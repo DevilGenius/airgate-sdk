@@ -71,16 +71,17 @@ func buildAccount(req *pb.ForwardRequest) *sdk.Account {
 // toProtoResult 将 SDK ForwardResult 转为 proto ForwardResult
 func toProtoResult(result *sdk.ForwardResult) *pb.ForwardResult {
 	return &pb.ForwardResult{
-		StatusCode:        int32(result.StatusCode),
-		InputTokens:       int32(result.InputTokens),
-		OutputTokens:      int32(result.OutputTokens),
-		CachedInputTokens: int32(result.CachedInputTokens),
-		Model:             result.Model,
-		DurationMs:        result.Duration.Milliseconds(),
-		AccountStatus:     result.AccountStatus,
-		ErrorMessage:      result.ErrorMessage,
-		RetryAfterMs:      result.RetryAfter.Milliseconds(),
-		ServiceTier:       result.ServiceTier,
+		StatusCode:         int32(result.StatusCode),
+		InputTokens:        int32(result.InputTokens),
+		OutputTokens:       int32(result.OutputTokens),
+		CachedInputTokens:  int32(result.CachedInputTokens),
+		Model:              result.Model,
+		DurationMs:         result.Duration.Milliseconds(),
+		AccountStatus:      result.AccountStatus,
+		ErrorMessage:       result.ErrorMessage,
+		RetryAfterMs:       result.RetryAfter.Milliseconds(),
+		ServiceTier:        result.ServiceTier,
+		UpdatedCredentials: result.UpdatedCredentials,
 	}
 }
 

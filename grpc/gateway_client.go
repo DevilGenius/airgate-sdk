@@ -102,17 +102,18 @@ func buildProtoRequest(req *sdk.ForwardRequest) *pb.ForwardRequest {
 // fromProtoResult 将 proto ForwardResult 转为 SDK ForwardResult
 func fromProtoResult(r *pb.ForwardResult) *sdk.ForwardResult {
 	result := &sdk.ForwardResult{
-		StatusCode:        int(r.StatusCode),
-		InputTokens:       int(r.InputTokens),
-		OutputTokens:      int(r.OutputTokens),
-		CachedInputTokens: int(r.CachedInputTokens),
-		Model:             r.Model,
-		Duration:          time.Duration(r.DurationMs) * time.Millisecond,
-		AccountStatus:     r.AccountStatus,
-		ErrorMessage:      r.ErrorMessage,
-		RetryAfter:        time.Duration(r.RetryAfterMs) * time.Millisecond,
-		ServiceTier:       r.ServiceTier,
-		Body:              r.Body,
+		StatusCode:         int(r.StatusCode),
+		InputTokens:        int(r.InputTokens),
+		OutputTokens:       int(r.OutputTokens),
+		CachedInputTokens:  int(r.CachedInputTokens),
+		Model:              r.Model,
+		Duration:           time.Duration(r.DurationMs) * time.Millisecond,
+		AccountStatus:      r.AccountStatus,
+		ErrorMessage:       r.ErrorMessage,
+		RetryAfter:         time.Duration(r.RetryAfterMs) * time.Millisecond,
+		ServiceTier:        r.ServiceTier,
+		Body:               r.Body,
+		UpdatedCredentials: r.UpdatedCredentials,
 	}
 	if len(r.Headers) > 0 {
 		result.Headers = protoHeadersToHTTP(r.Headers)
