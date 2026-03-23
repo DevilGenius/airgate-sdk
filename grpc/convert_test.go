@@ -86,14 +86,16 @@ func TestProtoHeadersToHTTP_NilValues(t *testing.T) {
 
 func TestForwardResult_RoundTrip(t *testing.T) {
 	original := &sdk.ForwardResult{
-		StatusCode:    200,
-		InputTokens:   150,
-		OutputTokens:  300,
-		CacheTokens:   50,
-		Model:         "claude-opus-4-20250514",
-		Duration:      2500 * time.Millisecond,
-		AccountStatus: "rate_limited",
-		RetryAfter:    30000 * time.Millisecond,
+		StatusCode:        200,
+		InputTokens:       150,
+		OutputTokens:      300,
+		CachedInputTokens: 50,
+		Model:             "claude-opus-4-20250514",
+		Duration:          2500 * time.Millisecond,
+		AccountStatus:     "rate_limited",
+		ErrorMessage:      "上游账号已停用",
+		RetryAfter:        30000 * time.Millisecond,
+		ServiceTier:       "priority",
 	}
 
 	proto := toProtoResult(original)
@@ -270,20 +272,26 @@ func TestBuildAccount_AllFieldsMapped(t *testing.T) {
 func TestConvertModels(t *testing.T) {
 	pbModels := []*pb.ModelInfoProto{
 		{
-			Id:          "gpt-4",
-			Name:        "GPT-4",
-			MaxTokens:   8192,
-			InputPrice:  30.0,
-			OutputPrice: 60.0,
-			CachePrice:  15.0,
+			Id:                       "gpt-4",
+			Name:                     "GPT-4",
+			MaxTokens:                8192,
+			InputPrice:               30.0,
+			OutputPrice:              60.0,
+			CachedInputPrice:         15.0,
+			InputPricePriority:       45.0,
+			OutputPricePriority:      90.0,
+			CachedInputPricePriority: 22.5,
 		},
 		{
-			Id:          "claude-opus-4-20250514",
-			Name:        "Claude Opus 4",
-			MaxTokens:   200000,
-			InputPrice:  15.0,
-			OutputPrice: 75.0,
-			CachePrice:  7.5,
+			Id:                       "claude-opus-4-20250514",
+			Name:                     "Claude Opus 4",
+			MaxTokens:                200000,
+			InputPrice:               15.0,
+			OutputPrice:              75.0,
+			CachedInputPrice:         7.5,
+			InputPricePriority:       22.5,
+			OutputPricePriority:      112.5,
+			CachedInputPricePriority: 11.25,
 		},
 	}
 
@@ -295,20 +303,26 @@ func TestConvertModels(t *testing.T) {
 
 	expected := []sdk.ModelInfo{
 		{
-			ID:          "gpt-4",
-			Name:        "GPT-4",
-			MaxTokens:   8192,
-			InputPrice:  30.0,
-			OutputPrice: 60.0,
-			CachePrice:  15.0,
+			ID:                       "gpt-4",
+			Name:                     "GPT-4",
+			MaxTokens:                8192,
+			InputPrice:               30.0,
+			OutputPrice:              60.0,
+			CachedInputPrice:         15.0,
+			InputPricePriority:       45.0,
+			OutputPricePriority:      90.0,
+			CachedInputPricePriority: 22.5,
 		},
 		{
-			ID:          "claude-opus-4-20250514",
-			Name:        "Claude Opus 4",
-			MaxTokens:   200000,
-			InputPrice:  15.0,
-			OutputPrice: 75.0,
-			CachePrice:  7.5,
+			ID:                       "claude-opus-4-20250514",
+			Name:                     "Claude Opus 4",
+			MaxTokens:                200000,
+			InputPrice:               15.0,
+			OutputPrice:              75.0,
+			CachedInputPrice:         7.5,
+			InputPricePriority:       22.5,
+			OutputPricePriority:      112.5,
+			CachedInputPricePriority: 11.25,
 		},
 	}
 

@@ -25,12 +25,15 @@ func (s *GatewayGRPCServer) GetModels(_ context.Context, _ *pb.Empty) (*pb.Model
 	resp := &pb.ModelsResponse{}
 	for _, m := range models {
 		resp.Models = append(resp.Models, &pb.ModelInfoProto{
-			Id:          m.ID,
-			Name:        m.Name,
-			MaxTokens:   int32(m.MaxTokens),
-			InputPrice:  m.InputPrice,
-			OutputPrice: m.OutputPrice,
-			CachePrice:  m.CachePrice,
+			Id:                       m.ID,
+			Name:                     m.Name,
+			MaxTokens:                int32(m.MaxTokens),
+			InputPrice:               m.InputPrice,
+			OutputPrice:              m.OutputPrice,
+			CachedInputPrice:         m.CachedInputPrice,
+			InputPricePriority:       m.InputPricePriority,
+			OutputPricePriority:      m.OutputPricePriority,
+			CachedInputPricePriority: m.CachedInputPricePriority,
 		})
 	}
 	return resp, nil
@@ -68,14 +71,16 @@ func buildAccount(req *pb.ForwardRequest) *sdk.Account {
 // toProtoResult 将 SDK ForwardResult 转为 proto ForwardResult
 func toProtoResult(result *sdk.ForwardResult) *pb.ForwardResult {
 	return &pb.ForwardResult{
-		StatusCode:    int32(result.StatusCode),
-		InputTokens:   int32(result.InputTokens),
-		OutputTokens:  int32(result.OutputTokens),
-		CacheTokens:   int32(result.CacheTokens),
-		Model:         result.Model,
-		DurationMs:    result.Duration.Milliseconds(),
-		AccountStatus: result.AccountStatus,
-		RetryAfterMs:  result.RetryAfter.Milliseconds(),
+		StatusCode:        int32(result.StatusCode),
+		InputTokens:       int32(result.InputTokens),
+		OutputTokens:      int32(result.OutputTokens),
+		CachedInputTokens: int32(result.CachedInputTokens),
+		Model:             result.Model,
+		DurationMs:        result.Duration.Milliseconds(),
+		AccountStatus:     result.AccountStatus,
+		ErrorMessage:      result.ErrorMessage,
+		RetryAfterMs:      result.RetryAfter.Milliseconds(),
+		ServiceTier:       result.ServiceTier,
 	}
 }
 

@@ -173,12 +173,15 @@ func convertModels(pbModels []*pb.ModelInfoProto) []sdk.ModelInfo {
 	models := make([]sdk.ModelInfo, len(pbModels))
 	for i, m := range pbModels {
 		models[i] = sdk.ModelInfo{
-			ID:          m.Id,
-			Name:        m.Name,
-			MaxTokens:   int(m.MaxTokens),
-			InputPrice:  m.InputPrice,
-			OutputPrice: m.OutputPrice,
-			CachePrice:  m.CachePrice,
+			ID:                       m.Id,
+			Name:                     m.Name,
+			MaxTokens:                int(m.MaxTokens),
+			InputPrice:               m.InputPrice,
+			OutputPrice:              m.OutputPrice,
+			CachedInputPrice:         m.CachedInputPrice,
+			InputPricePriority:       m.InputPricePriority,
+			OutputPricePriority:      m.OutputPricePriority,
+			CachedInputPricePriority: m.CachedInputPricePriority,
 		}
 	}
 	return models

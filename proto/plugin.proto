@@ -125,7 +125,10 @@ message ModelInfoProto {
     int32  max_tokens = 3;
     double input_price = 4;
     double output_price = 5;
-    double cache_price = 6;
+    double cached_input_price = 6;
+    double input_price_priority = 7;
+    double output_price_priority = 8;
+    double cached_input_price_priority = 9;
 }
 
 message ModelsResponse {
@@ -159,13 +162,16 @@ message ForwardResult {
     int32  status_code = 1;
     int32  input_tokens = 2;
     int32  output_tokens = 3;
-    int32  cache_tokens = 4;
+    int32  cached_input_tokens = 4;
     string model = 5;
     int64  duration_ms = 6;
     string account_status = 7;   // "" / "rate_limited" / "disabled" / "expired"
+    string error_message = 13;   // 上游错误信息（记录到账号 error_msg）
     int64  retry_after_ms = 8;   // 限流时建议等待时间（毫秒）
     bytes  body = 9;             // 非流式响应体
     map<string, HeaderValues> headers = 10;  // 非流式响应头
+    string service_tier = 11;
+    map<string, string> updated_credentials = 12;
 }
 
 message ForwardChunk {
