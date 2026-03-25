@@ -178,6 +178,8 @@ message ForwardChunk {
     bytes data = 1;
     bool  done = 2;
     ForwardResult final_result = 3;
+    int32 status_code = 4;
+    map<string, HeaderValues> headers = 5;
 }
 
 message CredentialsRequest {

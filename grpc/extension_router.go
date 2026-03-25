@@ -41,5 +41,32 @@ func (r *extensionRouter) match(method, path string) http.HandlerFunc {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	key := strings.ToUpper(method) + " " + path
-	return r.handlers[key]
+	if handler := r.handlers[key]; handler != nil {
+		return handler
+	}
+
+	// 支持以 "/" 结尾的前缀路由，用于插件处理动态子路径
+	// 例如注册 GET /openclaw/tenants/ 后，可匹配 /openclaw/tenants/123
+	methodPrefix := strings.ToUpper(method) + " "
+	var (
+		bestHandler http.HandlerFunc
+		bestLen     int
+	)
+	for routeKey, handler := range r.handlers {
+		if !strings.HasPrefix(routeKey, methodPrefix) {
+			continue
+		}
+		routePath := strings.TrimPrefix(routeKey, methodPrefix)
+		if !strings.HasSuffix(routePath, "/") {
+			continue
+		}
+		if !strings.HasPrefix(path, routePath) {
+			continue
+		}
+		if len(routePath) > bestLen {
+			bestLen = len(routePath)
+			bestHandler = handler
+		}
+	}
+	return bestHandler
 }

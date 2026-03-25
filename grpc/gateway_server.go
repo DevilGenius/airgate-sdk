@@ -157,6 +157,10 @@ func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.Gate
 		result.Duration = time.Since(startTime)
 	}
 
+	if err := sw.flushMeta(); err != nil {
+		return err
+	}
+
 	return stream.Send(&pb.ForwardChunk{
 		Done:        true,
 		FinalResult: toProtoResult(result),
@@ -190,6 +194,7 @@ type streamWriter struct {
 	stream  pb.GatewayService_ForwardStreamServer
 	headers http.Header
 	code    int
+	sent    bool
 }
 
 func (w *streamWriter) Header() http.Header {
@@ -200,6 +205,9 @@ func (w *streamWriter) Header() http.Header {
 }
 
 func (w *streamWriter) Write(data []byte) (int, error) {
+	if err := w.flushMeta(); err != nil {
+		return 0, err
+	}
 	err := w.stream.Send(&pb.ForwardChunk{
 		Data: data,
 	})
@@ -211,6 +219,24 @@ func (w *streamWriter) Write(data []byte) (int, error) {
 
 func (w *streamWriter) WriteHeader(statusCode int) {
 	w.code = statusCode
+}
+
+func (w *streamWriter) flushMeta() error {
+	if w.sent {
+		return nil
+	}
+	statusCode := w.code
+	if statusCode == 0 {
+		statusCode = http.StatusOK
+	}
+	if err := w.stream.Send(&pb.ForwardChunk{
+		StatusCode: int32(statusCode),
+		Headers:    httpHeadersToProto(w.Header()),
+	}); err != nil {
+		return err
+	}
+	w.sent = true
+	return nil
 }
 
 // bufferWriter 缓冲响应体的 http.ResponseWriter 实现（非流式 gRPC 用）
