@@ -23,7 +23,7 @@ func (s *stubForwardStreamServer) Send(chunk *pb.ForwardChunk) error {
 	return nil
 }
 
-func (s *stubForwardStreamServer) SetHeader(metadata.MD) error { return nil }
+func (s *stubForwardStreamServer) SetHeader(metadata.MD) error  { return nil }
 func (s *stubForwardStreamServer) SendHeader(metadata.MD) error { return nil }
 func (s *stubForwardStreamServer) SetTrailer(metadata.MD)       {}
 func (s *stubForwardStreamServer) Context() context.Context {
@@ -51,8 +51,8 @@ func (c *stubForwardStreamClient) Recv() (*pb.ForwardChunk, error) {
 }
 
 func (c *stubForwardStreamClient) Header() (metadata.MD, error) { return metadata.MD{}, nil }
-func (c *stubForwardStreamClient) Trailer() metadata.MD          { return metadata.MD{} }
-func (c *stubForwardStreamClient) CloseSend() error              { return nil }
+func (c *stubForwardStreamClient) Trailer() metadata.MD         { return metadata.MD{} }
+func (c *stubForwardStreamClient) CloseSend() error             { return nil }
 func (c *stubForwardStreamClient) Context() context.Context {
 	if c.ctx != nil {
 		return c.ctx
