@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
 	sdk "github.com/DouDOU-start/airgate-sdk"
@@ -102,17 +103,18 @@ func buildProtoRequest(req *sdk.ForwardRequest) *pb.ForwardRequest {
 // fromProtoResult 将 proto ForwardResult 转为 SDK ForwardResult
 func fromProtoResult(r *pb.ForwardResult) *sdk.ForwardResult {
 	result := &sdk.ForwardResult{
-		StatusCode:        int(r.StatusCode),
-		InputTokens:       int(r.InputTokens),
-		OutputTokens:      int(r.OutputTokens),
-		CachedInputTokens: int(r.CachedInputTokens),
-		Model:             r.Model,
-		Duration:          time.Duration(r.DurationMs) * time.Millisecond,
-		AccountStatus:     r.AccountStatus,
-		ErrorMessage:      r.ErrorMessage,
-		RetryAfter:        time.Duration(r.RetryAfterMs) * time.Millisecond,
-		ServiceTier:       r.ServiceTier,
-		Body:              r.Body,
+		StatusCode:         int(r.StatusCode),
+		InputTokens:        int(r.InputTokens),
+		OutputTokens:       int(r.OutputTokens),
+		CachedInputTokens:  int(r.CachedInputTokens),
+		Model:              r.Model,
+		Duration:           time.Duration(r.DurationMs) * time.Millisecond,
+		AccountStatus:      r.AccountStatus,
+		ErrorMessage:       r.ErrorMessage,
+		RetryAfter:         time.Duration(r.RetryAfterMs) * time.Millisecond,
+		ServiceTier:        r.ServiceTier,
+		Body:               r.Body,
+		UpdatedCredentials: r.UpdatedCredentials,
 	}
 	if len(r.Headers) > 0 {
 		result.Headers = protoHeadersToHTTP(r.Headers)
@@ -143,6 +145,7 @@ func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.Forward
 	}
 
 	var finalResult *sdk.ForwardResult
+	responseStarted := false
 	for {
 		chunk, err := stream.Recv()
 		if err == io.EOF {
@@ -150,6 +153,20 @@ func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.Forward
 		}
 		if err != nil {
 			return nil, fmt.Errorf("gRPC 流接收失败: %w", err)
+		}
+
+		if !responseStarted && req.Writer != nil && (chunk.StatusCode != 0 || len(chunk.Headers) > 0 || len(chunk.Data) > 0) {
+			for k, vals := range protoHeadersToHTTP(chunk.Headers) {
+				for _, v := range vals {
+					req.Writer.Header().Add(k, v)
+				}
+			}
+			statusCode := int(chunk.StatusCode)
+			if statusCode == 0 {
+				statusCode = http.StatusOK
+			}
+			req.Writer.WriteHeader(statusCode)
+			responseStarted = true
 		}
 
 		if len(chunk.Data) > 0 && req.Writer != nil {

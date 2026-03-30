@@ -1270,10 +1270,12 @@ func (x *ForwardResult) GetUpdatedCredentials() map[string]string {
 }
 
 type ForwardChunk struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
-	Done          bool                   `protobuf:"varint,2,opt,name=done,proto3" json:"done,omitempty"`
-	FinalResult   *ForwardResult         `protobuf:"bytes,3,opt,name=final_result,json=finalResult,proto3" json:"final_result,omitempty"`
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Data          []byte                   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	Done          bool                     `protobuf:"varint,2,opt,name=done,proto3" json:"done,omitempty"`
+	FinalResult   *ForwardResult           `protobuf:"bytes,3,opt,name=final_result,json=finalResult,proto3" json:"final_result,omitempty"`
+	StatusCode    int32                    `protobuf:"varint,4,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
+	Headers       map[string]*HeaderValues `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1325,6 +1327,20 @@ func (x *ForwardChunk) GetDone() bool {
 func (x *ForwardChunk) GetFinalResult() *ForwardResult {
 	if x != nil {
 		return x.FinalResult
+	}
+	return nil
+}
+
+func (x *ForwardChunk) GetStatusCode() int32 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *ForwardChunk) GetHeaders() map[string]*HeaderValues {
+	if x != nil {
+		return x.Headers
 	}
 	return nil
 }
@@ -2200,11 +2216,17 @@ const file_plugin_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\x1aE\n" +
 	"\x17UpdatedCredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"{\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc1\x02\n" +
 	"\fForwardChunk\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12\x12\n" +
 	"\x04done\x18\x02 \x01(\bR\x04done\x12C\n" +
-	"\ffinal_result\x18\x03 \x01(\v2 .airgate.plugin.v1.ForwardResultR\vfinalResult\"\xae\x01\n" +
+	"\ffinal_result\x18\x03 \x01(\v2 .airgate.plugin.v1.ForwardResultR\vfinalResult\x12\x1f\n" +
+	"\vstatus_code\x18\x04 \x01(\x05R\n" +
+	"statusCode\x12F\n" +
+	"\aheaders\x18\x05 \x03(\v2,.airgate.plugin.v1.ForwardChunk.HeadersEntryR\aheaders\x1a[\n" +
+	"\fHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xae\x01\n" +
 	"\x12CredentialsRequest\x12X\n" +
 	"\vcredentials\x18\x01 \x03(\v26.airgate.plugin.v1.CredentialsRequest.CredentialsEntryR\vcredentials\x1a>\n" +
 	"\x10CredentialsEntry\x12\x10\n" +
@@ -2334,7 +2356,7 @@ func file_plugin_proto_rawDescGZIP() []byte {
 }
 
 var file_plugin_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_plugin_proto_goTypes = []any{
 	(WebSocketFrame_FrameType)(0),   // 0: airgate.plugin.v1.WebSocketFrame.FrameType
 	(*Empty)(nil),                   // 1: airgate.plugin.v1.Empty
@@ -2369,12 +2391,13 @@ var file_plugin_proto_goTypes = []any{
 	nil,                             // 30: airgate.plugin.v1.ForwardRequest.HeadersEntry
 	nil,                             // 31: airgate.plugin.v1.ForwardResult.HeadersEntry
 	nil,                             // 32: airgate.plugin.v1.ForwardResult.UpdatedCredentialsEntry
-	nil,                             // 33: airgate.plugin.v1.CredentialsRequest.CredentialsEntry
-	nil,                             // 34: airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
-	nil,                             // 35: airgate.plugin.v1.HttpRequest.HeadersEntry
-	nil,                             // 36: airgate.plugin.v1.HttpResponse.HeadersEntry
-	nil,                             // 37: airgate.plugin.v1.HttpResponseChunk.HeadersEntry
-	nil,                             // 38: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
+	nil,                             // 33: airgate.plugin.v1.ForwardChunk.HeadersEntry
+	nil,                             // 34: airgate.plugin.v1.CredentialsRequest.CredentialsEntry
+	nil,                             // 35: airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
+	nil,                             // 36: airgate.plugin.v1.HttpRequest.HeadersEntry
+	nil,                             // 37: airgate.plugin.v1.HttpResponse.HeadersEntry
+	nil,                             // 38: airgate.plugin.v1.HttpResponseChunk.HeadersEntry
+	nil,                             // 39: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
 }
 var file_plugin_proto_depIdxs = []int32{
 	6,  // 0: airgate.plugin.v1.PluginInfoResponse.account_types:type_name -> airgate.plugin.v1.AccountTypeProto
@@ -2389,66 +2412,68 @@ var file_plugin_proto_depIdxs = []int32{
 	31, // 9: airgate.plugin.v1.ForwardResult.headers:type_name -> airgate.plugin.v1.ForwardResult.HeadersEntry
 	32, // 10: airgate.plugin.v1.ForwardResult.updated_credentials:type_name -> airgate.plugin.v1.ForwardResult.UpdatedCredentialsEntry
 	16, // 11: airgate.plugin.v1.ForwardChunk.final_result:type_name -> airgate.plugin.v1.ForwardResult
-	33, // 12: airgate.plugin.v1.CredentialsRequest.credentials:type_name -> airgate.plugin.v1.CredentialsRequest.CredentialsEntry
-	34, // 13: airgate.plugin.v1.QuotaInfoResponse.extra:type_name -> airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
-	35, // 14: airgate.plugin.v1.HttpRequest.headers:type_name -> airgate.plugin.v1.HttpRequest.HeadersEntry
-	36, // 15: airgate.plugin.v1.HttpResponse.headers:type_name -> airgate.plugin.v1.HttpResponse.HeadersEntry
-	37, // 16: airgate.plugin.v1.HttpResponseChunk.headers:type_name -> airgate.plugin.v1.HttpResponseChunk.HeadersEntry
-	23, // 17: airgate.plugin.v1.BackgroundTasksResponse.tasks:type_name -> airgate.plugin.v1.BackgroundTaskProto
-	0,  // 18: airgate.plugin.v1.WebSocketFrame.type:type_name -> airgate.plugin.v1.WebSocketFrame.FrameType
-	26, // 19: airgate.plugin.v1.WebSocketFrame.connect_info:type_name -> airgate.plugin.v1.WebSocketConnectInfo
-	16, // 20: airgate.plugin.v1.WebSocketFrame.result:type_name -> airgate.plugin.v1.ForwardResult
-	38, // 21: airgate.plugin.v1.WebSocketConnectInfo.headers:type_name -> airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
-	27, // 22: airgate.plugin.v1.WebAssetsResponse.files:type_name -> airgate.plugin.v1.WebAssetFile
-	3,  // 23: airgate.plugin.v1.ForwardRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	3,  // 24: airgate.plugin.v1.ForwardResult.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	3,  // 25: airgate.plugin.v1.HttpRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	3,  // 26: airgate.plugin.v1.HttpResponse.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	3,  // 27: airgate.plugin.v1.HttpResponseChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	3,  // 28: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	1,  // 29: airgate.plugin.v1.PluginService.GetInfo:input_type -> airgate.plugin.v1.Empty
-	10, // 30: airgate.plugin.v1.PluginService.Init:input_type -> airgate.plugin.v1.InitRequest
-	1,  // 31: airgate.plugin.v1.PluginService.Start:input_type -> airgate.plugin.v1.Empty
-	1,  // 32: airgate.plugin.v1.PluginService.Stop:input_type -> airgate.plugin.v1.Empty
-	1,  // 33: airgate.plugin.v1.PluginService.GetWebAssets:input_type -> airgate.plugin.v1.Empty
-	1,  // 34: airgate.plugin.v1.PluginService.HealthCheck:input_type -> airgate.plugin.v1.Empty
-	20, // 35: airgate.plugin.v1.PluginService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
-	1,  // 36: airgate.plugin.v1.GatewayService.GetPlatform:input_type -> airgate.plugin.v1.Empty
-	1,  // 37: airgate.plugin.v1.GatewayService.GetModels:input_type -> airgate.plugin.v1.Empty
-	1,  // 38: airgate.plugin.v1.GatewayService.GetRoutes:input_type -> airgate.plugin.v1.Empty
-	15, // 39: airgate.plugin.v1.GatewayService.Forward:input_type -> airgate.plugin.v1.ForwardRequest
-	15, // 40: airgate.plugin.v1.GatewayService.ForwardStream:input_type -> airgate.plugin.v1.ForwardRequest
-	18, // 41: airgate.plugin.v1.GatewayService.ValidateAccount:input_type -> airgate.plugin.v1.CredentialsRequest
-	18, // 42: airgate.plugin.v1.GatewayService.QueryQuota:input_type -> airgate.plugin.v1.CredentialsRequest
-	25, // 43: airgate.plugin.v1.GatewayService.HandleWebSocket:input_type -> airgate.plugin.v1.WebSocketFrame
-	1,  // 44: airgate.plugin.v1.ExtensionService.Migrate:input_type -> airgate.plugin.v1.Empty
-	1,  // 45: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:input_type -> airgate.plugin.v1.Empty
-	20, // 46: airgate.plugin.v1.ExtensionService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
-	20, // 47: airgate.plugin.v1.ExtensionService.HandleStreamRequest:input_type -> airgate.plugin.v1.HttpRequest
-	4,  // 48: airgate.plugin.v1.PluginService.GetInfo:output_type -> airgate.plugin.v1.PluginInfoResponse
-	1,  // 49: airgate.plugin.v1.PluginService.Init:output_type -> airgate.plugin.v1.Empty
-	1,  // 50: airgate.plugin.v1.PluginService.Start:output_type -> airgate.plugin.v1.Empty
-	1,  // 51: airgate.plugin.v1.PluginService.Stop:output_type -> airgate.plugin.v1.Empty
-	28, // 52: airgate.plugin.v1.PluginService.GetWebAssets:output_type -> airgate.plugin.v1.WebAssetsResponse
-	1,  // 53: airgate.plugin.v1.PluginService.HealthCheck:output_type -> airgate.plugin.v1.Empty
-	21, // 54: airgate.plugin.v1.PluginService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
-	2,  // 55: airgate.plugin.v1.GatewayService.GetPlatform:output_type -> airgate.plugin.v1.StringResponse
-	12, // 56: airgate.plugin.v1.GatewayService.GetModels:output_type -> airgate.plugin.v1.ModelsResponse
-	14, // 57: airgate.plugin.v1.GatewayService.GetRoutes:output_type -> airgate.plugin.v1.RoutesResponse
-	16, // 58: airgate.plugin.v1.GatewayService.Forward:output_type -> airgate.plugin.v1.ForwardResult
-	17, // 59: airgate.plugin.v1.GatewayService.ForwardStream:output_type -> airgate.plugin.v1.ForwardChunk
-	1,  // 60: airgate.plugin.v1.GatewayService.ValidateAccount:output_type -> airgate.plugin.v1.Empty
-	19, // 61: airgate.plugin.v1.GatewayService.QueryQuota:output_type -> airgate.plugin.v1.QuotaInfoResponse
-	25, // 62: airgate.plugin.v1.GatewayService.HandleWebSocket:output_type -> airgate.plugin.v1.WebSocketFrame
-	1,  // 63: airgate.plugin.v1.ExtensionService.Migrate:output_type -> airgate.plugin.v1.Empty
-	24, // 64: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:output_type -> airgate.plugin.v1.BackgroundTasksResponse
-	21, // 65: airgate.plugin.v1.ExtensionService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
-	22, // 66: airgate.plugin.v1.ExtensionService.HandleStreamRequest:output_type -> airgate.plugin.v1.HttpResponseChunk
-	48, // [48:67] is the sub-list for method output_type
-	29, // [29:48] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	33, // 12: airgate.plugin.v1.ForwardChunk.headers:type_name -> airgate.plugin.v1.ForwardChunk.HeadersEntry
+	34, // 13: airgate.plugin.v1.CredentialsRequest.credentials:type_name -> airgate.plugin.v1.CredentialsRequest.CredentialsEntry
+	35, // 14: airgate.plugin.v1.QuotaInfoResponse.extra:type_name -> airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
+	36, // 15: airgate.plugin.v1.HttpRequest.headers:type_name -> airgate.plugin.v1.HttpRequest.HeadersEntry
+	37, // 16: airgate.plugin.v1.HttpResponse.headers:type_name -> airgate.plugin.v1.HttpResponse.HeadersEntry
+	38, // 17: airgate.plugin.v1.HttpResponseChunk.headers:type_name -> airgate.plugin.v1.HttpResponseChunk.HeadersEntry
+	23, // 18: airgate.plugin.v1.BackgroundTasksResponse.tasks:type_name -> airgate.plugin.v1.BackgroundTaskProto
+	0,  // 19: airgate.plugin.v1.WebSocketFrame.type:type_name -> airgate.plugin.v1.WebSocketFrame.FrameType
+	26, // 20: airgate.plugin.v1.WebSocketFrame.connect_info:type_name -> airgate.plugin.v1.WebSocketConnectInfo
+	16, // 21: airgate.plugin.v1.WebSocketFrame.result:type_name -> airgate.plugin.v1.ForwardResult
+	39, // 22: airgate.plugin.v1.WebSocketConnectInfo.headers:type_name -> airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
+	27, // 23: airgate.plugin.v1.WebAssetsResponse.files:type_name -> airgate.plugin.v1.WebAssetFile
+	3,  // 24: airgate.plugin.v1.ForwardRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	3,  // 25: airgate.plugin.v1.ForwardResult.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	3,  // 26: airgate.plugin.v1.ForwardChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	3,  // 27: airgate.plugin.v1.HttpRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	3,  // 28: airgate.plugin.v1.HttpResponse.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	3,  // 29: airgate.plugin.v1.HttpResponseChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	3,  // 30: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	1,  // 31: airgate.plugin.v1.PluginService.GetInfo:input_type -> airgate.plugin.v1.Empty
+	10, // 32: airgate.plugin.v1.PluginService.Init:input_type -> airgate.plugin.v1.InitRequest
+	1,  // 33: airgate.plugin.v1.PluginService.Start:input_type -> airgate.plugin.v1.Empty
+	1,  // 34: airgate.plugin.v1.PluginService.Stop:input_type -> airgate.plugin.v1.Empty
+	1,  // 35: airgate.plugin.v1.PluginService.GetWebAssets:input_type -> airgate.plugin.v1.Empty
+	1,  // 36: airgate.plugin.v1.PluginService.HealthCheck:input_type -> airgate.plugin.v1.Empty
+	20, // 37: airgate.plugin.v1.PluginService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
+	1,  // 38: airgate.plugin.v1.GatewayService.GetPlatform:input_type -> airgate.plugin.v1.Empty
+	1,  // 39: airgate.plugin.v1.GatewayService.GetModels:input_type -> airgate.plugin.v1.Empty
+	1,  // 40: airgate.plugin.v1.GatewayService.GetRoutes:input_type -> airgate.plugin.v1.Empty
+	15, // 41: airgate.plugin.v1.GatewayService.Forward:input_type -> airgate.plugin.v1.ForwardRequest
+	15, // 42: airgate.plugin.v1.GatewayService.ForwardStream:input_type -> airgate.plugin.v1.ForwardRequest
+	18, // 43: airgate.plugin.v1.GatewayService.ValidateAccount:input_type -> airgate.plugin.v1.CredentialsRequest
+	18, // 44: airgate.plugin.v1.GatewayService.QueryQuota:input_type -> airgate.plugin.v1.CredentialsRequest
+	25, // 45: airgate.plugin.v1.GatewayService.HandleWebSocket:input_type -> airgate.plugin.v1.WebSocketFrame
+	1,  // 46: airgate.plugin.v1.ExtensionService.Migrate:input_type -> airgate.plugin.v1.Empty
+	1,  // 47: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:input_type -> airgate.plugin.v1.Empty
+	20, // 48: airgate.plugin.v1.ExtensionService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
+	20, // 49: airgate.plugin.v1.ExtensionService.HandleStreamRequest:input_type -> airgate.plugin.v1.HttpRequest
+	4,  // 50: airgate.plugin.v1.PluginService.GetInfo:output_type -> airgate.plugin.v1.PluginInfoResponse
+	1,  // 51: airgate.plugin.v1.PluginService.Init:output_type -> airgate.plugin.v1.Empty
+	1,  // 52: airgate.plugin.v1.PluginService.Start:output_type -> airgate.plugin.v1.Empty
+	1,  // 53: airgate.plugin.v1.PluginService.Stop:output_type -> airgate.plugin.v1.Empty
+	28, // 54: airgate.plugin.v1.PluginService.GetWebAssets:output_type -> airgate.plugin.v1.WebAssetsResponse
+	1,  // 55: airgate.plugin.v1.PluginService.HealthCheck:output_type -> airgate.plugin.v1.Empty
+	21, // 56: airgate.plugin.v1.PluginService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
+	2,  // 57: airgate.plugin.v1.GatewayService.GetPlatform:output_type -> airgate.plugin.v1.StringResponse
+	12, // 58: airgate.plugin.v1.GatewayService.GetModels:output_type -> airgate.plugin.v1.ModelsResponse
+	14, // 59: airgate.plugin.v1.GatewayService.GetRoutes:output_type -> airgate.plugin.v1.RoutesResponse
+	16, // 60: airgate.plugin.v1.GatewayService.Forward:output_type -> airgate.plugin.v1.ForwardResult
+	17, // 61: airgate.plugin.v1.GatewayService.ForwardStream:output_type -> airgate.plugin.v1.ForwardChunk
+	1,  // 62: airgate.plugin.v1.GatewayService.ValidateAccount:output_type -> airgate.plugin.v1.Empty
+	19, // 63: airgate.plugin.v1.GatewayService.QueryQuota:output_type -> airgate.plugin.v1.QuotaInfoResponse
+	25, // 64: airgate.plugin.v1.GatewayService.HandleWebSocket:output_type -> airgate.plugin.v1.WebSocketFrame
+	1,  // 65: airgate.plugin.v1.ExtensionService.Migrate:output_type -> airgate.plugin.v1.Empty
+	24, // 66: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:output_type -> airgate.plugin.v1.BackgroundTasksResponse
+	21, // 67: airgate.plugin.v1.ExtensionService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
+	22, // 68: airgate.plugin.v1.ExtensionService.HandleStreamRequest:output_type -> airgate.plugin.v1.HttpResponseChunk
+	50, // [50:69] is the sub-list for method output_type
+	31, // [31:50] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_plugin_proto_init() }
@@ -2462,7 +2487,7 @@ func file_plugin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plugin_proto_rawDesc), len(file_plugin_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   38,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   3,
 		},
