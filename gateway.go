@@ -48,9 +48,10 @@ type ForwardResult struct {
 	ServiceTier           string        // 服务层级，如 standard / flex / priority
 	Model                 string        // 实际使用的模型
 	Duration              time.Duration // 请求耗时
+	FirstTokenMs          int64         // 首 token 响应延迟（毫秒）
 
 	// 账号状态反馈（插件识别，Core 处置）
-	AccountStatus string        // "" 正常 / "rate_limited" / "disabled" / "expired"
+	AccountStatus AccountStatus // "" 正常 / "rate_limited" / "disabled" / "expired"
 	ErrorMessage  string        // 上游错误信息（用于记录到账号 error_msg，便于排查）
 	RetryAfter    time.Duration // 限流时建议的等待时间
 

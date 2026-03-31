@@ -175,7 +175,8 @@ func convertModels(pbModels []*pb.ModelInfoProto) []sdk.ModelInfo {
 		models[i] = sdk.ModelInfo{
 			ID:                       m.Id,
 			Name:                     m.Name,
-			MaxTokens:                int(m.MaxTokens),
+			ContextWindow:            int(m.ContextWindow),
+			MaxOutputTokens:          int(m.MaxOutputTokens),
 			InputPrice:               m.InputPrice,
 			OutputPrice:              m.OutputPrice,
 			CachedInputPrice:         m.CachedInputPrice,

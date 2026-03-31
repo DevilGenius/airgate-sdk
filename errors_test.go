@@ -102,8 +102,8 @@ func TestErrorsIsWithWrapping(t *testing.T) {
 func TestAccountStatusConstants(t *testing.T) {
 	cases := []struct {
 		name string
-		got  string
-		want string
+		got  sdk.AccountStatus
+		want sdk.AccountStatus
 	}{
 		{"AccountStatusOK", sdk.AccountStatusOK, ""},
 		{"AccountStatusRateLimited", sdk.AccountStatusRateLimited, "rate_limited"},
@@ -121,14 +121,14 @@ func TestAccountStatusConstants(t *testing.T) {
 }
 
 func TestAccountStatusConstantsAreDistinct(t *testing.T) {
-	statuses := map[string]string{
+	statuses := map[string]sdk.AccountStatus{
 		"AccountStatusOK":          sdk.AccountStatusOK,
 		"AccountStatusRateLimited": sdk.AccountStatusRateLimited,
 		"AccountStatusDisabled":    sdk.AccountStatusDisabled,
 		"AccountStatusExpired":     sdk.AccountStatusExpired,
 	}
 
-	seen := make(map[string]string) // value -> name
+	seen := make(map[sdk.AccountStatus]string) // value -> name
 	for name, val := range statuses {
 		if prev, dup := seen[val]; dup {
 			t.Errorf("%s and %s have the same value %q", name, prev, val)

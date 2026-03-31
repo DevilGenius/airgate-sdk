@@ -30,12 +30,14 @@ var ErrAccountExpired = errors.New("account expired")
 // ErrAccountQuotaExhausted 账号额度已用尽
 var ErrAccountQuotaExhausted = errors.New("account quota exhausted")
 
-// ==================== 账号状态常量 ====================
+// ==================== 账号状态类型 ====================
 
-// AccountStatus 账号状态常量，用于 ForwardResult.AccountStatus
+// AccountStatus 账号状态（强类型，避免拼写错误）
+type AccountStatus string
+
 const (
-	AccountStatusOK          = ""             // 正常
-	AccountStatusRateLimited = "rate_limited" // 被限流
-	AccountStatusDisabled    = "disabled"     // 已禁用
-	AccountStatusExpired     = "expired"      // 已过期
+	AccountStatusOK          AccountStatus = ""             // 正常
+	AccountStatusRateLimited AccountStatus = "rate_limited" // 被限流
+	AccountStatusDisabled    AccountStatus = "disabled"     // 已禁用
+	AccountStatusExpired     AccountStatus = "expired"      // 已过期
 )

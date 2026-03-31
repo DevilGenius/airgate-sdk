@@ -38,7 +38,6 @@ func TestHeaderConversion_MultiValue(t *testing.T) {
 
 	proto := httpHeadersToProto(original)
 
-	// Verify proto representation preserves multiple values.
 	for key, vals := range original {
 		pv, ok := proto[key]
 		if !ok {
@@ -70,7 +69,6 @@ func TestHeaderConversion_Empty(t *testing.T) {
 }
 
 func TestProtoHeadersToHTTP_NilValues(t *testing.T) {
-	// A proto map entry with a nil HeaderValues should not panic.
 	proto := map[string]*pb.HeaderValues{
 		"X-Nil": nil,
 	}
@@ -86,16 +84,18 @@ func TestProtoHeadersToHTTP_NilValues(t *testing.T) {
 
 func TestForwardResult_RoundTrip(t *testing.T) {
 	original := &sdk.ForwardResult{
-		StatusCode:        200,
-		InputTokens:       150,
-		OutputTokens:      300,
-		CachedInputTokens: 50,
-		Model:             "claude-opus-4-20250514",
-		Duration:          2500 * time.Millisecond,
-		AccountStatus:     "rate_limited",
-		ErrorMessage:      "上游账号已停用",
-		RetryAfter:        30000 * time.Millisecond,
-		ServiceTier:       "priority",
+		StatusCode:            200,
+		InputTokens:           150,
+		OutputTokens:          300,
+		CachedInputTokens:     50,
+		ReasoningOutputTokens: 25,
+		Model:                 "claude-opus-4-20250514",
+		Duration:              2500 * time.Millisecond,
+		FirstTokenMs:          120,
+		AccountStatus:         sdk.AccountStatusRateLimited,
+		ErrorMessage:          "上游账号已停用",
+		RetryAfter:            30000 * time.Millisecond,
+		ServiceTier:           "priority",
 	}
 
 	proto := toProtoResult(original)
@@ -131,8 +131,6 @@ func TestForwardResult_DurationConversion(t *testing.T) {
 }
 
 func TestForwardResult_SubMillisecondTruncation(t *testing.T) {
-	// Durations with sub-millisecond precision are truncated during round-trip
-	// because proto stores only milliseconds.
 	original := &sdk.ForwardResult{
 		Duration:   1234567890 * time.Nanosecond, // 1234.567890 ms
 		RetryAfter: 0,
@@ -148,7 +146,12 @@ func TestForwardResult_SubMillisecondTruncation(t *testing.T) {
 }
 
 func TestForwardResult_AccountStatusPreserved(t *testing.T) {
-	statuses := []string{"", "rate_limited", "disabled", "expired"}
+	statuses := []sdk.AccountStatus{
+		sdk.AccountStatusOK,
+		sdk.AccountStatusRateLimited,
+		sdk.AccountStatusDisabled,
+		sdk.AccountStatusExpired,
+	}
 	for _, status := range statuses {
 		original := &sdk.ForwardResult{AccountStatus: status}
 		proto := toProtoResult(original)
@@ -170,7 +173,7 @@ func TestForwardResult_ZeroValues(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// buildAccount
+// buildAccount (从嵌套 AccountProto 构建)
 // ---------------------------------------------------------------------------
 
 func TestBuildAccount_ValidCredentials(t *testing.T) {
@@ -178,12 +181,14 @@ func TestBuildAccount_ValidCredentials(t *testing.T) {
 	credsJSON, _ := json.Marshal(creds)
 
 	req := &pb.ForwardRequest{
-		AccountId:       42,
-		AccountName:     "test-account",
-		AccountPlatform: "openai",
-		AccountType:     "apikey",
-		CredentialsJson: credsJSON,
-		ProxyUrl:        "http://proxy.local:8080",
+		Account: &pb.AccountProto{
+			Id:              42,
+			Name:            "test-account",
+			Platform:        "openai",
+			Type:            "apikey",
+			CredentialsJson: credsJSON,
+			ProxyUrl:        "http://proxy.local:8080",
+		},
 	}
 
 	account := buildAccount(req)
@@ -208,11 +213,21 @@ func TestBuildAccount_ValidCredentials(t *testing.T) {
 	}
 }
 
+func TestBuildAccount_NilAccount(t *testing.T) {
+	req := &pb.ForwardRequest{Account: nil}
+	account := buildAccount(req)
+	if account.ID != 0 || account.Name != "" {
+		t.Errorf("expected empty account for nil AccountProto, got %+v", account)
+	}
+}
+
 func TestBuildAccount_EmptyCredentials(t *testing.T) {
 	req := &pb.ForwardRequest{
-		AccountId:       1,
-		AccountName:     "no-creds",
-		CredentialsJson: nil,
+		Account: &pb.AccountProto{
+			Id:              1,
+			Name:            "no-creds",
+			CredentialsJson: nil,
+		},
 	}
 
 	account := buildAccount(req)
@@ -223,10 +238,11 @@ func TestBuildAccount_EmptyCredentials(t *testing.T) {
 }
 
 func TestBuildAccount_EmptyCredentialsJSON(t *testing.T) {
-	// Empty byte slice (length 0) should also result in nil credentials.
 	req := &pb.ForwardRequest{
-		AccountId:       1,
-		CredentialsJson: []byte{},
+		Account: &pb.AccountProto{
+			Id:              1,
+			CredentialsJson: []byte{},
+		},
 	}
 
 	account := buildAccount(req)
@@ -241,12 +257,14 @@ func TestBuildAccount_AllFieldsMapped(t *testing.T) {
 	credsJSON, _ := json.Marshal(creds)
 
 	req := &pb.ForwardRequest{
-		AccountId:       99,
-		AccountName:     "full-account",
-		AccountPlatform: "anthropic",
-		AccountType:     "oauth",
-		CredentialsJson: credsJSON,
-		ProxyUrl:        "socks5://proxy:1080",
+		Account: &pb.AccountProto{
+			Id:              99,
+			Name:            "full-account",
+			Platform:        "anthropic",
+			Type:            "oauth",
+			CredentialsJson: credsJSON,
+			ProxyUrl:        "socks5://proxy:1080",
+		},
 	}
 
 	account := buildAccount(req)
@@ -274,7 +292,8 @@ func TestConvertModels(t *testing.T) {
 		{
 			Id:                       "gpt-4",
 			Name:                     "GPT-4",
-			MaxTokens:                8192,
+			ContextWindow:            8192,
+			MaxOutputTokens:          4096,
 			InputPrice:               30.0,
 			OutputPrice:              60.0,
 			CachedInputPrice:         15.0,
@@ -285,7 +304,8 @@ func TestConvertModels(t *testing.T) {
 		{
 			Id:                       "claude-opus-4-20250514",
 			Name:                     "Claude Opus 4",
-			MaxTokens:                200000,
+			ContextWindow:            200000,
+			MaxOutputTokens:          128000,
 			InputPrice:               15.0,
 			OutputPrice:              75.0,
 			CachedInputPrice:         7.5,
@@ -305,7 +325,8 @@ func TestConvertModels(t *testing.T) {
 		{
 			ID:                       "gpt-4",
 			Name:                     "GPT-4",
-			MaxTokens:                8192,
+			ContextWindow:            8192,
+			MaxOutputTokens:          4096,
 			InputPrice:               30.0,
 			OutputPrice:              60.0,
 			CachedInputPrice:         15.0,
@@ -316,7 +337,8 @@ func TestConvertModels(t *testing.T) {
 		{
 			ID:                       "claude-opus-4-20250514",
 			Name:                     "Claude Opus 4",
-			MaxTokens:                200000,
+			ContextWindow:            200000,
+			MaxOutputTokens:          128000,
 			InputPrice:               15.0,
 			OutputPrice:              75.0,
 			CachedInputPrice:         7.5,
@@ -344,7 +366,7 @@ func TestConvertModels_Empty(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// convertConnectInfo
+// convertConnectInfo (从嵌套 AccountProto 构建)
 // ---------------------------------------------------------------------------
 
 func TestConvertConnectInfo_Nil(t *testing.T) {
@@ -353,7 +375,6 @@ func TestConvertConnectInfo_Nil(t *testing.T) {
 		t.Fatal("expected non-nil result for nil input")
 		return
 	}
-	// Should return an empty struct with no panic.
 	if result.Path != "" || result.Query != "" || result.RemoteAddr != "" || result.ConnectionID != "" {
 		t.Errorf("expected empty fields for nil input, got %+v", result)
 	}
@@ -369,17 +390,19 @@ func TestConvertConnectInfo_FullData(t *testing.T) {
 	}
 
 	pbInfo := &pb.WebSocketConnectInfo{
-		Path:            "/v1/ws/chat",
-		Query:           "model=gpt-4&stream=true",
-		Headers:         headers,
-		RemoteAddr:      "192.168.1.100:54321",
-		ConnectionId:    "conn-abc-123",
-		AccountId:       77,
-		AccountName:     "ws-account",
-		AccountPlatform: "openai",
-		AccountType:     "apikey",
-		CredentialsJson: credsJSON,
-		ProxyUrl:        "http://proxy:3128",
+		Path:         "/v1/ws/chat",
+		Query:        "model=gpt-4&stream=true",
+		Headers:      headers,
+		RemoteAddr:   "192.168.1.100:54321",
+		ConnectionId: "conn-abc-123",
+		Account: &pb.AccountProto{
+			Id:              77,
+			Name:            "ws-account",
+			Platform:        "openai",
+			Type:            "apikey",
+			CredentialsJson: credsJSON,
+			ProxyUrl:        "http://proxy:3128",
+		},
 	}
 
 	info := convertConnectInfo(pbInfo)
@@ -397,7 +420,6 @@ func TestConvertConnectInfo_FullData(t *testing.T) {
 		t.Errorf("ConnectionID: got %q, want %q", info.ConnectionID, "conn-abc-123")
 	}
 
-	// Headers
 	expectedHeaders := http.Header{
 		"Authorization": {"Bearer tok"},
 		"X-Request-Id":  {"req-001"},
@@ -406,7 +428,6 @@ func TestConvertConnectInfo_FullData(t *testing.T) {
 		t.Errorf("Headers: got %v, want %v", info.Headers, expectedHeaders)
 	}
 
-	// Account
 	if info.Account == nil {
 		t.Fatal("Account is nil")
 	}
@@ -430,11 +451,10 @@ func TestConvertConnectInfo_FullData(t *testing.T) {
 	}
 }
 
-func TestConvertConnectInfo_NoCredentials(t *testing.T) {
+func TestConvertConnectInfo_NoAccount(t *testing.T) {
 	pbInfo := &pb.WebSocketConnectInfo{
-		Path:        "/ws",
-		AccountId:   10,
-		AccountName: "no-creds",
+		Path:    "/ws",
+		Account: nil,
 	}
 
 	info := convertConnectInfo(pbInfo)

@@ -110,16 +110,18 @@ func (c *GatewayGRPCClient) Routes() []sdk.RouteDefinition {
 func buildProtoRequest(req *sdk.ForwardRequest) *pb.ForwardRequest {
 	credsJSON, _ := json.Marshal(req.Account.Credentials) //nolint:errcheck // Credentials 是 map[string]string，Marshal 不会失败
 	return &pb.ForwardRequest{
-		AccountId:       req.Account.ID,
-		AccountName:     req.Account.Name,
-		AccountPlatform: req.Account.Platform,
-		AccountType:     req.Account.Type,
-		CredentialsJson: credsJSON,
-		ProxyUrl:        req.Account.ProxyURL,
-		Body:            req.Body,
-		Headers:         httpHeadersToProto(req.Headers),
-		Model:           req.Model,
-		Stream:          req.Stream,
+		Account: &pb.AccountProto{
+			Id:              req.Account.ID,
+			Name:            req.Account.Name,
+			Platform:        req.Account.Platform,
+			Type:            req.Account.Type,
+			CredentialsJson: credsJSON,
+			ProxyUrl:        req.Account.ProxyURL,
+		},
+		Body:    req.Body,
+		Headers: httpHeadersToProto(req.Headers),
+		Model:   req.Model,
+		Stream:  req.Stream,
 	}
 }
 
@@ -133,7 +135,8 @@ func fromProtoResult(r *pb.ForwardResult) *sdk.ForwardResult {
 		ReasoningOutputTokens: int(r.ReasoningOutputTokens),
 		Model:                 r.Model,
 		Duration:              time.Duration(r.DurationMs) * time.Millisecond,
-		AccountStatus:         r.AccountStatus,
+		FirstTokenMs:          r.FirstTokenMs,
+		AccountStatus:         sdk.AccountStatus(r.AccountStatus),
 		ErrorMessage:          r.ErrorMessage,
 		RetryAfter:            time.Duration(r.RetryAfterMs) * time.Millisecond,
 		ServiceTier:           r.ServiceTier,
@@ -251,17 +254,19 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 	if err := stream.Send(&pb.WebSocketFrame{
 		Type: pb.WebSocketFrame_CONNECT,
 		ConnectInfo: &pb.WebSocketConnectInfo{
-			Path:            info.Path,
-			Query:           info.Query,
-			Headers:         httpHeadersToProto(info.Headers),
-			RemoteAddr:      info.RemoteAddr,
-			ConnectionId:    info.ConnectionID,
-			AccountId:       info.Account.ID,
-			AccountName:     info.Account.Name,
-			AccountPlatform: info.Account.Platform,
-			AccountType:     info.Account.Type,
-			CredentialsJson: credsJSON,
-			ProxyUrl:        info.Account.ProxyURL,
+			Path:         info.Path,
+			Query:        info.Query,
+			Headers:      httpHeadersToProto(info.Headers),
+			RemoteAddr:   info.RemoteAddr,
+			ConnectionId: info.ConnectionID,
+			Account: &pb.AccountProto{
+				Id:              info.Account.ID,
+				Name:            info.Account.Name,
+				Platform:        info.Account.Platform,
+				Type:            info.Account.Type,
+				CredentialsJson: credsJSON,
+				ProxyUrl:        info.Account.ProxyURL,
+			},
 		},
 	}); err != nil {
 		return nil, fmt.Errorf("发送 CONNECT 帧失败: %w", err)

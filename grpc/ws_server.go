@@ -100,11 +100,21 @@ func convertConnectInfo(info *pb.WebSocketConnectInfo) *sdk.WebSocketConnectInfo
 	}
 
 	headers := protoHeadersToHTTP(info.Headers)
-
-	var creds map[string]string
-	if len(info.CredentialsJson) > 0 {
-		if err := json.Unmarshal(info.CredentialsJson, &creds); err != nil {
-			creds = make(map[string]string)
+	account := &sdk.Account{}
+	if a := info.Account; a != nil {
+		var creds map[string]string
+		if len(a.CredentialsJson) > 0 {
+			if err := json.Unmarshal(a.CredentialsJson, &creds); err != nil {
+				creds = make(map[string]string)
+			}
+		}
+		account = &sdk.Account{
+			ID:          a.Id,
+			Name:        a.Name,
+			Platform:    a.Platform,
+			Type:        a.Type,
+			Credentials: creds,
+			ProxyURL:    a.ProxyUrl,
 		}
 	}
 
@@ -114,13 +124,6 @@ func convertConnectInfo(info *pb.WebSocketConnectInfo) *sdk.WebSocketConnectInfo
 		Headers:      headers,
 		RemoteAddr:   info.RemoteAddr,
 		ConnectionID: info.ConnectionId,
-		Account: &sdk.Account{
-			ID:          info.AccountId,
-			Name:        info.AccountName,
-			Platform:    info.AccountPlatform,
-			Type:        info.AccountType,
-			Credentials: creds,
-			ProxyURL:    info.ProxyUrl,
-		},
+		Account:      account,
 	}
 }

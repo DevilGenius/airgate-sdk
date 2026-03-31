@@ -27,7 +27,8 @@ func (s *GatewayGRPCServer) GetModels(_ context.Context, _ *pb.Empty) (*pb.Model
 		resp.Models = append(resp.Models, &pb.ModelInfoProto{
 			Id:                       m.ID,
 			Name:                     m.Name,
-			MaxTokens:                int32(m.MaxTokens),
+			ContextWindow:            int64(m.ContextWindow),
+			MaxOutputTokens:          int64(m.MaxOutputTokens),
 			InputPrice:               m.InputPrice,
 			OutputPrice:              m.OutputPrice,
 			CachedInputPrice:         m.CachedInputPrice,
@@ -52,35 +53,40 @@ func (s *GatewayGRPCServer) GetRoutes(_ context.Context, _ *pb.Empty) (*pb.Route
 	return resp, nil
 }
 
-// buildAccount 从 proto ForwardRequest 构建 SDK Account
+// buildAccount 从 proto AccountProto 构建 SDK Account
 func buildAccount(req *pb.ForwardRequest) *sdk.Account {
+	a := req.Account
+	if a == nil {
+		return &sdk.Account{}
+	}
 	var creds map[string]string
-	if len(req.CredentialsJson) > 0 {
-		if err := json.Unmarshal(req.CredentialsJson, &creds); err != nil {
+	if len(a.CredentialsJson) > 0 {
+		if err := json.Unmarshal(a.CredentialsJson, &creds); err != nil {
 			creds = make(map[string]string)
 		}
 	}
 	return &sdk.Account{
-		ID:          req.AccountId,
-		Name:        req.AccountName,
-		Platform:    req.AccountPlatform,
-		Type:        req.AccountType,
+		ID:          a.Id,
+		Name:        a.Name,
+		Platform:    a.Platform,
+		Type:        a.Type,
 		Credentials: creds,
-		ProxyURL:    req.ProxyUrl,
+		ProxyURL:    a.ProxyUrl,
 	}
 }
 
 // toProtoResult 将 SDK ForwardResult 转为 proto ForwardResult
 func toProtoResult(result *sdk.ForwardResult) *pb.ForwardResult {
 	return &pb.ForwardResult{
-		StatusCode:            int32(result.StatusCode),
-		InputTokens:           int32(result.InputTokens),
-		OutputTokens:          int32(result.OutputTokens),
-		CachedInputTokens:     int32(result.CachedInputTokens),
-		ReasoningOutputTokens: int32(result.ReasoningOutputTokens),
+		StatusCode:            int64(result.StatusCode),
+		InputTokens:           int64(result.InputTokens),
+		OutputTokens:          int64(result.OutputTokens),
+		CachedInputTokens:     int64(result.CachedInputTokens),
+		ReasoningOutputTokens: int64(result.ReasoningOutputTokens),
 		Model:                 result.Model,
 		DurationMs:            result.Duration.Milliseconds(),
-		AccountStatus:         result.AccountStatus,
+		FirstTokenMs:          result.FirstTokenMs,
+		AccountStatus:         string(result.AccountStatus),
 		ErrorMessage:          result.ErrorMessage,
 		RetryAfterMs:          result.RetryAfter.Milliseconds(),
 		ServiceTier:           result.ServiceTier,
@@ -133,7 +139,7 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 		pbResult.Headers = httpHeadersToProto(bw.Header())
 	}
 	if pbResult.StatusCode == 0 && bw.code > 0 {
-		pbResult.StatusCode = int32(bw.code)
+		pbResult.StatusCode = int64(bw.code)
 	}
 	return pbResult, nil
 }
