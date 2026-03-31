@@ -9,7 +9,8 @@ func TestResetAtFromBaseClampsNegativeSeconds(t *testing.T) {
 	base := time.Date(2026, 3, 27, 10, 0, 0, 0, time.UTC)
 	resetAt := ResetAtFromBase(base, -30)
 	if resetAt == nil {
-		t.Fatalf("expected resetAt")
+		t.Fatal("expected resetAt")
+		return
 	}
 	if !resetAt.Equal(base) {
 		t.Fatalf("expected resetAt=%s, got %s", base, *resetAt)

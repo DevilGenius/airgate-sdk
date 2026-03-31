@@ -348,13 +348,14 @@ func TestConvertModels_Empty(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestConvertConnectInfo_Nil(t *testing.T) {
-	info := convertConnectInfo(nil)
-	if info == nil {
+	result := convertConnectInfo(nil)
+	if result == nil {
 		t.Fatal("expected non-nil result for nil input")
+		return
 	}
 	// Should return an empty struct with no panic.
-	if info.Path != "" || info.Query != "" || info.RemoteAddr != "" || info.ConnectionID != "" {
-		t.Errorf("expected empty fields for nil input, got %+v", info)
+	if result.Path != "" || result.Query != "" || result.RemoteAddr != "" || result.ConnectionID != "" {
+		t.Errorf("expected empty fields for nil input, got %+v", result)
 	}
 }
 

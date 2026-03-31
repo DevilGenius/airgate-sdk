@@ -155,16 +155,20 @@ SDK 定义两大类插件：
 
 ```go
 type ForwardResult struct {
-    StatusCode    int           // HTTP 状态码
-    InputTokens   int           // 输入 token 数
-    OutputTokens  int           // 输出 token 数
-    CacheTokens   int           // 缓存 token 数
-    Model         string        // 实际使用的模型
-    Duration      time.Duration // 请求耗时
+    StatusCode            int           // HTTP 状态码
+    InputTokens           int           // 输入 token 数（不含缓存部分）
+    OutputTokens          int           // 输出 token 数
+    CachedInputTokens     int           // 命中缓存的输入 token 数（仅 cache read）
+    ReasoningOutputTokens int           // 推理输出 token 数（o1/o3 等模型）
+    ServiceTier           string        // 服务层级，如 standard / flex / priority
+    Model                 string        // 实际使用的模型
+    Duration              time.Duration // 请求耗时
 
     // 账号状态反馈（插件识别，Core 处置）
-    AccountStatus string        // "" 正常 / "rate_limited" / "disabled" / "expired"
-    RetryAfter    time.Duration // 限流时建议的等待时间
+    AccountStatus      string            // "" 正常 / "rate_limited" / "disabled" / "expired"
+    ErrorMessage       string            // 上游错误信息（便于排查）
+    RetryAfter         time.Duration     // 限流时建议的等待时间
+    UpdatedCredentials map[string]string  // 凭证更新（如 token 刷新）
 }
 ```
 
