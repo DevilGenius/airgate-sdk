@@ -172,6 +172,7 @@ message ForwardResult {
     map<string, HeaderValues> headers = 10;  // 非流式响应头
     string service_tier = 11;
     map<string, string> updated_credentials = 12;
+    int32  reasoning_output_tokens = 14;  // 推理输出 token 数（o1/o3 等模型）
 }
 
 message ForwardChunk {

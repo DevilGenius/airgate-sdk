@@ -66,7 +66,7 @@ func (c *grpcWebSocketConn) ReadMessage() (int, []byte, error) {
 	case pb.WebSocketFrame_CLOSE:
 		return 0, nil, io.EOF
 	default:
-		return sdk.WSMessageText, frame.Data, nil
+		return 0, nil, fmt.Errorf("unexpected WebSocket frame type: %v", frame.Type)
 	}
 }
 
@@ -103,7 +103,9 @@ func convertConnectInfo(info *pb.WebSocketConnectInfo) *sdk.WebSocketConnectInfo
 
 	var creds map[string]string
 	if len(info.CredentialsJson) > 0 {
-		_ = json.Unmarshal(info.CredentialsJson, &creds)
+		if err := json.Unmarshal(info.CredentialsJson, &creds); err != nil {
+			creds = make(map[string]string)
+		}
 	}
 
 	return &sdk.WebSocketConnectInfo{

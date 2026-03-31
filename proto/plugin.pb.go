@@ -1130,22 +1130,23 @@ func (x *ForwardRequest) GetStream() bool {
 }
 
 type ForwardResult struct {
-	state              protoimpl.MessageState   `protogen:"open.v1"`
-	StatusCode         int32                    `protobuf:"varint,1,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
-	InputTokens        int32                    `protobuf:"varint,2,opt,name=input_tokens,json=inputTokens,proto3" json:"input_tokens,omitempty"`
-	OutputTokens       int32                    `protobuf:"varint,3,opt,name=output_tokens,json=outputTokens,proto3" json:"output_tokens,omitempty"`
-	CachedInputTokens  int32                    `protobuf:"varint,4,opt,name=cached_input_tokens,json=cachedInputTokens,proto3" json:"cached_input_tokens,omitempty"`
-	Model              string                   `protobuf:"bytes,5,opt,name=model,proto3" json:"model,omitempty"`
-	DurationMs         int64                    `protobuf:"varint,6,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
-	AccountStatus      string                   `protobuf:"bytes,7,opt,name=account_status,json=accountStatus,proto3" json:"account_status,omitempty"`                                           // "" / "rate_limited" / "disabled" / "expired"
-	ErrorMessage       string                   `protobuf:"bytes,13,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`                                             // 上游错误信息（记录到账号 error_msg）
-	RetryAfterMs       int64                    `protobuf:"varint,8,opt,name=retry_after_ms,json=retryAfterMs,proto3" json:"retry_after_ms,omitempty"`                                           // 限流时建议等待时间（毫秒）
-	Body               []byte                   `protobuf:"bytes,9,opt,name=body,proto3" json:"body,omitempty"`                                                                                  // 非流式响应体
-	Headers            map[string]*HeaderValues `protobuf:"bytes,10,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 非流式响应头
-	ServiceTier        string                   `protobuf:"bytes,11,opt,name=service_tier,json=serviceTier,proto3" json:"service_tier,omitempty"`
-	UpdatedCredentials map[string]string        `protobuf:"bytes,12,rep,name=updated_credentials,json=updatedCredentials,proto3" json:"updated_credentials,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state                 protoimpl.MessageState   `protogen:"open.v1"`
+	StatusCode            int32                    `protobuf:"varint,1,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
+	InputTokens           int32                    `protobuf:"varint,2,opt,name=input_tokens,json=inputTokens,proto3" json:"input_tokens,omitempty"`
+	OutputTokens          int32                    `protobuf:"varint,3,opt,name=output_tokens,json=outputTokens,proto3" json:"output_tokens,omitempty"`
+	CachedInputTokens     int32                    `protobuf:"varint,4,opt,name=cached_input_tokens,json=cachedInputTokens,proto3" json:"cached_input_tokens,omitempty"`
+	Model                 string                   `protobuf:"bytes,5,opt,name=model,proto3" json:"model,omitempty"`
+	DurationMs            int64                    `protobuf:"varint,6,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	AccountStatus         string                   `protobuf:"bytes,7,opt,name=account_status,json=accountStatus,proto3" json:"account_status,omitempty"`                                           // "" / "rate_limited" / "disabled" / "expired"
+	ErrorMessage          string                   `protobuf:"bytes,13,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`                                             // 上游错误信息（记录到账号 error_msg）
+	RetryAfterMs          int64                    `protobuf:"varint,8,opt,name=retry_after_ms,json=retryAfterMs,proto3" json:"retry_after_ms,omitempty"`                                           // 限流时建议等待时间（毫秒）
+	Body                  []byte                   `protobuf:"bytes,9,opt,name=body,proto3" json:"body,omitempty"`                                                                                  // 非流式响应体
+	Headers               map[string]*HeaderValues `protobuf:"bytes,10,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 非流式响应头
+	ServiceTier           string                   `protobuf:"bytes,11,opt,name=service_tier,json=serviceTier,proto3" json:"service_tier,omitempty"`
+	UpdatedCredentials    map[string]string        `protobuf:"bytes,12,rep,name=updated_credentials,json=updatedCredentials,proto3" json:"updated_credentials,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ReasoningOutputTokens int32                    `protobuf:"varint,14,opt,name=reasoning_output_tokens,json=reasoningOutputTokens,proto3" json:"reasoning_output_tokens,omitempty"` // 推理输出 token 数（o1/o3 等模型）
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ForwardResult) Reset() {
@@ -1267,6 +1268,13 @@ func (x *ForwardResult) GetUpdatedCredentials() map[string]string {
 		return x.UpdatedCredentials
 	}
 	return nil
+}
+
+func (x *ForwardResult) GetReasoningOutputTokens() int32 {
+	if x != nil {
+		return x.ReasoningOutputTokens
+	}
+	return 0
 }
 
 type ForwardChunk struct {
@@ -2193,7 +2201,7 @@ const file_plugin_proto_rawDesc = "" +
 	" \x01(\bR\x06stream\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xe0\x05\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\x98\x06\n" +
 	"\rForwardResult\x12\x1f\n" +
 	"\vstatus_code\x18\x01 \x01(\x05R\n" +
 	"statusCode\x12!\n" +
@@ -2210,7 +2218,8 @@ const file_plugin_proto_rawDesc = "" +
 	"\aheaders\x18\n" +
 	" \x03(\v2-.airgate.plugin.v1.ForwardResult.HeadersEntryR\aheaders\x12!\n" +
 	"\fservice_tier\x18\v \x01(\tR\vserviceTier\x12i\n" +
-	"\x13updated_credentials\x18\f \x03(\v28.airgate.plugin.v1.ForwardResult.UpdatedCredentialsEntryR\x12updatedCredentials\x1a[\n" +
+	"\x13updated_credentials\x18\f \x03(\v28.airgate.plugin.v1.ForwardResult.UpdatedCredentialsEntryR\x12updatedCredentials\x126\n" +
+	"\x17reasoning_output_tokens\x18\x0e \x01(\x05R\x15reasoningOutputTokens\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
 	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\x1aE\n" +

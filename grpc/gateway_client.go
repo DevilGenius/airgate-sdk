@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	sdk "github.com/DouDOU-start/airgate-sdk"
@@ -17,7 +18,8 @@ type GatewayGRPCClient struct {
 	pluginBase // 嵌入公共基类，自动获得 Info/Init/Start/Stop/GetWebAssets
 	gateway    pb.GatewayServiceClient
 
-	// 缓存
+	// 缓存（mu 保护并发安全）
+	mu             sync.RWMutex
 	cachedPlatform string
 	cachedModels   []sdk.ModelInfo
 	cachedRoutes   []sdk.RouteDefinition
@@ -27,6 +29,8 @@ type GatewayGRPCClient struct {
 // 下次调用时将重新从插件获取最新数据。
 // 典型场景：ConfigWatcher.OnConfigUpdate 后调用。
 func (c *GatewayGRPCClient) InvalidateCache() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.cachedPlatform = ""
 	c.cachedModels = nil
 	c.cachedRoutes = nil
@@ -34,37 +38,54 @@ func (c *GatewayGRPCClient) InvalidateCache() {
 }
 
 func (c *GatewayGRPCClient) Platform() string {
+	c.mu.RLock()
 	if c.cachedPlatform != "" {
+		defer c.mu.RUnlock()
 		return c.cachedPlatform
 	}
+	c.mu.RUnlock()
+
 	ctx, cancel := withTimeout()
 	defer cancel()
 	resp, err := c.gateway.GetPlatform(ctx, &pb.Empty{})
 	if err != nil {
 		return ""
 	}
+	c.mu.Lock()
 	c.cachedPlatform = resp.Value
+	c.mu.Unlock()
 	return resp.Value
 }
 
 func (c *GatewayGRPCClient) Models() []sdk.ModelInfo {
+	c.mu.RLock()
 	if c.cachedModels != nil {
+		defer c.mu.RUnlock()
 		return c.cachedModels
 	}
+	c.mu.RUnlock()
+
 	ctx, cancel := withTimeout()
 	defer cancel()
 	resp, err := c.gateway.GetModels(ctx, &pb.Empty{})
 	if err != nil {
 		return nil
 	}
-	c.cachedModels = convertModels(resp.Models)
-	return c.cachedModels
+	models := convertModels(resp.Models)
+	c.mu.Lock()
+	c.cachedModels = models
+	c.mu.Unlock()
+	return models
 }
 
 func (c *GatewayGRPCClient) Routes() []sdk.RouteDefinition {
+	c.mu.RLock()
 	if c.cachedRoutes != nil {
+		defer c.mu.RUnlock()
 		return c.cachedRoutes
 	}
+	c.mu.RUnlock()
+
 	ctx, cancel := withTimeout()
 	defer cancel()
 	resp, err := c.gateway.GetRoutes(ctx, &pb.Empty{})
@@ -79,13 +100,15 @@ func (c *GatewayGRPCClient) Routes() []sdk.RouteDefinition {
 			Description: r.Description,
 		}
 	}
+	c.mu.Lock()
 	c.cachedRoutes = routes
+	c.mu.Unlock()
 	return routes
 }
 
 // buildProtoRequest 将 SDK ForwardRequest 转为 proto ForwardRequest
 func buildProtoRequest(req *sdk.ForwardRequest) *pb.ForwardRequest {
-	credsJSON, _ := json.Marshal(req.Account.Credentials)
+	credsJSON, _ := json.Marshal(req.Account.Credentials) //nolint:errcheck // Credentials 是 map[string]string，Marshal 不会失败
 	return &pb.ForwardRequest{
 		AccountId:       req.Account.ID,
 		AccountName:     req.Account.Name,
@@ -103,18 +126,19 @@ func buildProtoRequest(req *sdk.ForwardRequest) *pb.ForwardRequest {
 // fromProtoResult 将 proto ForwardResult 转为 SDK ForwardResult
 func fromProtoResult(r *pb.ForwardResult) *sdk.ForwardResult {
 	result := &sdk.ForwardResult{
-		StatusCode:         int(r.StatusCode),
-		InputTokens:        int(r.InputTokens),
-		OutputTokens:       int(r.OutputTokens),
-		CachedInputTokens:  int(r.CachedInputTokens),
-		Model:              r.Model,
-		Duration:           time.Duration(r.DurationMs) * time.Millisecond,
-		AccountStatus:      r.AccountStatus,
-		ErrorMessage:       r.ErrorMessage,
-		RetryAfter:         time.Duration(r.RetryAfterMs) * time.Millisecond,
-		ServiceTier:        r.ServiceTier,
-		Body:               r.Body,
-		UpdatedCredentials: r.UpdatedCredentials,
+		StatusCode:            int(r.StatusCode),
+		InputTokens:           int(r.InputTokens),
+		OutputTokens:          int(r.OutputTokens),
+		CachedInputTokens:     int(r.CachedInputTokens),
+		ReasoningOutputTokens: int(r.ReasoningOutputTokens),
+		Model:                 r.Model,
+		Duration:              time.Duration(r.DurationMs) * time.Millisecond,
+		AccountStatus:         r.AccountStatus,
+		ErrorMessage:          r.ErrorMessage,
+		RetryAfter:            time.Duration(r.RetryAfterMs) * time.Millisecond,
+		ServiceTier:           r.ServiceTier,
+		Body:                  r.Body,
+		UpdatedCredentials:    r.UpdatedCredentials,
 	}
 	if len(r.Headers) > 0 {
 		result.Headers = protoHeadersToHTTP(r.Headers)
@@ -221,7 +245,7 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 	}
 
 	info := conn.ConnectInfo()
-	credsJSON, _ := json.Marshal(info.Account.Credentials)
+	credsJSON, _ := json.Marshal(info.Account.Credentials) //nolint:errcheck // Credentials 是 map[string]string，Marshal 不会失败
 
 	// 发送 CONNECT 帧
 	if err := stream.Send(&pb.WebSocketFrame{
@@ -250,9 +274,17 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 	}
 
 	// 双向转发 goroutine：读取客户端消息发到插件
+	readerCtx, readerCancel := context.WithCancel(ctx)
+	defer readerCancel()
 	errCh := make(chan error, 1)
 	go func() {
+		defer func() { close(errCh) }()
 		for {
+			select {
+			case <-readerCtx.Done():
+				return
+			default:
+			}
 			msgType, data, readErr := conn.ReadMessage()
 			if readErr != nil {
 				_ = stream.Send(&pb.WebSocketFrame{
@@ -308,12 +340,8 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 
 done:
 	_ = clientConn // 保持引用
-
-	// 等待读取 goroutine 退出，避免泄漏
-	select {
-	case <-errCh:
-	default:
-	}
+	readerCancel() // 通知读取 goroutine 退出
+	<-errCh        // 等待 goroutine 完成
 
 	if result == nil {
 		return &sdk.ForwardResult{}, nil

@@ -56,7 +56,9 @@ func (s *GatewayGRPCServer) GetRoutes(_ context.Context, _ *pb.Empty) (*pb.Route
 func buildAccount(req *pb.ForwardRequest) *sdk.Account {
 	var creds map[string]string
 	if len(req.CredentialsJson) > 0 {
-		_ = json.Unmarshal(req.CredentialsJson, &creds)
+		if err := json.Unmarshal(req.CredentialsJson, &creds); err != nil {
+			creds = make(map[string]string)
+		}
 	}
 	return &sdk.Account{
 		ID:          req.AccountId,
@@ -71,17 +73,18 @@ func buildAccount(req *pb.ForwardRequest) *sdk.Account {
 // toProtoResult 将 SDK ForwardResult 转为 proto ForwardResult
 func toProtoResult(result *sdk.ForwardResult) *pb.ForwardResult {
 	return &pb.ForwardResult{
-		StatusCode:         int32(result.StatusCode),
-		InputTokens:        int32(result.InputTokens),
-		OutputTokens:       int32(result.OutputTokens),
-		CachedInputTokens:  int32(result.CachedInputTokens),
-		Model:              result.Model,
-		DurationMs:         result.Duration.Milliseconds(),
-		AccountStatus:      result.AccountStatus,
-		ErrorMessage:       result.ErrorMessage,
-		RetryAfterMs:       result.RetryAfter.Milliseconds(),
-		ServiceTier:        result.ServiceTier,
-		UpdatedCredentials: result.UpdatedCredentials,
+		StatusCode:            int32(result.StatusCode),
+		InputTokens:           int32(result.InputTokens),
+		OutputTokens:          int32(result.OutputTokens),
+		CachedInputTokens:     int32(result.CachedInputTokens),
+		ReasoningOutputTokens: int32(result.ReasoningOutputTokens),
+		Model:                 result.Model,
+		DurationMs:            result.Duration.Milliseconds(),
+		AccountStatus:         result.AccountStatus,
+		ErrorMessage:          result.ErrorMessage,
+		RetryAfterMs:          result.RetryAfter.Milliseconds(),
+		ServiceTier:           result.ServiceTier,
+		UpdatedCredentials:    result.UpdatedCredentials,
 	}
 }
 
@@ -124,9 +127,11 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 		return nil, err
 	}
 	pbResult := toProtoResult(result)
-	// 将 bufferWriter 捕获的响应体放入 proto result
-	pbResult.Body = bw.body
-	pbResult.Headers = httpHeadersToProto(bw.Header())
+	// 优先使用 bufferWriter 捕获的响应，回退到 result 自身
+	if len(bw.body) > 0 {
+		pbResult.Body = bw.body
+		pbResult.Headers = httpHeadersToProto(bw.Header())
+	}
 	if pbResult.StatusCode == 0 && bw.code > 0 {
 		pbResult.StatusCode = int32(bw.code)
 	}
@@ -225,18 +230,15 @@ func (w *streamWriter) flushMeta() error {
 	if w.sent {
 		return nil
 	}
+	w.sent = true // 提前标记，防止失败后重复发送
 	statusCode := w.code
 	if statusCode == 0 {
 		statusCode = http.StatusOK
 	}
-	if err := w.stream.Send(&pb.ForwardChunk{
+	return w.stream.Send(&pb.ForwardChunk{
 		StatusCode: int32(statusCode),
 		Headers:    httpHeadersToProto(w.Header()),
-	}); err != nil {
-		return err
-	}
-	w.sent = true
-	return nil
+	})
 }
 
 // bufferWriter 缓冲响应体的 http.ResponseWriter 实现（非流式 gRPC 用）
