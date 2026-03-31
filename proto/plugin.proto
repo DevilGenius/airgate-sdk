@@ -181,6 +181,9 @@ message ForwardResult {
     map<string, string> updated_credentials = 12;
     int64  reasoning_output_tokens = 14;  // 推理输出 token 数（o1/o3 等模型）
     int64  first_token_ms = 15;           // 首 token 延迟（毫秒）
+    double input_cost = 16;               // 输入费用（USD，插件计算）
+    double output_cost = 17;              // 输出费用（USD，插件计算）
+    double cached_input_cost = 18;        // 缓存输入费用（USD，插件计算）
 }
 
 message ForwardChunk {

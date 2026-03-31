@@ -96,6 +96,9 @@ func TestForwardResult_RoundTrip(t *testing.T) {
 		ErrorMessage:          "上游账号已停用",
 		RetryAfter:            30000 * time.Millisecond,
 		ServiceTier:           "priority",
+		InputCost:             0.00375,
+		OutputCost:            0.0225,
+		CachedInputCost:       0.000125,
 	}
 
 	proto := toProtoResult(original)

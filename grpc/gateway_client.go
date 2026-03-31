@@ -142,6 +142,9 @@ func fromProtoResult(r *pb.ForwardResult) *sdk.ForwardResult {
 		ServiceTier:           r.ServiceTier,
 		Body:                  r.Body,
 		UpdatedCredentials:    r.UpdatedCredentials,
+		InputCost:             r.InputCost,
+		OutputCost:            r.OutputCost,
+		CachedInputCost:       r.CachedInputCost,
 	}
 	if len(r.Headers) > 0 {
 		result.Headers = protoHeadersToHTTP(r.Headers)

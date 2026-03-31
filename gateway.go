@@ -50,6 +50,12 @@ type ForwardResult struct {
 	Duration              time.Duration // 请求耗时
 	FirstTokenMs          int64         // 首 token 响应延迟（毫秒）
 
+	// 费用明细（插件计算，token × 单价，美元）
+	// Core 只做倍率乘法，不再关心模型定价
+	InputCost       float64 // 输入 token 费用
+	OutputCost      float64 // 输出 token 费用
+	CachedInputCost float64 // 缓存输入 token 费用
+
 	// 账号状态反馈（插件识别，Core 处置）
 	AccountStatus AccountStatus // "" 正常 / "rate_limited" / "disabled" / "expired"
 	ErrorMessage  string        // 上游错误信息（用于记录到账号 error_msg，便于排查）

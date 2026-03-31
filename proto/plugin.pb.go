@@ -1198,6 +1198,9 @@ type ForwardResult struct {
 	UpdatedCredentials    map[string]string        `protobuf:"bytes,12,rep,name=updated_credentials,json=updatedCredentials,proto3" json:"updated_credentials,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ReasoningOutputTokens int64                    `protobuf:"varint,14,opt,name=reasoning_output_tokens,json=reasoningOutputTokens,proto3" json:"reasoning_output_tokens,omitempty"` // 推理输出 token 数（o1/o3 等模型）
 	FirstTokenMs          int64                    `protobuf:"varint,15,opt,name=first_token_ms,json=firstTokenMs,proto3" json:"first_token_ms,omitempty"`                            // 首 token 延迟（毫秒）
+	InputCost             float64                  `protobuf:"fixed64,16,opt,name=input_cost,json=inputCost,proto3" json:"input_cost,omitempty"`                                      // 输入费用（USD，插件计算）
+	OutputCost            float64                  `protobuf:"fixed64,17,opt,name=output_cost,json=outputCost,proto3" json:"output_cost,omitempty"`                                   // 输出费用（USD，插件计算）
+	CachedInputCost       float64                  `protobuf:"fixed64,18,opt,name=cached_input_cost,json=cachedInputCost,proto3" json:"cached_input_cost,omitempty"`                  // 缓存输入费用（USD，插件计算）
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -1333,6 +1336,27 @@ func (x *ForwardResult) GetReasoningOutputTokens() int64 {
 func (x *ForwardResult) GetFirstTokenMs() int64 {
 	if x != nil {
 		return x.FirstTokenMs
+	}
+	return 0
+}
+
+func (x *ForwardResult) GetInputCost() float64 {
+	if x != nil {
+		return x.InputCost
+	}
+	return 0
+}
+
+func (x *ForwardResult) GetOutputCost() float64 {
+	if x != nil {
+		return x.OutputCost
+	}
+	return 0
+}
+
+func (x *ForwardResult) GetCachedInputCost() float64 {
+	if x != nil {
+		return x.CachedInputCost
 	}
 	return 0
 }
@@ -2222,7 +2246,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\aaccount\x18\v \x01(\v2\x1f.airgate.plugin.v1.AccountProtoR\aaccount\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01J\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x03\x10\x04J\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\a\"\xbe\x06\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01J\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x03\x10\x04J\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\a\"\xaa\a\n" +
 	"\rForwardResult\x12\x1f\n" +
 	"\vstatus_code\x18\x01 \x01(\x03R\n" +
 	"statusCode\x12!\n" +
@@ -2241,7 +2265,12 @@ const file_plugin_proto_rawDesc = "" +
 	"\fservice_tier\x18\v \x01(\tR\vserviceTier\x12i\n" +
 	"\x13updated_credentials\x18\f \x03(\v28.airgate.plugin.v1.ForwardResult.UpdatedCredentialsEntryR\x12updatedCredentials\x126\n" +
 	"\x17reasoning_output_tokens\x18\x0e \x01(\x03R\x15reasoningOutputTokens\x12$\n" +
-	"\x0efirst_token_ms\x18\x0f \x01(\x03R\ffirstTokenMs\x1a[\n" +
+	"\x0efirst_token_ms\x18\x0f \x01(\x03R\ffirstTokenMs\x12\x1d\n" +
+	"\n" +
+	"input_cost\x18\x10 \x01(\x01R\tinputCost\x12\x1f\n" +
+	"\voutput_cost\x18\x11 \x01(\x01R\n" +
+	"outputCost\x12*\n" +
+	"\x11cached_input_cost\x18\x12 \x01(\x01R\x0fcachedInputCost\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
 	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\x1aE\n" +

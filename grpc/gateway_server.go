@@ -91,6 +91,9 @@ func toProtoResult(result *sdk.ForwardResult) *pb.ForwardResult {
 		RetryAfterMs:          result.RetryAfter.Milliseconds(),
 		ServiceTier:           result.ServiceTier,
 		UpdatedCredentials:    result.UpdatedCredentials,
+		InputCost:             result.InputCost,
+		OutputCost:            result.OutputCost,
+		CachedInputCost:       result.CachedInputCost,
 	}
 }
 
