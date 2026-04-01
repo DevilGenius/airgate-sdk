@@ -56,6 +56,11 @@ type ForwardResult struct {
 	OutputCost      float64 // 输出 token 费用
 	CachedInputCost float64 // 缓存输入 token 费用
 
+	// 单价（美元 / 1M token，插件填充，Core 透传存储）
+	InputPrice       float64 // 输入单价
+	OutputPrice      float64 // 输出单价
+	CachedInputPrice float64 // 缓存输入单价
+
 	// 账号状态反馈（插件识别，Core 处置）
 	AccountStatus AccountStatus // "" 正常 / "rate_limited" / "disabled" / "expired"
 	ErrorMessage  string        // 上游错误信息（用于记录到账号 error_msg，便于排查）
