@@ -94,6 +94,9 @@ func toProtoResult(result *sdk.ForwardResult) *pb.ForwardResult {
 		InputCost:             result.InputCost,
 		OutputCost:            result.OutputCost,
 		CachedInputCost:       result.CachedInputCost,
+		InputPrice:            result.InputPrice,
+		OutputPrice:           result.OutputPrice,
+		CachedInputPrice:      result.CachedInputPrice,
 	}
 }
 

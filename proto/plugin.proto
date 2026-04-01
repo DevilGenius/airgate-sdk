@@ -184,6 +184,9 @@ message ForwardResult {
     double input_cost = 16;               // 输入费用（USD，插件计算）
     double output_cost = 17;              // 输出费用（USD，插件计算）
     double cached_input_cost = 18;        // 缓存输入费用（USD，插件计算）
+    double input_price = 19;              // 输入单价（$/1M token）
+    double output_price = 20;             // 输出单价（$/1M token）
+    double cached_input_price = 21;       // 缓存输入单价（$/1M token）
 }
 
 message ForwardChunk {
