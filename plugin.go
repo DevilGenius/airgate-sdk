@@ -27,7 +27,7 @@ const (
 )
 
 // SDKVersion 当前 SDK 版本，插件编译时自动嵌入
-const SDKVersion = "0.2.0"
+const SDKVersion = "0.1.0"
 
 // PluginInfo 插件元信息
 type PluginInfo struct {
