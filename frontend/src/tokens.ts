@@ -8,90 +8,93 @@ import type {
   ThemeTokens,
 } from './types.js';
 
-/** 暗色主题 — Neutral Dark */
+/** 暗色主题 — Deep Ocean */
 export const darkTheme: ThemeTokens = {
-  primary: '#2dd4a8',
-  primaryHover: '#5de8c2',
-  primarySubtle: 'rgba(45, 212, 168, 0.10)',
-  primaryGlow: 'rgba(45, 212, 168, 0.18)',
+  primary: '#3ecfb4',
+  primaryHover: '#62dcc4',
+  primarySubtle: 'rgba(62, 207, 180, 0.08)',
+  primaryGlow: 'rgba(62, 207, 180, 0.14)',
 
-  success: '#22c55e',
-  successSubtle: 'rgba(34, 197, 94, 0.14)',
-  warning: '#f59e0b',
-  warningSubtle: 'rgba(245, 158, 11, 0.14)',
-  danger: '#ef4444',
-  dangerSubtle: 'rgba(239, 68, 68, 0.14)',
-  info: '#60a5fa',
-  infoSubtle: 'rgba(96, 165, 250, 0.14)',
+  success: '#34d399',
+  successSubtle: 'rgba(52, 211, 153, 0.12)',
+  warning: '#fbbf24',
+  warningSubtle: 'rgba(251, 191, 36, 0.12)',
+  danger: '#fb7185',
+  dangerSubtle: 'rgba(251, 113, 133, 0.12)',
+  info: '#7dd3fc',
+  infoSubtle: 'rgba(125, 211, 252, 0.12)',
 
-  bgDeep: '#0a0a0c',
-  bg: '#111113',
-  bgElevated: '#18181b',
-  bgSurface: '#1e1e21',
-  bgHover: '#27272a',
-  bgActive: '#303033',
+  // 背景：深蓝黑，带微蓝底调增加深度感
+  bgDeep: '#06080e',
+  bg: '#0c0f17',
+  bgElevated: '#131722',
+  bgSurface: '#1a1e2a',
+  bgHover: '#232836',
+  bgActive: '#2c3240',
 
-  border: 'rgba(255, 255, 255, 0.08)',
-  borderSubtle: 'rgba(255, 255, 255, 0.05)',
-  borderFocus: 'rgba(45, 212, 168, 0.40)',
+  // 边框：蓝调透明
+  border: 'rgba(148, 175, 225, 0.08)',
+  borderSubtle: 'rgba(148, 175, 225, 0.05)',
+  borderFocus: 'rgba(62, 207, 180, 0.40)',
 
-  text: '#ececf0',
-  textSecondary: '#a1a1aa',
-  textTertiary: '#63636e',
-  textInverse: '#0a0a0c',
+  // 文字：微蓝白，长时间阅读更舒适
+  text: '#e2e6f0',
+  textSecondary: '#8d93a8',
+  textTertiary: '#565d73',
+  textInverse: '#06080e',
 
-  glass: 'rgba(255, 255, 255, 0.03)',
-  glassBorder: 'rgba(255, 255, 255, 0.07)',
+  glass: 'rgba(148, 175, 225, 0.03)',
+  glassBorder: 'rgba(148, 175, 225, 0.06)',
 
-  shadowSm: '0 2px 8px rgba(0, 0, 0, 0.32)',
-  shadowMd: '0 8px 24px rgba(0, 0, 0, 0.44)',
-  shadowLg: '0 20px 48px rgba(0, 0, 0, 0.56)',
-  shadowGlow: '0 0 0 1px rgba(45, 212, 168, 0.08), 0 8px 32px rgba(45, 212, 168, 0.12)',
+  shadowSm: '0 2px 8px rgba(0, 0, 0, 0.36)',
+  shadowMd: '0 8px 24px rgba(0, 0, 0, 0.48)',
+  shadowLg: '0 20px 48px rgba(0, 0, 0, 0.60)',
+  shadowGlow: '0 0 0 1px rgba(62, 207, 180, 0.08), 0 8px 32px rgba(62, 207, 180, 0.10)',
 };
 
-/** 亮色主题 — Clean Neutral White */
+/** 亮色主题 — Deep Ocean Light */
 export const lightTheme: ThemeTokens = {
   primary: '#0d9488',
-  primaryHover: '#0f766e',
-  primarySubtle: 'rgba(13, 148, 136, 0.06)',
-  primaryGlow: 'rgba(13, 148, 136, 0.12)',
+  primaryHover: '#0b7e74',
+  primarySubtle: 'rgba(13, 148, 136, 0.05)',
+  primaryGlow: 'rgba(13, 148, 136, 0.10)',
 
-  success: '#15803d',
-  successSubtle: 'rgba(21, 128, 61, 0.07)',
-  warning: '#b45309',
-  warningSubtle: 'rgba(180, 83, 9, 0.07)',
-  danger: '#b91c1c',
-  dangerSubtle: 'rgba(185, 28, 28, 0.07)',
+  success: '#16a34a',
+  successSubtle: 'rgba(22, 163, 74, 0.06)',
+  warning: '#d97706',
+  warningSubtle: 'rgba(217, 119, 6, 0.06)',
+  danger: '#e11d48',
+  dangerSubtle: 'rgba(225, 29, 72, 0.06)',
   info: '#2563eb',
-  infoSubtle: 'rgba(37, 99, 235, 0.07)',
+  infoSubtle: 'rgba(37, 99, 235, 0.06)',
 
-  // 背景：接近纯白，中性灰调
-  bgDeep: '#f5f4f2',
-  bg: '#f9f8f6',
+  // 背景：冷蓝灰，与暗色主题色温统一
+  bgDeep: '#f1f3f8',
+  bg: '#f6f7fb',
   bgElevated: '#ffffff',
   bgSurface: '#ffffff',
-  bgHover: '#f0efed',
-  bgActive: '#e9e8e5',
+  bgHover: '#eaedf5',
+  bgActive: '#e0e4ee',
 
-  // 边框：中性灰边界
-  border: '#e5e5e5',
-  borderSubtle: '#f0f0f0',
-  borderFocus: 'rgba(13, 148, 136, 0.50)',
+  // 边框：冷蓝调
+  border: '#d6dae6',
+  borderSubtle: '#e6e9f2',
+  borderFocus: 'rgba(13, 148, 136, 0.45)',
 
-  // 文字：纯黑灰阶梯，高对比度
-  text: '#1a1a1a',
-  textSecondary: '#4a4a4a',
-  textTertiary: '#7a7a7a',
+  // 文字：深蓝黑，非纯黑，阅读更柔和
+  text: '#131830',
+  textSecondary: '#424866',
+  textTertiary: '#6e7490',
   textInverse: '#ffffff',
 
-  glass: 'rgba(255, 255, 255, 0.90)',
-  glassBorder: 'rgba(0, 0, 0, 0.06)',
+  glass: 'rgba(255, 255, 255, 0.92)',
+  glassBorder: 'rgba(10, 20, 60, 0.06)',
 
-  // 阴影：中性灰调，干净简洁
-  shadowSm: '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
-  shadowMd: '0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04)',
-  shadowLg: '0 16px 40px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04)',
-  shadowGlow: '0 0 0 1px rgba(13, 148, 136, 0.12), 0 8px 24px rgba(13, 148, 136, 0.08)',
+  // 阴影：带蓝调，更有层次
+  shadowSm: '0 1px 3px rgba(10, 20, 60, 0.06), 0 1px 2px rgba(10, 20, 60, 0.04)',
+  shadowMd: '0 4px 12px rgba(10, 20, 60, 0.07), 0 2px 4px rgba(10, 20, 60, 0.04)',
+  shadowLg: '0 16px 40px rgba(10, 20, 60, 0.09), 0 4px 8px rgba(10, 20, 60, 0.04)',
+  shadowGlow: '0 0 0 1px rgba(13, 148, 136, 0.10), 0 8px 24px rgba(13, 148, 136, 0.07)',
 };
 
 /** 通用基础 token */
@@ -154,11 +157,11 @@ export const themes: Record<ThemeName, ThemeTokens> = {
  */
 export const lightElevationContexts: Record<ElevationContext, Partial<ThemeTokens>> = {
   modal: {
-    bgElevated: '#f9f9f9',
-    bgSurface: '#f5f5f5',
-    bgHover: '#efefef',
-    glassBorder: '#e5e5e5',
-    border: '#d9d9d9',
+    bgElevated: '#eef0f7',
+    bgSurface: '#e6e9f2',
+    bgHover: '#e0e4ee',
+    glassBorder: '#d2d6e3',
+    border: '#c8cdd9',
     shadowSm: 'none',
     shadowMd: 'none',
   },
