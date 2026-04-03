@@ -24,6 +24,7 @@ export {
   lightTheme,
   staticTokenGroups,
   staticTokens,
+  decorativePalette,
   themes,
 } from './tokens.js';
 

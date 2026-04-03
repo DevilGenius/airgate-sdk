@@ -66,12 +66,12 @@ export const lightTheme: ThemeTokens = {
   infoSubtle: 'rgba(37, 99, 235, 0.07)',
 
   // 背景：接近纯白，中性灰调
-  bgDeep: '#f9f9f9',
-  bg: '#fcfcfc',
+  bgDeep: '#f5f4f2',
+  bg: '#f9f8f6',
   bgElevated: '#ffffff',
   bgSurface: '#ffffff',
-  bgHover: '#f5f5f5',
-  bgActive: '#efefef',
+  bgHover: '#f0efed',
+  bgActive: '#e9e8e5',
 
   // 边框：中性灰边界
   border: '#e5e5e5',
@@ -124,6 +124,22 @@ export const staticTokens: StaticTokens = {
   ...foundationTokens,
   ...appShellTokens,
 };
+
+/** 图表/头像装饰色（与主题无关的固定调色板） */
+export const decorativePalette = [
+  '#3b82f6', // blue
+  '#10b981', // emerald
+  '#f59e0b', // amber
+  '#ef4444', // red
+  '#8b5cf6', // violet
+  '#06b6d4', // cyan
+  '#ec4899', // pink
+  '#84cc16', // lime
+  '#f97316', // orange
+  '#6366f1', // indigo
+  '#0d9488', // teal (primary)
+  '#a855f7', // purple
+] as const;
 
 /** 主题集合 */
 export const themes: Record<ThemeName, ThemeTokens> = {
