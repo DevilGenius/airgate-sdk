@@ -8,12 +8,12 @@ import type {
   ThemeTokens,
 } from './types.js';
 
-/** 暗色主题 — Obsidian Terminal */
+/** 暗色主题 — Neutral Dark */
 export const darkTheme: ThemeTokens = {
-  primary: '#00d4aa',
-  primaryHover: '#00e6b8',
-  primarySubtle: 'rgba(0, 212, 170, 0.12)',
-  primaryGlow: 'rgba(0, 212, 170, 0.20)',
+  primary: '#2dd4a8',
+  primaryHover: '#5de8c2',
+  primarySubtle: 'rgba(45, 212, 168, 0.10)',
+  primaryGlow: 'rgba(45, 212, 168, 0.18)',
 
   success: '#22c55e',
   successSubtle: 'rgba(34, 197, 94, 0.14)',
@@ -21,24 +21,24 @@ export const darkTheme: ThemeTokens = {
   warningSubtle: 'rgba(245, 158, 11, 0.14)',
   danger: '#ef4444',
   dangerSubtle: 'rgba(239, 68, 68, 0.14)',
-  info: '#a78bfa',
-  infoSubtle: 'rgba(167, 139, 250, 0.14)',
+  info: '#60a5fa',
+  infoSubtle: 'rgba(96, 165, 250, 0.14)',
 
-  bgDeep: '#09090b',
-  bg: '#0f0f12',
-  bgElevated: '#16161a',
-  bgSurface: '#1c1c21',
-  bgHover: '#25252b',
-  bgActive: '#2e2e36',
+  bgDeep: '#0a0a0c',
+  bg: '#111113',
+  bgElevated: '#18181b',
+  bgSurface: '#1e1e21',
+  bgHover: '#27272a',
+  bgActive: '#303033',
 
   border: 'rgba(255, 255, 255, 0.08)',
   borderSubtle: 'rgba(255, 255, 255, 0.05)',
-  borderFocus: 'rgba(0, 212, 170, 0.40)',
+  borderFocus: 'rgba(45, 212, 168, 0.40)',
 
   text: '#ececf0',
   textSecondary: '#a1a1aa',
   textTertiary: '#63636e',
-  textInverse: '#09090b',
+  textInverse: '#0a0a0c',
 
   glass: 'rgba(255, 255, 255, 0.03)',
   glassBorder: 'rgba(255, 255, 255, 0.07)',
@@ -46,52 +46,52 @@ export const darkTheme: ThemeTokens = {
   shadowSm: '0 2px 8px rgba(0, 0, 0, 0.32)',
   shadowMd: '0 8px 24px rgba(0, 0, 0, 0.44)',
   shadowLg: '0 20px 48px rgba(0, 0, 0, 0.56)',
-  shadowGlow: '0 0 0 1px rgba(0, 212, 170, 0.08), 0 8px 32px rgba(0, 212, 170, 0.12)',
+  shadowGlow: '0 0 0 1px rgba(45, 212, 168, 0.08), 0 8px 32px rgba(45, 212, 168, 0.12)',
 };
 
-/** 亮色主题 — iOS-inspired Calm Glass */
+/** 亮色主题 — Clean Neutral White */
 export const lightTheme: ThemeTokens = {
-  primary: '#14b8a6',
-  primaryHover: '#0d9488',
-  primarySubtle: 'rgba(20, 184, 166, 0.08)',
-  primaryGlow: 'rgba(20, 184, 166, 0.16)',
+  primary: '#0d9488',
+  primaryHover: '#0f766e',
+  primarySubtle: 'rgba(13, 148, 136, 0.06)',
+  primaryGlow: 'rgba(13, 148, 136, 0.12)',
 
-  success: '#16a34a',
-  successSubtle: 'rgba(22, 163, 74, 0.07)',
-  warning: '#d97706',
-  warningSubtle: 'rgba(217, 119, 6, 0.07)',
-  danger: '#dc2626',
-  dangerSubtle: 'rgba(220, 38, 38, 0.07)',
-  info: '#0284c7',
-  infoSubtle: 'rgba(2, 132, 199, 0.07)',
+  success: '#15803d',
+  successSubtle: 'rgba(21, 128, 61, 0.07)',
+  warning: '#b45309',
+  warningSubtle: 'rgba(180, 83, 9, 0.07)',
+  danger: '#b91c1c',
+  dangerSubtle: 'rgba(185, 28, 28, 0.07)',
+  info: '#2563eb',
+  infoSubtle: 'rgba(37, 99, 235, 0.07)',
 
-  // 背景：青白色调，通透轻盈
-  bgDeep: '#e6eff4',
-  bg: '#f2f7fa',
-  bgElevated: 'rgba(255, 255, 255, 0.72)',
-  bgSurface: 'rgba(255, 255, 255, 0.62)',
-  bgHover: 'rgba(29, 39, 52, 0.04)',
-  bgActive: 'rgba(29, 39, 52, 0.07)',
+  // 背景：接近纯白，中性灰调
+  bgDeep: '#f9f9f9',
+  bg: '#fcfcfc',
+  bgElevated: '#ffffff',
+  bgSurface: '#ffffff',
+  bgHover: '#f5f5f5',
+  bgActive: '#efefef',
 
-  // 边框：浅灰色描边，提供清晰边界
-  border: 'rgba(29, 39, 52, 0.08)',
-  borderSubtle: 'rgba(29, 39, 52, 0.05)',
-  borderFocus: 'rgba(20, 184, 166, 0.50)',
+  // 边框：中性灰边界
+  border: '#e5e5e5',
+  borderSubtle: '#f0f0f0',
+  borderFocus: 'rgba(13, 148, 136, 0.50)',
 
-  // 文字：单一色源 rgb(29,39,52)，加强对比度
-  text: 'rgba(29, 39, 52, 0.95)',
-  textSecondary: 'rgba(29, 39, 52, 0.58)',
-  textTertiary: 'rgba(29, 39, 52, 0.38)',
+  // 文字：纯黑灰阶梯，高对比度
+  text: '#1a1a1a',
+  textSecondary: '#4a4a4a',
+  textTertiary: '#7a7a7a',
   textInverse: '#ffffff',
 
-  glass: 'rgba(255, 255, 255, 0.72)',
-  glassBorder: 'rgba(29, 39, 52, 0.06)',
+  glass: 'rgba(255, 255, 255, 0.90)',
+  glassBorder: 'rgba(0, 0, 0, 0.06)',
 
-  // 阴影：蓝灰调 rgba(85,102,122) + inset 白光（内敛风格）
-  shadowSm: '0 2px 8px rgba(85, 102, 122, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.82)',
-  shadowMd: '0 4px 16px rgba(85, 102, 122, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.76)',
-  shadowLg: '0 18px 48px rgba(85, 102, 122, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.72)',
-  shadowGlow: '0 10px 28px rgba(20, 184, 166, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.70)',
+  // 阴影：中性灰调，干净简洁
+  shadowSm: '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
+  shadowMd: '0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04)',
+  shadowLg: '0 16px 40px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04)',
+  shadowGlow: '0 0 0 1px rgba(13, 148, 136, 0.12), 0 8px 24px rgba(13, 148, 136, 0.08)',
 };
 
 /** 通用基础 token */
@@ -138,11 +138,11 @@ export const themes: Record<ThemeName, ThemeTokens> = {
  */
 export const lightElevationContexts: Record<ElevationContext, Partial<ThemeTokens>> = {
   modal: {
-    bgElevated: 'rgba(29, 39, 52, 0.024)',
-    bgSurface: 'rgba(29, 39, 52, 0.04)',
-    bgHover: 'rgba(29, 39, 52, 0.06)',
-    glassBorder: 'rgba(29, 39, 52, 0.05)',
-    border: 'rgba(29, 39, 52, 0.10)',
+    bgElevated: '#f9f9f9',
+    bgSurface: '#f5f5f5',
+    bgHover: '#efefef',
+    glassBorder: '#e5e5e5',
+    border: '#d9d9d9',
     shadowSm: 'none',
     shadowMd: 'none',
   },

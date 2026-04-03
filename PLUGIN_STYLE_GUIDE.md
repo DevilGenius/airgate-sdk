@@ -193,14 +193,14 @@ export function YourComponent(props) {
 
 | Token | Tailwind 类 | 暗色值 | 用途 |
 |---|---|---|---|
-| `--ag-primary` | `agw-text-primary` / `agw-bg-primary` | `#00d4aa` | 主操作、链接、选中态 |
-| `--ag-primary-hover` | `agw-bg-primary-hover` | `#00e6b8` | 主色悬停 |
-| `--ag-primary-subtle` | `agw-bg-primary-subtle` | `rgba(0,212,170,0.12)` | 主色背景/高亮 |
-| `--ag-primary-glow` | — | `rgba(0,212,170,0.20)` | 发光阴影 |
+| `--ag-primary` | `agw-text-primary` / `agw-bg-primary` | `#2dd4a8` | 主操作、链接、选中态 |
+| `--ag-primary-hover` | `agw-bg-primary-hover` | `#5de8c2` | 主色悬停 |
+| `--ag-primary-subtle` | `agw-bg-primary-subtle` | `rgba(45,212,168,0.10)` | 主色背景/高亮 |
+| `--ag-primary-glow` | — | `rgba(45,212,168,0.18)` | 发光阴影 |
 | `--ag-success` | `agw-text-success` | `#22c55e` | 成功状态 |
 | `--ag-warning` | `agw-text-warning` | `#f59e0b` | 警告状态 |
 | `--ag-danger` | `agw-text-danger` | `#ef4444` | 错误/删除 |
-| `--ag-info` | `agw-text-info` | `#a78bfa` | 信息/辅助色 |
+| `--ag-info` | `agw-text-info` | `#60a5fa` | 信息/辅助色 |
 
 ### 背景层级
 
@@ -208,12 +208,12 @@ export function YourComponent(props) {
 
 | Token | Tailwind 类 | 暗色值 | 用途 |
 |---|---|---|---|
-| `--ag-bg-deep` | `agw-bg-bg-deep` | `#09090b` | 页面最底层 |
-| `--ag-bg` | `agw-bg-bg` | `#0f0f12` | 侧边栏/主面板 |
-| `--ag-bg-elevated` | `agw-bg-bg-elevated` | `#16161a` | 卡片/弹窗/下拉 |
-| `--ag-bg-surface` | `agw-bg-surface` | `#1c1c21` | 输入框/表单区域 |
-| `--ag-bg-hover` | `agw-bg-bg-hover` | `#25252b` | 悬停态背景 |
-| `--ag-bg-active` | `agw-bg-bg-active` | `#2e2e36` | 按下/激活态 |
+| `--ag-bg-deep` | `agw-bg-bg-deep` | `#0a0a0c` | 页面最底层 |
+| `--ag-bg` | `agw-bg-bg` | `#111113` | 侧边栏/主面板 |
+| `--ag-bg-elevated` | `agw-bg-bg-elevated` | `#18181b` | 卡片/弹窗/下拉 |
+| `--ag-bg-surface` | `agw-bg-surface` | `#1e1e21` | 输入框/表单区域 |
+| `--ag-bg-hover` | `agw-bg-bg-hover` | `#27272a` | 悬停态背景 |
+| `--ag-bg-active` | `agw-bg-bg-active` | `#303033` | 按下/激活态 |
 
 ### 文字
 
@@ -222,7 +222,7 @@ export function YourComponent(props) {
 | `--ag-text` | `agw-text-text` | `#ececf0` | 主文字 |
 | `--ag-text-secondary` | `agw-text-text-secondary` | `#a1a1aa` | 次要文字/标签 |
 | `--ag-text-tertiary` | `agw-text-text-tertiary` | `#63636e` | 提示文字/占位符 |
-| `--ag-text-inverse` | `agw-text-text-inverse` | `#09090b` | 反色（主色按钮文字） |
+| `--ag-text-inverse` | `agw-text-text-inverse` | `#0a0a0c` | 反色（主色按钮文字） |
 
 ### 边框
 

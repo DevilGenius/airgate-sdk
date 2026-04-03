@@ -383,14 +383,14 @@ export const pluginFoundationCssText = `
 [data-theme="light"] .ag-elevation-modal .agw-input {
   background: var(--ag-bg-surface);
   border-color: var(--ag-border);
-  box-shadow: inset 0 1px 2px rgba(29, 39, 52, 0.04);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 
 [data-theme="light"] .ag-elevation-modal .agw-input:focus,
 [data-theme="light"] .ag-elevation-modal .agw-input:focus-visible {
-  background: rgba(29, 39, 52, 0.02);
+  background: rgba(0, 0, 0, 0.02);
   border-color: var(--ag-border-focus);
   box-shadow: 0 0 0 3px var(--ag-primary-subtle);
 }
