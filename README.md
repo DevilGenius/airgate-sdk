@@ -163,12 +163,27 @@ type ForwardResult struct {
     ServiceTier           string        // 服务层级，如 standard / flex / priority
     Model                 string        // 实际使用的模型
     Duration              time.Duration // 请求耗时
+    FirstTokenMs          int64         // 首 token 响应延迟（毫秒）
+
+    // 费用明细（插件计算，token × 单价，美元）
+    InputCost             float64
+    OutputCost            float64
+    CachedInputCost       float64
+
+    // 单价（美元 / 1M token，插件填充，Core 透传存储）
+    InputPrice            float64
+    OutputPrice           float64
+    CachedInputPrice      float64
 
     // 账号状态反馈（插件识别，Core 处置）
-    AccountStatus      string            // "" 正常 / "rate_limited" / "disabled" / "expired"
+    AccountStatus      AccountStatus     // "" 正常 / "rate_limited" / "disabled" / "expired"
     ErrorMessage       string            // 上游错误信息（便于排查）
     RetryAfter         time.Duration     // 限流时建议的等待时间
-    UpdatedCredentials map[string]string  // 凭证更新（如 token 刷新）
+    UpdatedCredentials map[string]string // 凭证更新（如 token 刷新）
+
+    // 非流式响应（Writer 不可用时通过此字段返回）
+    Body               []byte
+    Headers            http.Header
 }
 ```
 
@@ -177,7 +192,7 @@ type ForwardResult struct {
 Core 自动处理的能力：
 
 - **账号调度** — 根据负载、可用性和账号状态选择上游账号
-- **计费** — 基于 `ForwardResult` 中的 token 数自动计费
+- **计费** — 基于 `ForwardResult` 中的 token 与费用字段计费
 - **限流** — 按用户/分组维度限流
 - **并发控制** — 按账号维度控制并发
 
@@ -263,7 +278,14 @@ func (g *MyGateway) Platform() string { return "myplatform" }
 
 func (g *MyGateway) Models() []sdk.ModelInfo {
     return []sdk.ModelInfo{
-        {ID: "my-model-v1", Name: "My Model V1", MaxTokens: 128000, InputPrice: 1.0, OutputPrice: 3.0},
+        {
+            ID:              "my-model-v1",
+            Name:            "My Model V1",
+            ContextWindow:   128000,
+            MaxOutputTokens: 16384,
+            InputPrice:      1.0,
+            OutputPrice:     3.0,
+        },
     }
 }
 
@@ -278,10 +300,14 @@ func (g *MyGateway) Forward(ctx context.Context, req *sdk.ForwardRequest) (*sdk.
     // req.Body / req.Headers — 原始请求
     // req.Writer — 流式写入 SSE 响应
     return &sdk.ForwardResult{
-        StatusCode:   200,
-        InputTokens:  100,
-        OutputTokens: 50,
-        Model:        "my-model-v1",
+        StatusCode:       200,
+        InputTokens:      100,
+        OutputTokens:     50,
+        InputCost:        0.0001,
+        OutputCost:       0.00015,
+        InputPrice:       1.0,
+        OutputPrice:      3.0,
+        Model:            "my-model-v1",
     }, nil
 }
 
