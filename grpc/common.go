@@ -93,6 +93,8 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 		})
 	}
 
+	info.InstructionPresets = resp.InstructionPresets
+
 	b.cachedInfo = &info
 	return info
 }

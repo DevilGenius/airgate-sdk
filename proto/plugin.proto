@@ -71,6 +71,7 @@ message PluginInfoResponse {
     string sdk_version = 10;                          // 插件编译时的 SDK 版本
     repeated string dependencies = 11;                // 依赖的其他插件 ID
     repeated ConfigFieldProto config_schema = 12;     // 配置项声明
+    repeated string instruction_presets = 13;         // 可用的 instructions 预设名称列表
 }
 
 message ConfigFieldProto {

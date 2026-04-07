@@ -73,6 +73,8 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 		})
 	}
 
+	resp.InstructionPresets = info.InstructionPresets
+
 	return resp, nil
 }
 
