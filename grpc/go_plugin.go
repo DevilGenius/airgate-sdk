@@ -9,7 +9,6 @@ import (
 
 	sdk "github.com/DouDOU-start/airgate-sdk"
 	pb "github.com/DouDOU-start/airgate-sdk/proto"
-	"github.com/DouDOU-start/airgate-sdk/shared"
 )
 
 // 确保所有 Plugin 类型都实现了 goplugin.GRPCPlugin 接口
@@ -74,15 +73,15 @@ func Serve(impl interface{}) {
 
 	switch p := impl.(type) {
 	case sdk.GatewayPlugin:
-		pluginMap[shared.PluginKeyGateway] = &GatewayGRPCPlugin{Impl: p}
+		pluginMap[PluginKeyGateway] = &GatewayGRPCPlugin{Impl: p}
 	case sdk.ExtensionPlugin:
-		pluginMap[shared.PluginKeyExtension] = &ExtensionGRPCPlugin{Impl: p}
+		pluginMap[PluginKeyExtension] = &ExtensionGRPCPlugin{Impl: p}
 	default:
 		panic(fmt.Sprintf("airgate-sdk: Serve() 收到未知的插件类型 %T，支持的类型: GatewayPlugin, ExtensionPlugin", impl))
 	}
 
 	goplugin.Serve(&goplugin.ServeConfig{
-		HandshakeConfig: shared.Handshake,
+		HandshakeConfig: Handshake,
 		Plugins:         pluginMap,
 		GRPCServer:      goplugin.DefaultGRPCServer,
 	})

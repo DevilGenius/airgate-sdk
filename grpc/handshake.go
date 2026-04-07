@@ -1,4 +1,4 @@
-package shared
+package grpc
 
 import "github.com/hashicorp/go-plugin"
 

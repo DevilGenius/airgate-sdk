@@ -6,6 +6,34 @@ import (
 	"time"
 )
 
+// WebSocket 消息类型
+const (
+	WSMessageText   = 1
+	WSMessageBinary = 2
+)
+
+// WebSocketConn 抽象的 WebSocket 连接（gRPC 双向流实现）
+type WebSocketConn interface {
+	// ReadMessage 读取客户端发来的消息
+	ReadMessage() (messageType int, data []byte, err error)
+	// WriteMessage 向客户端发送消息
+	WriteMessage(messageType int, data []byte) error
+	// ConnectInfo 返回连接建立时的元信息
+	ConnectInfo() *WebSocketConnectInfo
+	// Close 关闭连接
+	Close(code int, reason string) error
+}
+
+// WebSocketConnectInfo WebSocket 连接元信息
+type WebSocketConnectInfo struct {
+	Path         string      // 请求路径
+	Query        string      // 查询参数
+	Headers      http.Header // 原始请求头
+	RemoteAddr   string      // 客户端地址
+	ConnectionID string      // 核心分配的连接 ID
+	Account      *Account    // 核心调度的账户
+}
+
 // GatewayPlugin 网关插件接口
 // Core 自动处理：账号调度、计费、限流、并发控制
 // 插件负责：声明模型和路由、转发请求、验证凭证、查询额度
