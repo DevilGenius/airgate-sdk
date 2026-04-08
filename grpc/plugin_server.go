@@ -63,6 +63,7 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 			Title:       p.Title,
 			Icon:        p.Icon,
 			Description: p.Description,
+			Audience:    p.Audience,
 		})
 	}
 	for _, w := range info.FrontendWidgets {

@@ -83,6 +83,7 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 			Title:       p.Title,
 			Icon:        p.Icon,
 			Description: p.Description,
+			Audience:    p.Audience,
 		})
 	}
 	for _, w := range resp.FrontendWidgets {

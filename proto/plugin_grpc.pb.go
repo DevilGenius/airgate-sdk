@@ -725,6 +725,7 @@ var GatewayService_ServiceDesc = grpc.ServiceDesc{
 const (
 	ExtensionService_Migrate_FullMethodName             = "/airgate.plugin.v1.ExtensionService/Migrate"
 	ExtensionService_GetBackgroundTasks_FullMethodName  = "/airgate.plugin.v1.ExtensionService/GetBackgroundTasks"
+	ExtensionService_RunBackgroundTask_FullMethodName   = "/airgate.plugin.v1.ExtensionService/RunBackgroundTask"
 	ExtensionService_HandleRequest_FullMethodName       = "/airgate.plugin.v1.ExtensionService/HandleRequest"
 	ExtensionService_HandleStreamRequest_FullMethodName = "/airgate.plugin.v1.ExtensionService/HandleStreamRequest"
 )
@@ -735,6 +736,8 @@ const (
 type ExtensionServiceClient interface {
 	Migrate(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	GetBackgroundTasks(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BackgroundTasksResponse, error)
+	// 由 Core 调度器按 Interval 周期触发；插件进程内查表执行 Handler
+	RunBackgroundTask(ctx context.Context, in *RunBackgroundTaskRequest, opts ...grpc.CallOption) (*Empty, error)
 	// HTTP 请求由核心代理到插件
 	HandleRequest(ctx context.Context, in *HttpRequest, opts ...grpc.CallOption) (*HttpResponse, error)
 	HandleStreamRequest(ctx context.Context, in *HttpRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[HttpResponseChunk], error)
@@ -762,6 +765,16 @@ func (c *extensionServiceClient) GetBackgroundTasks(ctx context.Context, in *Emp
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(BackgroundTasksResponse)
 	err := c.cc.Invoke(ctx, ExtensionService_GetBackgroundTasks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) RunBackgroundTask(ctx context.Context, in *RunBackgroundTaskRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, ExtensionService_RunBackgroundTask_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -803,6 +816,8 @@ type ExtensionService_HandleStreamRequestClient = grpc.ServerStreamingClient[Htt
 type ExtensionServiceServer interface {
 	Migrate(context.Context, *Empty) (*Empty, error)
 	GetBackgroundTasks(context.Context, *Empty) (*BackgroundTasksResponse, error)
+	// 由 Core 调度器按 Interval 周期触发；插件进程内查表执行 Handler
+	RunBackgroundTask(context.Context, *RunBackgroundTaskRequest) (*Empty, error)
 	// HTTP 请求由核心代理到插件
 	HandleRequest(context.Context, *HttpRequest) (*HttpResponse, error)
 	HandleStreamRequest(*HttpRequest, grpc.ServerStreamingServer[HttpResponseChunk]) error
@@ -821,6 +836,9 @@ func (UnimplementedExtensionServiceServer) Migrate(context.Context, *Empty) (*Em
 }
 func (UnimplementedExtensionServiceServer) GetBackgroundTasks(context.Context, *Empty) (*BackgroundTasksResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBackgroundTasks not implemented")
+}
+func (UnimplementedExtensionServiceServer) RunBackgroundTask(context.Context, *RunBackgroundTaskRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RunBackgroundTask not implemented")
 }
 func (UnimplementedExtensionServiceServer) HandleRequest(context.Context, *HttpRequest) (*HttpResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method HandleRequest not implemented")
@@ -885,6 +903,24 @@ func _ExtensionService_GetBackgroundTasks_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ExtensionService_RunBackgroundTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RunBackgroundTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).RunBackgroundTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_RunBackgroundTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).RunBackgroundTask(ctx, req.(*RunBackgroundTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ExtensionService_HandleRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HttpRequest)
 	if err := dec(in); err != nil {
@@ -928,6 +964,10 @@ var ExtensionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBackgroundTasks",
 			Handler:    _ExtensionService_GetBackgroundTasks_Handler,
+		},
+		{
+			MethodName: "RunBackgroundTask",
+			Handler:    _ExtensionService_RunBackgroundTask_Handler,
 		},
 		{
 			MethodName: "HandleRequest",

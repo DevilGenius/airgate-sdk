@@ -3,9 +3,11 @@ package grpc
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 
 	sdk "github.com/DouDOU-start/airgate-sdk"
 	pb "github.com/DouDOU-start/airgate-sdk/proto"
@@ -14,8 +16,10 @@ import (
 // ExtensionGRPCServer 将 ExtensionPlugin 包装为 gRPC 服务端
 type ExtensionGRPCServer struct {
 	pb.UnimplementedExtensionServiceServer
-	Impl   sdk.ExtensionPlugin
-	router *extensionRouter
+	Impl    sdk.ExtensionPlugin
+	router  *extensionRouter
+	taskMu  sync.RWMutex
+	taskMap map[string]func(context.Context) error // GetBackgroundTasks 时缓存，供 RunBackgroundTask 查表
 }
 
 // initRouter 初始化路由器并注册插件路由（由 Serve 调用）
@@ -34,13 +38,41 @@ func (s *ExtensionGRPCServer) Migrate(_ context.Context, _ *pb.Empty) (*pb.Empty
 func (s *ExtensionGRPCServer) GetBackgroundTasks(_ context.Context, _ *pb.Empty) (*pb.BackgroundTasksResponse, error) {
 	tasks := s.Impl.BackgroundTasks()
 	resp := &pb.BackgroundTasksResponse{}
+	taskMap := make(map[string]func(context.Context) error, len(tasks))
 	for _, t := range tasks {
 		resp.Tasks = append(resp.Tasks, &pb.BackgroundTaskProto{
 			Name:       t.Name,
 			IntervalMs: t.Interval.Milliseconds(),
 		})
+		taskMap[t.Name] = t.Handler
 	}
+	s.taskMu.Lock()
+	s.taskMap = taskMap
+	s.taskMu.Unlock()
 	return resp, nil
+}
+
+// RunBackgroundTask 由 Core 调度器周期触发，按名查表执行 Handler。
+func (s *ExtensionGRPCServer) RunBackgroundTask(ctx context.Context, req *pb.RunBackgroundTaskRequest) (*pb.Empty, error) {
+	s.taskMu.RLock()
+	handler, ok := s.taskMap[req.Name]
+	s.taskMu.RUnlock()
+	// taskMap 尚未填充（Core 还没调过 GetBackgroundTasks）时，先取一次
+	if !ok {
+		if _, err := s.GetBackgroundTasks(ctx, &pb.Empty{}); err != nil {
+			return nil, err
+		}
+		s.taskMu.RLock()
+		handler, ok = s.taskMap[req.Name]
+		s.taskMu.RUnlock()
+	}
+	if !ok || handler == nil {
+		return nil, fmt.Errorf("background task %q not found", req.Name)
+	}
+	if err := handler(ctx); err != nil {
+		return nil, err
+	}
+	return &pb.Empty{}, nil
 }
 
 func (s *ExtensionGRPCServer) HandleRequest(ctx context.Context, req *pb.HttpRequest) (*pb.HttpResponse, error) {

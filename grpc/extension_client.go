@@ -48,6 +48,13 @@ func (c *ExtensionGRPCClient) BackgroundTasks() []sdk.BackgroundTask {
 	return tasks
 }
 
+// RunBackgroundTask 让插件进程执行已声明的后台任务（由 Core 调度器调用）。
+// 使用独立的 ctx（一般由调用方控制超时），不复用 withTimeout()，因为任务可能较慢。
+func (c *ExtensionGRPCClient) RunBackgroundTask(ctx context.Context, name string) error {
+	_, err := c.extension.RunBackgroundTask(ctx, &pb.RunBackgroundTaskRequest{Name: name})
+	return err
+}
+
 // InvalidateCache 清除缓存的插件信息，下次调用时重新获取
 func (c *ExtensionGRPCClient) InvalidateCache() {
 	c.cachedInfo = nil

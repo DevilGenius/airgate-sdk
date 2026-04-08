@@ -63,6 +63,11 @@ type FrontendPage struct {
 	Title       string `json:"title"`
 	Icon        string `json:"icon"`
 	Description string `json:"description"`
+	// Audience 决定该页面对哪些用户可见：
+	//   "admin" / 空字符串 — 仅管理员（默认，向后兼容）
+	//   "user"             — 仅普通登录用户
+	//   "all"              — 所有登录用户（含管理员）
+	Audience string `json:"audience,omitempty"`
 }
 
 // 前端组件插槽常量

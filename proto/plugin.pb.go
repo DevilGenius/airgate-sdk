@@ -73,7 +73,7 @@ func (x WebSocketFrame_FrameType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WebSocketFrame_FrameType.Descriptor instead.
 func (WebSocketFrame_FrameType) EnumDescriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{25, 0}
+	return file_plugin_proto_rawDescGZIP(), []int{26, 0}
 }
 
 type Empty struct {
@@ -591,6 +591,7 @@ type FrontendPageProto struct {
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Icon          string                 `protobuf:"bytes,3,opt,name=icon,proto3" json:"icon,omitempty"`
 	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Audience      string                 `protobuf:"bytes,5,opt,name=audience,proto3" json:"audience,omitempty"` // "admin" | "user" | "all"，空 = "admin"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -649,6 +650,13 @@ func (x *FrontendPageProto) GetIcon() string {
 func (x *FrontendPageProto) GetDescription() string {
 	if x != nil {
 		return x.Description
+	}
+	return ""
+}
+
+func (x *FrontendPageProto) GetAudience() string {
+	if x != nil {
+		return x.Audience
 	}
 	return ""
 }
@@ -1905,6 +1913,50 @@ func (x *BackgroundTasksResponse) GetTasks() []*BackgroundTaskProto {
 	return nil
 }
 
+type RunBackgroundTaskRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RunBackgroundTaskRequest) Reset() {
+	*x = RunBackgroundTaskRequest{}
+	mi := &file_plugin_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RunBackgroundTaskRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RunBackgroundTaskRequest) ProtoMessage() {}
+
+func (x *RunBackgroundTaskRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RunBackgroundTaskRequest.ProtoReflect.Descriptor instead.
+func (*RunBackgroundTaskRequest) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *RunBackgroundTaskRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 type WebSocketFrame struct {
 	state protoimpl.MessageState   `protogen:"open.v1"`
 	Type  WebSocketFrame_FrameType `protobuf:"varint,1,opt,name=type,proto3,enum=airgate.plugin.v1.WebSocketFrame_FrameType" json:"type,omitempty"`
@@ -1922,7 +1974,7 @@ type WebSocketFrame struct {
 
 func (x *WebSocketFrame) Reset() {
 	*x = WebSocketFrame{}
-	mi := &file_plugin_proto_msgTypes[25]
+	mi := &file_plugin_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1934,7 +1986,7 @@ func (x *WebSocketFrame) String() string {
 func (*WebSocketFrame) ProtoMessage() {}
 
 func (x *WebSocketFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[25]
+	mi := &file_plugin_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1947,7 +1999,7 @@ func (x *WebSocketFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebSocketFrame.ProtoReflect.Descriptor instead.
 func (*WebSocketFrame) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{25}
+	return file_plugin_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *WebSocketFrame) GetType() WebSocketFrame_FrameType {
@@ -2006,7 +2058,7 @@ type WebSocketConnectInfo struct {
 
 func (x *WebSocketConnectInfo) Reset() {
 	*x = WebSocketConnectInfo{}
-	mi := &file_plugin_proto_msgTypes[26]
+	mi := &file_plugin_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2018,7 +2070,7 @@ func (x *WebSocketConnectInfo) String() string {
 func (*WebSocketConnectInfo) ProtoMessage() {}
 
 func (x *WebSocketConnectInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[26]
+	mi := &file_plugin_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2031,7 +2083,7 @@ func (x *WebSocketConnectInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebSocketConnectInfo.ProtoReflect.Descriptor instead.
 func (*WebSocketConnectInfo) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{26}
+	return file_plugin_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *WebSocketConnectInfo) GetPath() string {
@@ -2086,7 +2138,7 @@ type WebAssetFile struct {
 
 func (x *WebAssetFile) Reset() {
 	*x = WebAssetFile{}
-	mi := &file_plugin_proto_msgTypes[27]
+	mi := &file_plugin_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2098,7 +2150,7 @@ func (x *WebAssetFile) String() string {
 func (*WebAssetFile) ProtoMessage() {}
 
 func (x *WebAssetFile) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[27]
+	mi := &file_plugin_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2111,7 +2163,7 @@ func (x *WebAssetFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebAssetFile.ProtoReflect.Descriptor instead.
 func (*WebAssetFile) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{27}
+	return file_plugin_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *WebAssetFile) GetPath() string {
@@ -2138,7 +2190,7 @@ type WebAssetsResponse struct {
 
 func (x *WebAssetsResponse) Reset() {
 	*x = WebAssetsResponse{}
-	mi := &file_plugin_proto_msgTypes[28]
+	mi := &file_plugin_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2150,7 +2202,7 @@ func (x *WebAssetsResponse) String() string {
 func (*WebAssetsResponse) ProtoMessage() {}
 
 func (x *WebAssetsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[28]
+	mi := &file_plugin_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2163,7 +2215,7 @@ func (x *WebAssetsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebAssetsResponse.ProtoReflect.Descriptor instead.
 func (*WebAssetsResponse) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{28}
+	return file_plugin_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *WebAssetsResponse) GetFiles() []*WebAssetFile {
@@ -2225,12 +2277,13 @@ const file_plugin_proto_rawDesc = "" +
 	"\x04type\x18\x03 \x01(\tR\x04type\x12\x1a\n" +
 	"\brequired\x18\x04 \x01(\bR\brequired\x12 \n" +
 	"\vplaceholder\x18\x05 \x01(\tR\vplaceholder\x12#\n" +
-	"\redit_disabled\x18\x06 \x01(\bR\feditDisabled\"s\n" +
+	"\redit_disabled\x18\x06 \x01(\bR\feditDisabled\"\x8f\x01\n" +
 	"\x11FrontendPageProto\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
 	"\x04icon\x18\x03 \x01(\tR\x04icon\x12 \n" +
-	"\vdescription\x18\x04 \x01(\tR\vdescription\"^\n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\x1a\n" +
+	"\baudience\x18\x05 \x01(\tR\baudience\"^\n" +
 	"\x13FrontendWidgetProto\x12\x12\n" +
 	"\x04slot\x18\x01 \x01(\tR\x04slot\x12\x1d\n" +
 	"\n" +
@@ -2374,7 +2427,9 @@ const file_plugin_proto_rawDesc = "" +
 	"\vinterval_ms\x18\x02 \x01(\x03R\n" +
 	"intervalMs\"W\n" +
 	"\x17BackgroundTasksResponse\x12<\n" +
-	"\x05tasks\x18\x01 \x03(\v2&.airgate.plugin.v1.BackgroundTaskProtoR\x05tasks\"\xf4\x02\n" +
+	"\x05tasks\x18\x01 \x03(\v2&.airgate.plugin.v1.BackgroundTaskProtoR\x05tasks\".\n" +
+	"\x18RunBackgroundTaskRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\xf4\x02\n" +
 	"\x0eWebSocketFrame\x12?\n" +
 	"\x04type\x18\x01 \x01(\x0e2+.airgate.plugin.v1.WebSocketFrame.FrameTypeR\x04type\x12\x12\n" +
 	"\x04data\x18\x02 \x01(\fR\x04data\x12J\n" +
@@ -2428,10 +2483,11 @@ const file_plugin_proto_rawDesc = "" +
 	"\x0fValidateAccount\x12%.airgate.plugin.v1.CredentialsRequest\x1a\x18.airgate.plugin.v1.Empty\x12Y\n" +
 	"\n" +
 	"QueryQuota\x12%.airgate.plugin.v1.CredentialsRequest\x1a$.airgate.plugin.v1.QuotaInfoResponse\x12[\n" +
-	"\x0fHandleWebSocket\x12!.airgate.plugin.v1.WebSocketFrame\x1a!.airgate.plugin.v1.WebSocketFrame(\x010\x012\xde\x02\n" +
+	"\x0fHandleWebSocket\x12!.airgate.plugin.v1.WebSocketFrame\x1a!.airgate.plugin.v1.WebSocketFrame(\x010\x012\xba\x03\n" +
 	"\x10ExtensionService\x12=\n" +
 	"\aMigrate\x12\x18.airgate.plugin.v1.Empty\x1a\x18.airgate.plugin.v1.Empty\x12Z\n" +
-	"\x12GetBackgroundTasks\x12\x18.airgate.plugin.v1.Empty\x1a*.airgate.plugin.v1.BackgroundTasksResponse\x12P\n" +
+	"\x12GetBackgroundTasks\x12\x18.airgate.plugin.v1.Empty\x1a*.airgate.plugin.v1.BackgroundTasksResponse\x12Z\n" +
+	"\x11RunBackgroundTask\x12+.airgate.plugin.v1.RunBackgroundTaskRequest\x1a\x18.airgate.plugin.v1.Empty\x12P\n" +
 	"\rHandleRequest\x12\x1e.airgate.plugin.v1.HttpRequest\x1a\x1f.airgate.plugin.v1.HttpResponse\x12]\n" +
 	"\x13HandleStreamRequest\x12\x1e.airgate.plugin.v1.HttpRequest\x1a$.airgate.plugin.v1.HttpResponseChunk0\x01B+Z)github.com/DouDOU-start/airgate-sdk/protob\x06proto3"
 
@@ -2448,49 +2504,50 @@ func file_plugin_proto_rawDescGZIP() []byte {
 }
 
 var file_plugin_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
+var file_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
 var file_plugin_proto_goTypes = []any{
-	(WebSocketFrame_FrameType)(0),   // 0: airgate.plugin.v1.WebSocketFrame.FrameType
-	(*Empty)(nil),                   // 1: airgate.plugin.v1.Empty
-	(*StringResponse)(nil),          // 2: airgate.plugin.v1.StringResponse
-	(*HeaderValues)(nil),            // 3: airgate.plugin.v1.HeaderValues
-	(*PluginInfoResponse)(nil),      // 4: airgate.plugin.v1.PluginInfoResponse
-	(*ConfigFieldProto)(nil),        // 5: airgate.plugin.v1.ConfigFieldProto
-	(*AccountTypeProto)(nil),        // 6: airgate.plugin.v1.AccountTypeProto
-	(*CredentialFieldProto)(nil),    // 7: airgate.plugin.v1.CredentialFieldProto
-	(*FrontendPageProto)(nil),       // 8: airgate.plugin.v1.FrontendPageProto
-	(*FrontendWidgetProto)(nil),     // 9: airgate.plugin.v1.FrontendWidgetProto
-	(*InitRequest)(nil),             // 10: airgate.plugin.v1.InitRequest
-	(*ModelInfoProto)(nil),          // 11: airgate.plugin.v1.ModelInfoProto
-	(*ModelsResponse)(nil),          // 12: airgate.plugin.v1.ModelsResponse
-	(*RouteDefinitionProto)(nil),    // 13: airgate.plugin.v1.RouteDefinitionProto
-	(*RoutesResponse)(nil),          // 14: airgate.plugin.v1.RoutesResponse
-	(*AccountProto)(nil),            // 15: airgate.plugin.v1.AccountProto
-	(*ForwardRequest)(nil),          // 16: airgate.plugin.v1.ForwardRequest
-	(*ForwardResult)(nil),           // 17: airgate.plugin.v1.ForwardResult
-	(*ForwardChunk)(nil),            // 18: airgate.plugin.v1.ForwardChunk
-	(*CredentialsRequest)(nil),      // 19: airgate.plugin.v1.CredentialsRequest
-	(*QuotaInfoResponse)(nil),       // 20: airgate.plugin.v1.QuotaInfoResponse
-	(*HttpRequest)(nil),             // 21: airgate.plugin.v1.HttpRequest
-	(*HttpResponse)(nil),            // 22: airgate.plugin.v1.HttpResponse
-	(*HttpResponseChunk)(nil),       // 23: airgate.plugin.v1.HttpResponseChunk
-	(*BackgroundTaskProto)(nil),     // 24: airgate.plugin.v1.BackgroundTaskProto
-	(*BackgroundTasksResponse)(nil), // 25: airgate.plugin.v1.BackgroundTasksResponse
-	(*WebSocketFrame)(nil),          // 26: airgate.plugin.v1.WebSocketFrame
-	(*WebSocketConnectInfo)(nil),    // 27: airgate.plugin.v1.WebSocketConnectInfo
-	(*WebAssetFile)(nil),            // 28: airgate.plugin.v1.WebAssetFile
-	(*WebAssetsResponse)(nil),       // 29: airgate.plugin.v1.WebAssetsResponse
-	nil,                             // 30: airgate.plugin.v1.InitRequest.ConfigEntry
-	nil,                             // 31: airgate.plugin.v1.ForwardRequest.HeadersEntry
-	nil,                             // 32: airgate.plugin.v1.ForwardResult.HeadersEntry
-	nil,                             // 33: airgate.plugin.v1.ForwardResult.UpdatedCredentialsEntry
-	nil,                             // 34: airgate.plugin.v1.ForwardChunk.HeadersEntry
-	nil,                             // 35: airgate.plugin.v1.CredentialsRequest.CredentialsEntry
-	nil,                             // 36: airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
-	nil,                             // 37: airgate.plugin.v1.HttpRequest.HeadersEntry
-	nil,                             // 38: airgate.plugin.v1.HttpResponse.HeadersEntry
-	nil,                             // 39: airgate.plugin.v1.HttpResponseChunk.HeadersEntry
-	nil,                             // 40: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
+	(WebSocketFrame_FrameType)(0),    // 0: airgate.plugin.v1.WebSocketFrame.FrameType
+	(*Empty)(nil),                    // 1: airgate.plugin.v1.Empty
+	(*StringResponse)(nil),           // 2: airgate.plugin.v1.StringResponse
+	(*HeaderValues)(nil),             // 3: airgate.plugin.v1.HeaderValues
+	(*PluginInfoResponse)(nil),       // 4: airgate.plugin.v1.PluginInfoResponse
+	(*ConfigFieldProto)(nil),         // 5: airgate.plugin.v1.ConfigFieldProto
+	(*AccountTypeProto)(nil),         // 6: airgate.plugin.v1.AccountTypeProto
+	(*CredentialFieldProto)(nil),     // 7: airgate.plugin.v1.CredentialFieldProto
+	(*FrontendPageProto)(nil),        // 8: airgate.plugin.v1.FrontendPageProto
+	(*FrontendWidgetProto)(nil),      // 9: airgate.plugin.v1.FrontendWidgetProto
+	(*InitRequest)(nil),              // 10: airgate.plugin.v1.InitRequest
+	(*ModelInfoProto)(nil),           // 11: airgate.plugin.v1.ModelInfoProto
+	(*ModelsResponse)(nil),           // 12: airgate.plugin.v1.ModelsResponse
+	(*RouteDefinitionProto)(nil),     // 13: airgate.plugin.v1.RouteDefinitionProto
+	(*RoutesResponse)(nil),           // 14: airgate.plugin.v1.RoutesResponse
+	(*AccountProto)(nil),             // 15: airgate.plugin.v1.AccountProto
+	(*ForwardRequest)(nil),           // 16: airgate.plugin.v1.ForwardRequest
+	(*ForwardResult)(nil),            // 17: airgate.plugin.v1.ForwardResult
+	(*ForwardChunk)(nil),             // 18: airgate.plugin.v1.ForwardChunk
+	(*CredentialsRequest)(nil),       // 19: airgate.plugin.v1.CredentialsRequest
+	(*QuotaInfoResponse)(nil),        // 20: airgate.plugin.v1.QuotaInfoResponse
+	(*HttpRequest)(nil),              // 21: airgate.plugin.v1.HttpRequest
+	(*HttpResponse)(nil),             // 22: airgate.plugin.v1.HttpResponse
+	(*HttpResponseChunk)(nil),        // 23: airgate.plugin.v1.HttpResponseChunk
+	(*BackgroundTaskProto)(nil),      // 24: airgate.plugin.v1.BackgroundTaskProto
+	(*BackgroundTasksResponse)(nil),  // 25: airgate.plugin.v1.BackgroundTasksResponse
+	(*RunBackgroundTaskRequest)(nil), // 26: airgate.plugin.v1.RunBackgroundTaskRequest
+	(*WebSocketFrame)(nil),           // 27: airgate.plugin.v1.WebSocketFrame
+	(*WebSocketConnectInfo)(nil),     // 28: airgate.plugin.v1.WebSocketConnectInfo
+	(*WebAssetFile)(nil),             // 29: airgate.plugin.v1.WebAssetFile
+	(*WebAssetsResponse)(nil),        // 30: airgate.plugin.v1.WebAssetsResponse
+	nil,                              // 31: airgate.plugin.v1.InitRequest.ConfigEntry
+	nil,                              // 32: airgate.plugin.v1.ForwardRequest.HeadersEntry
+	nil,                              // 33: airgate.plugin.v1.ForwardResult.HeadersEntry
+	nil,                              // 34: airgate.plugin.v1.ForwardResult.UpdatedCredentialsEntry
+	nil,                              // 35: airgate.plugin.v1.ForwardChunk.HeadersEntry
+	nil,                              // 36: airgate.plugin.v1.CredentialsRequest.CredentialsEntry
+	nil,                              // 37: airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
+	nil,                              // 38: airgate.plugin.v1.HttpRequest.HeadersEntry
+	nil,                              // 39: airgate.plugin.v1.HttpResponse.HeadersEntry
+	nil,                              // 40: airgate.plugin.v1.HttpResponseChunk.HeadersEntry
+	nil,                              // 41: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
 }
 var file_plugin_proto_depIdxs = []int32{
 	6,  // 0: airgate.plugin.v1.PluginInfoResponse.account_types:type_name -> airgate.plugin.v1.AccountTypeProto
@@ -2498,27 +2555,27 @@ var file_plugin_proto_depIdxs = []int32{
 	9,  // 2: airgate.plugin.v1.PluginInfoResponse.frontend_widgets:type_name -> airgate.plugin.v1.FrontendWidgetProto
 	5,  // 3: airgate.plugin.v1.PluginInfoResponse.config_schema:type_name -> airgate.plugin.v1.ConfigFieldProto
 	7,  // 4: airgate.plugin.v1.AccountTypeProto.fields:type_name -> airgate.plugin.v1.CredentialFieldProto
-	30, // 5: airgate.plugin.v1.InitRequest.config:type_name -> airgate.plugin.v1.InitRequest.ConfigEntry
+	31, // 5: airgate.plugin.v1.InitRequest.config:type_name -> airgate.plugin.v1.InitRequest.ConfigEntry
 	11, // 6: airgate.plugin.v1.ModelsResponse.models:type_name -> airgate.plugin.v1.ModelInfoProto
 	13, // 7: airgate.plugin.v1.RoutesResponse.routes:type_name -> airgate.plugin.v1.RouteDefinitionProto
-	31, // 8: airgate.plugin.v1.ForwardRequest.headers:type_name -> airgate.plugin.v1.ForwardRequest.HeadersEntry
+	32, // 8: airgate.plugin.v1.ForwardRequest.headers:type_name -> airgate.plugin.v1.ForwardRequest.HeadersEntry
 	15, // 9: airgate.plugin.v1.ForwardRequest.account:type_name -> airgate.plugin.v1.AccountProto
-	32, // 10: airgate.plugin.v1.ForwardResult.headers:type_name -> airgate.plugin.v1.ForwardResult.HeadersEntry
-	33, // 11: airgate.plugin.v1.ForwardResult.updated_credentials:type_name -> airgate.plugin.v1.ForwardResult.UpdatedCredentialsEntry
+	33, // 10: airgate.plugin.v1.ForwardResult.headers:type_name -> airgate.plugin.v1.ForwardResult.HeadersEntry
+	34, // 11: airgate.plugin.v1.ForwardResult.updated_credentials:type_name -> airgate.plugin.v1.ForwardResult.UpdatedCredentialsEntry
 	17, // 12: airgate.plugin.v1.ForwardChunk.final_result:type_name -> airgate.plugin.v1.ForwardResult
-	34, // 13: airgate.plugin.v1.ForwardChunk.headers:type_name -> airgate.plugin.v1.ForwardChunk.HeadersEntry
-	35, // 14: airgate.plugin.v1.CredentialsRequest.credentials:type_name -> airgate.plugin.v1.CredentialsRequest.CredentialsEntry
-	36, // 15: airgate.plugin.v1.QuotaInfoResponse.extra:type_name -> airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
-	37, // 16: airgate.plugin.v1.HttpRequest.headers:type_name -> airgate.plugin.v1.HttpRequest.HeadersEntry
-	38, // 17: airgate.plugin.v1.HttpResponse.headers:type_name -> airgate.plugin.v1.HttpResponse.HeadersEntry
-	39, // 18: airgate.plugin.v1.HttpResponseChunk.headers:type_name -> airgate.plugin.v1.HttpResponseChunk.HeadersEntry
+	35, // 13: airgate.plugin.v1.ForwardChunk.headers:type_name -> airgate.plugin.v1.ForwardChunk.HeadersEntry
+	36, // 14: airgate.plugin.v1.CredentialsRequest.credentials:type_name -> airgate.plugin.v1.CredentialsRequest.CredentialsEntry
+	37, // 15: airgate.plugin.v1.QuotaInfoResponse.extra:type_name -> airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
+	38, // 16: airgate.plugin.v1.HttpRequest.headers:type_name -> airgate.plugin.v1.HttpRequest.HeadersEntry
+	39, // 17: airgate.plugin.v1.HttpResponse.headers:type_name -> airgate.plugin.v1.HttpResponse.HeadersEntry
+	40, // 18: airgate.plugin.v1.HttpResponseChunk.headers:type_name -> airgate.plugin.v1.HttpResponseChunk.HeadersEntry
 	24, // 19: airgate.plugin.v1.BackgroundTasksResponse.tasks:type_name -> airgate.plugin.v1.BackgroundTaskProto
 	0,  // 20: airgate.plugin.v1.WebSocketFrame.type:type_name -> airgate.plugin.v1.WebSocketFrame.FrameType
-	27, // 21: airgate.plugin.v1.WebSocketFrame.connect_info:type_name -> airgate.plugin.v1.WebSocketConnectInfo
+	28, // 21: airgate.plugin.v1.WebSocketFrame.connect_info:type_name -> airgate.plugin.v1.WebSocketConnectInfo
 	17, // 22: airgate.plugin.v1.WebSocketFrame.result:type_name -> airgate.plugin.v1.ForwardResult
-	40, // 23: airgate.plugin.v1.WebSocketConnectInfo.headers:type_name -> airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
+	41, // 23: airgate.plugin.v1.WebSocketConnectInfo.headers:type_name -> airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
 	15, // 24: airgate.plugin.v1.WebSocketConnectInfo.account:type_name -> airgate.plugin.v1.AccountProto
-	28, // 25: airgate.plugin.v1.WebAssetsResponse.files:type_name -> airgate.plugin.v1.WebAssetFile
+	29, // 25: airgate.plugin.v1.WebAssetsResponse.files:type_name -> airgate.plugin.v1.WebAssetFile
 	3,  // 26: airgate.plugin.v1.ForwardRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
 	3,  // 27: airgate.plugin.v1.ForwardResult.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
 	3,  // 28: airgate.plugin.v1.ForwardChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
@@ -2540,32 +2597,34 @@ var file_plugin_proto_depIdxs = []int32{
 	16, // 44: airgate.plugin.v1.GatewayService.ForwardStream:input_type -> airgate.plugin.v1.ForwardRequest
 	19, // 45: airgate.plugin.v1.GatewayService.ValidateAccount:input_type -> airgate.plugin.v1.CredentialsRequest
 	19, // 46: airgate.plugin.v1.GatewayService.QueryQuota:input_type -> airgate.plugin.v1.CredentialsRequest
-	26, // 47: airgate.plugin.v1.GatewayService.HandleWebSocket:input_type -> airgate.plugin.v1.WebSocketFrame
+	27, // 47: airgate.plugin.v1.GatewayService.HandleWebSocket:input_type -> airgate.plugin.v1.WebSocketFrame
 	1,  // 48: airgate.plugin.v1.ExtensionService.Migrate:input_type -> airgate.plugin.v1.Empty
 	1,  // 49: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:input_type -> airgate.plugin.v1.Empty
-	21, // 50: airgate.plugin.v1.ExtensionService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
-	21, // 51: airgate.plugin.v1.ExtensionService.HandleStreamRequest:input_type -> airgate.plugin.v1.HttpRequest
-	4,  // 52: airgate.plugin.v1.PluginService.GetInfo:output_type -> airgate.plugin.v1.PluginInfoResponse
-	1,  // 53: airgate.plugin.v1.PluginService.Init:output_type -> airgate.plugin.v1.Empty
-	1,  // 54: airgate.plugin.v1.PluginService.Start:output_type -> airgate.plugin.v1.Empty
-	1,  // 55: airgate.plugin.v1.PluginService.Stop:output_type -> airgate.plugin.v1.Empty
-	29, // 56: airgate.plugin.v1.PluginService.GetWebAssets:output_type -> airgate.plugin.v1.WebAssetsResponse
-	1,  // 57: airgate.plugin.v1.PluginService.HealthCheck:output_type -> airgate.plugin.v1.Empty
-	22, // 58: airgate.plugin.v1.PluginService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
-	2,  // 59: airgate.plugin.v1.GatewayService.GetPlatform:output_type -> airgate.plugin.v1.StringResponse
-	12, // 60: airgate.plugin.v1.GatewayService.GetModels:output_type -> airgate.plugin.v1.ModelsResponse
-	14, // 61: airgate.plugin.v1.GatewayService.GetRoutes:output_type -> airgate.plugin.v1.RoutesResponse
-	17, // 62: airgate.plugin.v1.GatewayService.Forward:output_type -> airgate.plugin.v1.ForwardResult
-	18, // 63: airgate.plugin.v1.GatewayService.ForwardStream:output_type -> airgate.plugin.v1.ForwardChunk
-	1,  // 64: airgate.plugin.v1.GatewayService.ValidateAccount:output_type -> airgate.plugin.v1.Empty
-	20, // 65: airgate.plugin.v1.GatewayService.QueryQuota:output_type -> airgate.plugin.v1.QuotaInfoResponse
-	26, // 66: airgate.plugin.v1.GatewayService.HandleWebSocket:output_type -> airgate.plugin.v1.WebSocketFrame
-	1,  // 67: airgate.plugin.v1.ExtensionService.Migrate:output_type -> airgate.plugin.v1.Empty
-	25, // 68: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:output_type -> airgate.plugin.v1.BackgroundTasksResponse
-	22, // 69: airgate.plugin.v1.ExtensionService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
-	23, // 70: airgate.plugin.v1.ExtensionService.HandleStreamRequest:output_type -> airgate.plugin.v1.HttpResponseChunk
-	52, // [52:71] is the sub-list for method output_type
-	33, // [33:52] is the sub-list for method input_type
+	26, // 50: airgate.plugin.v1.ExtensionService.RunBackgroundTask:input_type -> airgate.plugin.v1.RunBackgroundTaskRequest
+	21, // 51: airgate.plugin.v1.ExtensionService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
+	21, // 52: airgate.plugin.v1.ExtensionService.HandleStreamRequest:input_type -> airgate.plugin.v1.HttpRequest
+	4,  // 53: airgate.plugin.v1.PluginService.GetInfo:output_type -> airgate.plugin.v1.PluginInfoResponse
+	1,  // 54: airgate.plugin.v1.PluginService.Init:output_type -> airgate.plugin.v1.Empty
+	1,  // 55: airgate.plugin.v1.PluginService.Start:output_type -> airgate.plugin.v1.Empty
+	1,  // 56: airgate.plugin.v1.PluginService.Stop:output_type -> airgate.plugin.v1.Empty
+	30, // 57: airgate.plugin.v1.PluginService.GetWebAssets:output_type -> airgate.plugin.v1.WebAssetsResponse
+	1,  // 58: airgate.plugin.v1.PluginService.HealthCheck:output_type -> airgate.plugin.v1.Empty
+	22, // 59: airgate.plugin.v1.PluginService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
+	2,  // 60: airgate.plugin.v1.GatewayService.GetPlatform:output_type -> airgate.plugin.v1.StringResponse
+	12, // 61: airgate.plugin.v1.GatewayService.GetModels:output_type -> airgate.plugin.v1.ModelsResponse
+	14, // 62: airgate.plugin.v1.GatewayService.GetRoutes:output_type -> airgate.plugin.v1.RoutesResponse
+	17, // 63: airgate.plugin.v1.GatewayService.Forward:output_type -> airgate.plugin.v1.ForwardResult
+	18, // 64: airgate.plugin.v1.GatewayService.ForwardStream:output_type -> airgate.plugin.v1.ForwardChunk
+	1,  // 65: airgate.plugin.v1.GatewayService.ValidateAccount:output_type -> airgate.plugin.v1.Empty
+	20, // 66: airgate.plugin.v1.GatewayService.QueryQuota:output_type -> airgate.plugin.v1.QuotaInfoResponse
+	27, // 67: airgate.plugin.v1.GatewayService.HandleWebSocket:output_type -> airgate.plugin.v1.WebSocketFrame
+	1,  // 68: airgate.plugin.v1.ExtensionService.Migrate:output_type -> airgate.plugin.v1.Empty
+	25, // 69: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:output_type -> airgate.plugin.v1.BackgroundTasksResponse
+	1,  // 70: airgate.plugin.v1.ExtensionService.RunBackgroundTask:output_type -> airgate.plugin.v1.Empty
+	22, // 71: airgate.plugin.v1.ExtensionService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
+	23, // 72: airgate.plugin.v1.ExtensionService.HandleStreamRequest:output_type -> airgate.plugin.v1.HttpResponseChunk
+	53, // [53:73] is the sub-list for method output_type
+	33, // [33:53] is the sub-list for method input_type
 	33, // [33:33] is the sub-list for extension type_name
 	33, // [33:33] is the sub-list for extension extendee
 	0,  // [0:33] is the sub-list for field type_name
@@ -2582,7 +2641,7 @@ func file_plugin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plugin_proto_rawDesc), len(file_plugin_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   40,
+			NumMessages:   41,
 			NumExtensions: 0,
 			NumServices:   3,
 		},

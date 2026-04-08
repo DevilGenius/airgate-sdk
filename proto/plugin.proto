@@ -38,6 +38,8 @@ service GatewayService {
 service ExtensionService {
     rpc Migrate(Empty) returns (Empty);
     rpc GetBackgroundTasks(Empty) returns (BackgroundTasksResponse);
+    // 由 Core 调度器按 Interval 周期触发；插件进程内查表执行 Handler
+    rpc RunBackgroundTask(RunBackgroundTaskRequest) returns (Empty);
     // HTTP 请求由核心代理到插件
     rpc HandleRequest(HttpRequest) returns (HttpResponse);
     rpc HandleStreamRequest(HttpRequest) returns (stream HttpResponseChunk);
@@ -105,6 +107,7 @@ message FrontendPageProto {
     string title = 2;
     string icon = 3;
     string description = 4;
+    string audience = 5; // "admin" | "user" | "all"，空 = "admin"
 }
 
 message FrontendWidgetProto {
@@ -244,6 +247,10 @@ message BackgroundTaskProto {
 
 message BackgroundTasksResponse {
     repeated BackgroundTaskProto tasks = 1;
+}
+
+message RunBackgroundTaskRequest {
+    string name = 1;
 }
 
 // ==================== WebSocket 消息 ====================
