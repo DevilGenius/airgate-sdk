@@ -83,6 +83,17 @@ func Serve(impl interface{}) {
 	goplugin.Serve(&goplugin.ServeConfig{
 		HandshakeConfig: Handshake,
 		Plugins:         pluginMap,
-		GRPCServer:      goplugin.DefaultGRPCServer,
+		GRPCServer: func(opts []grpc.ServerOption) *grpc.Server {
+			opts = append(opts,
+				grpc.MaxRecvMsgSize(PluginGRPCMaxMessageBytes),
+				grpc.MaxSendMsgSize(PluginGRPCMaxMessageBytes),
+			)
+			return grpc.NewServer(opts...)
+		},
 	})
 }
+
+// PluginGRPCMaxMessageBytes 是插件 gRPC 服务端单条消息最大字节数（收/发同值）。
+// 默认 4 MB 经常被大段 LLM 响应或翻译后的 SSE 事件击穿，统一抬到 64 MB；
+// 必须与 core 侧 ClientConfig.GRPCDialOptions 中的上限保持一致。
+const PluginGRPCMaxMessageBytes = 64 * 1024 * 1024

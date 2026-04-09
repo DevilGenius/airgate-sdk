@@ -221,17 +221,34 @@ func (w *streamWriter) Header() http.Header {
 	return w.headers
 }
 
+// streamChunkSize 是单条 ForwardChunk 携带的最大字节数。
+// 故意远小于 PluginGRPCMaxMessageBytes（64 MB），既留足 proto 编码 / metadata 余量，
+// 又能让上游一次性 dump 的大事件被切片成多条 gRPC 消息发送，避免击穿对端的接收上限。
+const streamChunkSize = 256 * 1024
+
 func (w *streamWriter) Write(data []byte) (int, error) {
 	if err := w.flushMeta(); err != nil {
 		return 0, err
 	}
-	err := w.stream.Send(&pb.ForwardChunk{
-		Data: data,
-	})
-	if err != nil {
-		return 0, err
+	// 切块发送：单条 gRPC 消息最大 streamChunkSize 字节，避免大事件击穿对端接收上限。
+	// data 的所有内容都需要发送，所以即便长度为 0 也保留一次空 Send 的语义（与原行为一致）。
+	total := len(data)
+	if total == 0 {
+		if err := w.stream.Send(&pb.ForwardChunk{Data: data}); err != nil {
+			return 0, err
+		}
+		return 0, nil
 	}
-	return len(data), nil
+	for offset := 0; offset < total; offset += streamChunkSize {
+		end := offset + streamChunkSize
+		if end > total {
+			end = total
+		}
+		if err := w.stream.Send(&pb.ForwardChunk{Data: data[offset:end]}); err != nil {
+			return 0, err
+		}
+	}
+	return total, nil
 }
 
 func (w *streamWriter) WriteHeader(statusCode int) {
