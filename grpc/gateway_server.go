@@ -135,8 +135,16 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 	}
 
 	result, err := s.Impl.Forward(ctx, fwdReq)
+	// 即便插件返回了 err，只要带回了 result（其中可能包含 AccountStatus、StatusCode、
+	// ErrorMessage 等用于 core 端调度决策的关键字段），也要把 result 透传给客户端，
+	// 不要让 err 把这些信号吞掉。err 文本回填到 ErrorMessage。
 	if err != nil {
-		return nil, err
+		if result == nil {
+			return nil, err
+		}
+		if result.ErrorMessage == "" {
+			result.ErrorMessage = err.Error()
+		}
 	}
 	pbResult := toProtoResult(result)
 	// 优先使用 bufferWriter 捕获的响应，回退到 result 自身
@@ -165,8 +173,15 @@ func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.Gate
 
 	startTime := time.Now()
 	result, err := s.Impl.Forward(stream.Context(), fwdReq)
+	// 与非流式 Forward 同理：err 非 nil 但 result 也非 nil 时，把 result 透传给客户端，
+	// 让 AccountStatus 等调度信号能传递回 core，避免客户端侧的请求错误被记到账号头上。
 	if err != nil {
-		return err
+		if result == nil {
+			return err
+		}
+		if result.ErrorMessage == "" {
+			result.ErrorMessage = err.Error()
+		}
 	}
 
 	// 补充耗时

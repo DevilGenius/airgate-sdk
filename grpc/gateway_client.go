@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -168,7 +169,14 @@ func (c *GatewayGRPCClient) Forward(ctx context.Context, req *sdk.ForwardRequest
 	if err != nil {
 		return nil, fmt.Errorf("gRPC Forward 调用失败: %w", err)
 	}
-	return fromProtoResult(resp), nil
+	result := fromProtoResult(resp)
+	// 服务端在插件返回 (result, err) 时会把 err 文案塞进 result.ErrorMessage 透传过来。
+	// 客户端这里还原成 (result, error) 的双值返回，让 core 既能拿到调度信号
+	// （AccountStatus / StatusCode），又能感知到失败本身。
+	if result != nil && result.ErrorMessage != "" {
+		return result, errors.New(result.ErrorMessage)
+	}
+	return result, nil
 }
 
 func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.ForwardRequest, req *sdk.ForwardRequest) (*sdk.ForwardResult, error) {
@@ -218,6 +226,9 @@ func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.Forward
 
 	if finalResult == nil {
 		return nil, fmt.Errorf("未收到最终结果")
+	}
+	if finalResult.ErrorMessage != "" {
+		return finalResult, errors.New(finalResult.ErrorMessage)
 	}
 	return finalResult, nil
 }
