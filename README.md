@@ -28,19 +28,24 @@ go get github.com/DouDOU-start/airgate-sdk@latest
 
 ## ✨ 核心特性
 
-- **🔌 双类型插件模型** — `GatewayPlugin` 专注 AI API 转发（自动调度/计费/限流），`ExtensionPlugin` 覆盖支付、监控、报表等一切非网关场景
+- **🔌 三类插件模型** — `GatewayPlugin`（upstream 适配）/ `ExtensionPlugin`（路由 + 后台任务）/ `MiddlewarePlugin`（forward 路径拦截层，旁路观察 / 审计 / 脱敏），详见 [ADR-0001](docs/adr/0001-plugin-capability-and-isolation-model.md)
+- **🛂 能力模型** — 插件显式声明所需的 HostService / Middleware capability，Core 侧 gRPC interceptor 按"插件类型 → 允许集合"做最小权限校验（SDK `0.3.0` 起强制）
+- **🔁 反向通道 HostService** — 插件通过 `HostAware` 可选接口拿到 `Host`，直接回调 core 能力（选号 / 探测 / 列分组），走 hashicorp/go-plugin GRPCBroker 子进程隧道，无需 admin HTTP + API key
 - **🧩 最小契约** — 插件只需声明账号格式 / 模型 / 路由，并实现 `Forward`，core 自动接管账号管理、调度、计费、限流
 - **🎨 前端集成** — 独立页面 (`FrontendPages`) + 组件嵌入 (`FrontendWidgets`)，通过 `WebAssetsProvider` 统一打包到二进制
 - **🎭 统一主题** — 内置 `@airgate/theme` 包提供共享 token、亮暗切换、Tailwind 桥接和插件作用域隔离
 - **🛠 本地开发服务器** — `devserver` 包模拟 core 行为，**插件无需部署 core 即可端到端测试**账号、HTTP/SSE 转发、WebSocket
 - **📦 进程隔离** — 基于 hashicorp/go-plugin gRPC 模式，崩溃隔离、独立热更、独立发版
 
-## 🧩 两类插件
+## 🧩 三类插件
 
 | 类型 | 接口 | 定位 | 参考实现 |
 |---|---|---|---|
 | **网关插件** | `GatewayPlugin` | AI API 代理。声明模型/路由/账号格式 + 实现 `Forward`，core 自动调度 + 计费 + 限流 | [airgate-openai](https://github.com/DouDOU-start/airgate-openai) |
 | **扩展插件** | `ExtensionPlugin` | 一切非网关场景。提供路由注册、数据库迁移、后台任务三大基础能力 | [airgate-epay](https://github.com/DouDOU-start/airgate-epay) · [airgate-health](https://github.com/DouDOU-start/airgate-health) |
+| **中间件插件** | `MiddlewarePlugin` | Forward 路径的旁路拦截层：请求/响应记录、审计、脱敏、流量采样、合规标签注入 | （示例计划：`airgate-audit`） |
+
+三种角色的边界是**互斥**的：gateway **替代** upstream；extension **并行** 扩展（独立路由表 / 定时任务）；middleware **拦截** 每次 forward 的前后事件，**永远不能 block 生产流量**（详见 Decision 2 的失败语义）。
 
 ### 网关插件 `GatewayPlugin`
 
@@ -62,6 +67,21 @@ go get github.com/DouDOU-start/airgate-sdk@latest
 | 数据库迁移 | `Migrate()` | 创建插件专属表（通过 Config 获取 DSN 自行建连） |
 | 后台任务 | `BackgroundTasks()` | 声明定时任务，core 负责调度 |
 
+### 中间件插件 `MiddlewarePlugin`
+
+| 方法 | 职责 |
+|---|---|
+| `OnForwardBegin(ctx, req)` | 选完账号 / 还没调 upstream 之前触发。返回 `Decision` 可放行 / 拒绝 / 追加 header |
+| `OnForwardEnd(ctx, evt)` | upstream 返回之后 / 写 usage_log 之前触发。拿到完整的请求 + 响应元数据 |
+
+**关键设计约定**（详见 [ADR-0001 Decision 2/3](docs/adr/0001-plugin-capability-and-isolation-model.md)）：
+
+- **失败即跳过**：`OnForwardBegin` / `OnForwardEnd` 返回 `error` 只 log warn，不阻塞主流程。唯一例外是 `OnForwardBegin` 显式返回 `DecisionDeny`
+- **LIFO 链顺序**：多个 middleware 按 `PluginInfo.Priority` 升序调 Begin、**降序**调 End（像 middleware stack 展开）
+- **Payload 两段式**：默认只传元数据（`request_id` / `user_id` / `group_id` / `account_id` / `platform` / `model` / 用量）；声明 `CapabilityMiddlewareReadBody` 的插件额外收到 `request_body` / `response_body` + headers
+- **流式响应的 body 摘要**：End 阶段流式响应的 `ResponseBody` 只给首次非空 chunk 拼装的摘要，完整流式内容留给未来的 `OnStreamChunk`（ADR-0002）
+- **跨 hook 上下文**：`Metadata` 字段是所有 middleware 共享的 KV bag，从 Begin 贯穿到 End
+
 ### 可选能力
 
 所有插件类型都可额外实现以下接口，core 通过类型断言自动检测：
@@ -70,6 +90,87 @@ go get github.com/DouDOU-start/airgate-sdk@latest
 |---|---|
 | `WebAssetsProvider` | 提供前端静态资源（独立页面 / 嵌入组件） |
 | `ConfigWatcher` | 配置热更新 |
+| `HealthChecker` | 自定义健康检查逻辑 |
+| `RequestHandler` | 处理 `/api/v1/admin/plugins/:name/rpc/*` 透传请求 |
+| `HostAware` | 通过 `ctx.(sdk.HostAware).Host()` 拿到反向调用 core 的 `Host` 客户端 |
+
+## 🛂 能力模型（Capability）
+
+`SDKVersion = "0.3.0"` 起，插件调用 `HostService` 或使用 middleware 特殊 payload 必须**显式声明** capability，否则 Core 的 gRPC interceptor 会返回 `PermissionDenied`。
+
+```go
+func (p *MyExtension) Info() sdk.PluginInfo {
+    return sdk.PluginInfo{
+        ID:   "ext-monitor",
+        Type: sdk.PluginTypeExtension,
+        Capabilities: []string{
+            sdk.CapabilityHostListGroups,
+            sdk.CapabilityHostProbeForward,
+            sdk.CapabilityHostReportAccountResult,
+        },
+        // ...
+    }
+}
+```
+
+当前 capability 清单（Core 按"插件类型 → 允许集合"做交集后得到有效权限）：
+
+| Capability | 用途 | 允许的插件类型 |
+|---|---|---|
+| `host.list_groups` | `Host.ListGroups()` 列出分组 | `extension`, `middleware` |
+| `host.select_account` | `Host.SelectAccount()` 走真实调度选号 | `extension` |
+| `host.probe_forward` | `Host.ProbeForward()` 黑盒探测 | `extension`（probe 子类） |
+| `host.report_account_result` | `Host.ReportAccountResult()` 反馈状态机 | `extension`（probe 子类） |
+| `middleware.read_body` | middleware 接收 `request_body` / `response_body` | `middleware` |
+
+**向后兼容**：SDK `<= 0.2.x` 的旧插件不声明 `Capabilities` 仍然可以跑（通过 `sdk_version` 字段豁免），但管理后台会显示"兼容模式"警告。`>= 0.3.x` 起强制校验。
+
+**命名规范**：`<domain>.<action>`。新增 capability 必须在 ADR 里说明语义 / owner / 允许的插件类型。
+
+## 🔁 反向通道 HostService
+
+过去插件要回调 core（列分组、选号、探测）只能走 admin HTTP API + admin key —— 管理员要手工生成 key、插件要拼 URL 签 Bearer、同机两个进程也被迫走完整 HTTP+JSON 栈。`HostService` 通过 hashicorp/go-plugin 的 `GRPCBroker` 为每个插件子进程架起一条**反向 gRPC stream**，子进程隧道天然互信。
+
+```go
+type MyExtension struct {
+    host sdk.Host
+}
+
+func (p *MyExtension) Init(ctx sdk.PluginContext) error {
+    // HostAware 是可选接口：旧版 Core / devserver / 测试 mock 都可以不实现
+    if h, ok := ctx.(sdk.HostAware); ok {
+        p.host = h.Host() // 仍可能为 nil，调用方需 nil-check
+    }
+    return nil
+}
+
+func (p *MyExtension) probe(ctx context.Context) {
+    if p.host == nil { return }
+
+    groups, err := p.host.ListGroups(ctx)
+    if err != nil { /* ... */ }
+
+    for _, g := range groups {
+        result, _ := p.host.ProbeForward(ctx, sdk.HostProbeForwardRequest{GroupID: g.ID})
+        p.host.ReportAccountResult(ctx, result.AccountID, result.Success, result.ErrorMsg)
+    }
+}
+```
+
+当前 v1 暴露的 4 个 RPC（克制暴露面，等真实需求再加）：
+
+| RPC | 语义 |
+|---|---|
+| `SelectAccount` | 走和真实用户请求完全相同的调度路径选号 |
+| `ProbeForward` | 黑盒探测 chat completion：跳过 `usage_log` / 余额扣款，但仍触发 `ReportResult` |
+| `ListGroups` | 列出所有分组（id / name / platform / 是否独占 / 倍率） |
+| `ReportAccountResult` | 把账号调用结果反馈给 scheduler 的失败计数器 / 状态机 |
+
+**设计原则**（详见 [ADR-0001 §2](docs/adr/0001-plugin-capability-and-isolation-model.md)）：
+- **只加字段不删字段**（protobuf 天然向前兼容）
+- **加新 RPC 用新 rpc name**，不 hijack 旧的
+- **新能力必须伴随新 capability flag**，旧插件不声明就不启用
+- **Core 是 trust root**：HostService 所有输入做参数校验，credentials / password_hash / admin key 等敏感字段永远不通过 RPC 流向插件
 
 ## 🛠 技术栈
 
@@ -186,32 +287,63 @@ go build -o my-plugin .
 ## 🏗 架构
 
 ```text
-┌──────────────── Core ────────────────┐    ┌──────────── 插件 ──────────────┐
-│                                       │    │                                 │
-│  账号管理（增删改查、存储）             │    │  声明账号格式（AccountTypes）   │
-│  账号调度（负载均衡、选号）             │    │  声明模型（Models + 价格）      │
-│  路由注册（HTTP 网关、鉴权）            │    │  声明 API 端点（Routes）        │
-│  计费、限流、并发控制                   │    │  转发请求到上游（Forward）       │
-│  凭证验证调度                          │    │  验证账号凭证（ValidateAccount）│
-│  额度巡检调度                          │    │  查询账号额度（QueryQuota）     │
-│  WebSocket 升级转发                    │    │  WebSocket 通信（可选）         │
-└───────────────────────────────────────┘    └────────────────────────────────┘
-              通用平台能力                            上游 API 适配器
-                       ↑                                    ↓
-                       └────── go-plugin (gRPC) ────────────┘
+┌─────────────────────── Core ────────────────────────┐
+│  账号管理 / 调度 / 计费 / 限流 / 订阅 / 管理后台      │
+│                                                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────┐ │
+│  │ PluginService│  │GatewayService│  │ ExtService │ │   Core → Plugin
+│  │ Middleware-  │  │              │  │            │ │
+│  │ Service      │  │              │  │            │ │
+│  └──────────────┘  └──────────────┘  └────────────┘ │
+│         ▲                                            │
+│         │ HostService（反向 stream，经 GRPCBroker）  │   Plugin → Core
+└─────────┼────────────────────────────────────────────┘
+          │
+  ┌───────┴────────────────────────────────────────┐
+  │        Plugin subprocess (hashicorp/go-plugin)  │
+  │                                                 │
+  │  GatewayPlugin / ExtensionPlugin / MiddlewarePl │
+  │  Capabilities: [host.list_groups, ...]          │
+  └─────────────────────────────────────────────────┘
 ```
 
-**请求生命周期**：
+**请求生命周期（含 middleware chain）**：
 
 ```text
-用户请求 ──► Core 鉴权 ──► Core 选账号 ──► Plugin.Forward() ──► 上游 AI API
-                                              │
-                                              ▼
-                                         ForwardResult
-                                       ┌──────┴──────┐
-                                  token 用量      账号状态反馈
-                                  Core 计费       Core 更新账号
-                                                  （限流/封号/过期）
+用户请求
+  │
+  ▼
+Core 鉴权 + 限流 + 选账号
+  │
+  ▼
+Middleware.OnForwardBegin  (按 Priority 升序依次调)
+  │ ├─ Decision=Allow  → 继续
+  │ ├─ Decision=Mutate → 追加 header 继续
+  │ └─ Decision=Deny   → 直接返回给用户
+  ▼
+Gateway.Forward()  ──►  上游 AI API
+  │
+  ▼
+Middleware.OnForwardEnd    (按 Priority 降序依次调，LIFO)
+  │  拿到完整 metadata + 按需 body
+  ▼
+Core 写 usage_log / 计费 / 账号状态处置
+```
+
+**反向调用（插件 → Core）**：
+
+```text
+Plugin.probe()
+  └─ ctx.(HostAware).Host().ListGroups(ctx)
+        │
+        │  gRPC stream  (GRPCBroker 子进程隧道，无需 admin key)
+        ▼
+  Core: HostService interceptor
+        │
+        │  检查 plugin capability set
+        │  未声明 → PermissionDenied
+        ▼
+  Core: groupRepo.List()
 ```
 
 **账号模型**：Core 用一张 `accounts` 表存所有平台账号，靠 `platform` + `type` 区分。SDK `Account` 是 core 传给插件的**最小视图**，只包含 `ID / Name / Platform / Type / Credentials / ProxyURL` —— 调度和计费参数全部留在 core。
@@ -269,15 +401,19 @@ backgroundColor: cssVar('bgSurface')   // → 'var(--ag-bg-surface, #1c2237)'
 
 ```text
 airgate-sdk/
-├── plugin.go              # Plugin 基础接口 + PluginInfo + 可选接口
+├── plugin.go              # Plugin 基础接口 + PluginInfo + Capability 常量 + 可选接口
 ├── gateway.go             # GatewayPlugin 接口
 ├── extension.go           # ExtensionPlugin 接口
+├── middleware.go          # MiddlewarePlugin 接口 + MiddlewareRequest/Event/Decision
+├── host.go                # HostService 客户端接口（反向通道）+ HostAware 可选接口
 ├── models.go              # 共享类型：Account / ForwardRequest / ForwardResult
-├── billing.go             # 计费相关类型
+├── billing.go             # 计费相关类型 + 账号用量视图
 ├── errors.go              # 标准错误（ErrNotSupported 等）
 ├── log.go                 # 日志桥接
 ├── grpc/                  # gRPC 桥接层（hashicorp/go-plugin 适配）
-│   ├── go_plugin.go       # Serve() 入口
+│   ├── go_plugin.go       # Serve() 入口 + GRPCBroker 反向 stream
+│   ├── host_client.go     # 插件侧的 HostService 客户端封装
+│   ├── middleware_*.go    # MiddlewareService client / server
 │   └── *_client.go        # 各插件类型的 client / server
 ├── devserver/             # 本地开发服务器
 │   ├── server.go          # Config + Run() 入口
@@ -285,8 +421,10 @@ airgate-sdk/
 │   ├── proxy.go           # HTTP / SSE / WebSocket 代理
 │   └── static/            # 内嵌管理 UI
 ├── frontend/              # @airgate/theme + @airgate/theme/plugin
-├── proto/                 # protobuf 定义
-└── docs/                  # 风格指南
+├── proto/                 # protobuf 定义（5 个 service: Plugin/Gateway/Extension/Middleware/Host）
+└── docs/
+    ├── adr/               # 架构决策记录（ADR-0001 起）
+    └── plugin-style-guide.md
 ```
 
 **推荐的插件项目结构**：
@@ -357,23 +495,35 @@ Core 启动插件后的消费流程：
 
 ```text
 启动插件进程（go-plugin）
-  → Info()       获取元信息（ID、类型、账号格式、前端声明）
-  → Platform()   获取业务平台键
-  → Models()     获取模型列表（缓存，用于计费）
-  → Routes()     获取路由声明（注册到 HTTP 网关）
-  → GetWebAssets() 提取前端资源（如有）
+  → 通过 GRPCBroker 注册 HostService 反向 stream（若启用）
+  → Info()       获取元信息（ID、类型、Capabilities、账号格式、前端声明）
+  → Capability 校验：
+        有效集 = Info.Capabilities ∩ 插件类型允许集合
+        注册到 HostService interceptor 的 per-plugin context
+  → Init(ctx)    注入 config + log_level + host_broker_id
+  → Start(ctx)
 
-添加/导入账号时：
-  → ValidateAccount(ctx, cred)  验证凭证有效性
+Gateway 插件专属：
+  → Platform() / Models() / Routes() / GetWebAssets()
+  → ValidateAccount(ctx, cred)  添加账号时
+  → QueryQuota(ctx, cred)       定时巡检
 
-定时巡检：
-  → QueryQuota(ctx, cred)  查询额度，结果存入 accounts 表
+Extension 插件专属：
+  → Migrate()
+  → GetBackgroundTasks() + 调度器按 Interval 触发 RunBackgroundTask(name)
+  → HandleRequest / HandleStreamRequest（/api/v1/admin/plugins/:name/rpc/* 透传）
 
-HTTP 请求到达时：
+HTTP 请求到达时（forward 路径）：
   → Core 鉴权 + 限流 + 调度账号
-  → Forward(ctx, req)  调用插件转发
-  → Core 记账（基于 ForwardResult.tokens）
-  → Core 处置账号状态（rate_limited / disabled / expired）
+  → Middleware.OnForwardBegin（按 Priority 升序；Deny → 直接拒绝）
+  → Gateway.Forward(ctx, req)
+  → Middleware.OnForwardEnd（按 Priority 降序，LIFO）
+  → Core 写 usage_log + 处置账号状态（rate_limited / disabled / expired）
+
+插件发起反向调用时：
+  → HostService gRPC interceptor 从 context 取出该插件的 capability set
+  → 未声明 → status.PermissionDenied
+  → 放行 → core 业务层处理
 ```
 
 Core 必须遵守的约定：
@@ -383,6 +533,9 @@ Core 必须遵守的约定：
 - 以插件运行时返回的元信息为准，**不依赖 `plugin.yaml` 做运行时决策**
 - 添加账号时必须调用 `ValidateAccount`，验证失败拒绝保存
 - 账号管理 UI 统一由插件 `FrontendWidgets` 渲染，core 不做默认表单生成
+- **middleware 的失败永远不能 block 生产流量**：`OnForwardBegin/End` 返回 error 只 log warn；唯一阻断途径是 `OnForwardBegin` 返回 `Decision{Action: Deny}`
+- **capability 校验在 interceptor 层强制**：core 业务代码不应再做 capability 判断（单一真相源）
+- 插件**不得**拿到 core 业务数据库的 DSN；core 业务数据一律通过 `HostService` RPC 暴露（详见 [ADR-0001 Decision 1/5](docs/adr/0001-plugin-capability-and-isolation-model.md)）
 
 ## 🤝 贡献 / 反馈
 
