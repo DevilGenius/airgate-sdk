@@ -46,6 +46,18 @@ func (c *grpcPluginContext) Config() sdk.PluginConfig {
 	return c.config
 }
 
+// PluginDSN 实现 sdk.PluginDSNAware：从 core 注入的 config 里读取插件专属 DB DSN。
+//
+// Core 在调度插件 schema 准备完成后，把 plugin_<id> 的受限 role + search_path
+// 拼成完整 DSN，通过 InitRequest.config 注入。插件直接拿到的就是"已经隔离好的
+// 数据库连接串"，无需关心独立 schema 的细节。
+func (c *grpcPluginContext) PluginDSN() string {
+	if c.config == nil {
+		return ""
+	}
+	return c.config.GetString(sdk.PluginDSNConfigKey)
+}
+
 // Host 实现 sdk.HostAware。返回 nil 表示不可用（非错误，调用方做 nil-check）。
 //
 // 失败情形（都返回 nil + 内部记录 err）：

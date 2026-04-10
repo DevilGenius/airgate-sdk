@@ -459,6 +459,8 @@ message MiddlewareEvent {
     string platform    = 5;
     string model       = 6;
     bool   stream      = 7;
+    int64  input_tokens_est = 8;  // 与 MiddlewareRequest 字段对齐：core 侧粗略估算，
+                                  // 便于 middleware 做 estimate vs actual 比对。
 
     // === 响应结果 ===
     int64  status_code    = 20;

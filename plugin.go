@@ -39,22 +39,9 @@ const (
 // 0.3.0 起强制 Capability 声明：没有声明 capability 的插件调用 HostService RPC 会被
 // interceptor 以 PermissionDenied 拒绝（详见 ADR-0001 Decision 4）。SDK <= 0.2.x 的
 // 存量插件通过 sdk_version 字段豁免，但会在管理后台显示"兼容模式"警告。
-const SDKVersion = "0.3.0"
-
-// Capability 常量表。插件在 PluginInfo.Capabilities 里列出它要用的 capability，
-// Core 按 "PluginType → 允许集合" 做交集后得到有效权限集。
 //
-// 命名规范：<domain>.<action>。新增 capability 时在 ADR 里明确语义、owner、允许的插件类型。
-const (
-	// HostService 能力
-	CapabilityHostListGroups          = "host.list_groups"
-	CapabilityHostSelectAccount       = "host.select_account"
-	CapabilityHostProbeForward        = "host.probe_forward"
-	CapabilityHostReportAccountResult = "host.report_account_result"
-
-	// MiddlewareService 能力
-	CapabilityMiddlewareReadBody = "middleware.read_body"
-)
+// Capability 常量、type → allowed map、ValidateCapabilities helper 见 capability.go。
+const SDKVersion = "0.3.0"
 
 // PluginInfo 插件元信息
 type PluginInfo struct {
@@ -73,7 +60,8 @@ type PluginInfo struct {
 	InstructionPresets []string         `json:"instruction_presets"` // 可用的 instructions 预设名称
 	// Capabilities 声明的 HostService / Middleware 能力列表（ADR-0001 Decision 4）。
 	// 使用 CapabilityXxx 常量。旧版 SDK 插件留空即可（sdk_version 豁免生效）。
-	Capabilities []string `json:"capabilities"`
+	// 类型化为 []Capability 后能在编译期捕获拼写错误；详见 capability.go。
+	Capabilities []Capability `json:"capabilities"`
 	// Priority 仅对 type=middleware 生效：Core 按 priority 升序调 OnForwardBegin、
 	// 降序调 OnForwardEnd（LIFO 栈语义）。默认 100。其他类型插件忽略此字段。
 	Priority int32 `json:"priority"`
@@ -90,13 +78,72 @@ type ConfigField struct {
 	Placeholder string `json:"placeholder,omitempty"` // 占位提示
 }
 
-// PluginContext 核心注入给插件的上下文
-// 数据库连接通过 Config 传递 DSN（config.GetString("db_dsn")），插件自行建连
+// PluginContext 核心注入给插件的上下文。
+//
+// 这是一个最小契约：只暴露所有插件都需要的 Logger + Config。其余能力
+// （Host 反向调用、插件专属 DB DSN、未来更多）通过**可选接口**提供，保证
+// 向 PluginContext 加方法永远不是 breaking change。
+//
+// 已知的可选接口：
+//   - HostAware       — 反向调用 core（HostService）
+//   - PluginDSNAware  — 拿到 core 注入的"插件专属数据库" DSN（ADR-0001 Decision 5）
 type PluginContext interface {
 	// Logger 返回结构化日志记录器
 	Logger() *slog.Logger
 	// Config 返回插件配置
 	Config() PluginConfig
+}
+
+// PluginDSNConfigKey 是 core 注入"插件专属数据库" DSN 的标准 config key。
+// 插件作者**不应**直接拼写 "plugin_dsn" 字符串，而应当通过 ctx.PluginDSN() 或
+// GetPluginDSN(ctx) 访问。这个常量公开是为了 core / devserver 设置 config 时
+// 也用同一个键名，单一真相源。
+const PluginDSNConfigKey = "plugin_dsn"
+
+// PluginDSNAware 是可选接口：实现 PluginContext 的对象如果同时实现了
+// PluginDSNAware，插件就能拿到 core 注入的"插件专属数据库" DSN。
+//
+// DSN 中已经预设好 search_path 到独立 schema（plugin_<plugin_id>），插件
+// 直接 sql.Open() + 写 SQL 即可，core 业务表（accounts/users/usage_logs/...）
+// 在 PostgreSQL 层就被 REVOKE 拒绝。详见 ADR-0001 Decision 5。
+//
+// 用法：
+//
+//	import _ "github.com/lib/pq"  // 或其他 driver
+//
+//	func (p *MyPlugin) Init(ctx sdk.PluginContext) error {
+//	    dsn := sdk.GetPluginDSN(ctx)
+//	    if dsn == "" {
+//	        return errors.New("plugin DB not provisioned by core")
+//	    }
+//	    db, err := sql.Open("postgres", dsn)
+//	    if err != nil { return err }
+//	    p.db = db
+//	    return nil
+//	}
+//
+// 不需要 DB 的插件 / dev server / 测试 mock 可以完全忽略此接口。
+type PluginDSNAware interface {
+	// PluginDSN 返回 core 注入的插件专属 DB DSN。
+	// 空字符串 = core 没启用插件 DB 或当前插件不需要（调用方需要 nil/empty check）。
+	PluginDSN() string
+}
+
+// GetPluginDSN 是 PluginDSNAware 的便利访问器：如果 ctx 实现了该接口则返回 DSN，
+// 否则返回空字符串。让插件作者写一行而不是三行。
+func GetPluginDSN(ctx PluginContext) string {
+	if ctx == nil {
+		return ""
+	}
+	if d, ok := ctx.(PluginDSNAware); ok {
+		return d.PluginDSN()
+	}
+	// 兜底：从 config 里捞，便于老 PluginContext 实现（不实现 PluginDSNAware
+	// 但 core 已经把 DSN 放进 config）也能正常工作。
+	if cfg := ctx.Config(); cfg != nil {
+		return cfg.GetString(PluginDSNConfigKey)
+	}
+	return ""
 }
 
 // ConfigWatcher 可选接口，支持配置热更新的插件实现

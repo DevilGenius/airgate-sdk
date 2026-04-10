@@ -2943,13 +2943,14 @@ func (x *MiddlewareRequest) GetRequestHeaders() map[string]*HeaderValues {
 type MiddlewareEvent struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// === 核心元数据（与 MiddlewareRequest 对齐）===
-	RequestId string `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	UserId    int64  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	GroupId   int64  `protobuf:"varint,3,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	AccountId int64  `protobuf:"varint,4,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Platform  string `protobuf:"bytes,5,opt,name=platform,proto3" json:"platform,omitempty"`
-	Model     string `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
-	Stream    bool   `protobuf:"varint,7,opt,name=stream,proto3" json:"stream,omitempty"`
+	RequestId      string `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	UserId         int64  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	GroupId        int64  `protobuf:"varint,3,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	AccountId      int64  `protobuf:"varint,4,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Platform       string `protobuf:"bytes,5,opt,name=platform,proto3" json:"platform,omitempty"`
+	Model          string `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
+	Stream         bool   `protobuf:"varint,7,opt,name=stream,proto3" json:"stream,omitempty"`
+	InputTokensEst int64  `protobuf:"varint,8,opt,name=input_tokens_est,json=inputTokensEst,proto3" json:"input_tokens_est,omitempty"` // 与 MiddlewareRequest 字段对齐：core 侧粗略估算，
 	// === 响应结果 ===
 	StatusCode        int64  `protobuf:"varint,20,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
 	DurationMs        int64  `protobuf:"varint,21,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
@@ -3051,6 +3052,13 @@ func (x *MiddlewareEvent) GetStream() bool {
 		return x.Stream
 	}
 	return false
+}
+
+func (x *MiddlewareEvent) GetInputTokensEst() int64 {
+	if x != nil {
+		return x.InputTokensEst
+	}
+	return 0
 }
 
 func (x *MiddlewareEvent) GetStatusCode() int64 {
@@ -3528,7 +3536,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ab\n" +
 	"\x13RequestHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xce\a\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xf8\a\n" +
 	"\x0fMiddlewareEvent\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x17\n" +
@@ -3538,7 +3546,8 @@ const file_plugin_proto_rawDesc = "" +
 	"account_id\x18\x04 \x01(\x03R\taccountId\x12\x1a\n" +
 	"\bplatform\x18\x05 \x01(\tR\bplatform\x12\x14\n" +
 	"\x05model\x18\x06 \x01(\tR\x05model\x12\x16\n" +
-	"\x06stream\x18\a \x01(\bR\x06stream\x12\x1f\n" +
+	"\x06stream\x18\a \x01(\bR\x06stream\x12(\n" +
+	"\x10input_tokens_est\x18\b \x01(\x03R\x0einputTokensEst\x12\x1f\n" +
 	"\vstatus_code\x18\x14 \x01(\x03R\n" +
 	"statusCode\x12\x1f\n" +
 	"\vduration_ms\x18\x15 \x01(\x03R\n" +

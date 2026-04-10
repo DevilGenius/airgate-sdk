@@ -82,7 +82,12 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 	}
 
 	resp.InstructionPresets = info.InstructionPresets
-	resp.Capabilities = append([]string(nil), info.Capabilities...)
+	if len(info.Capabilities) > 0 {
+		resp.Capabilities = make([]string, len(info.Capabilities))
+		for i, c := range info.Capabilities {
+			resp.Capabilities[i] = string(c)
+		}
+	}
 	resp.Priority = info.Priority
 
 	return resp, nil

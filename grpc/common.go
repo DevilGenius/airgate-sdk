@@ -99,7 +99,12 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 	}
 
 	info.InstructionPresets = resp.InstructionPresets
-	info.Capabilities = append([]string(nil), resp.Capabilities...)
+	if len(resp.Capabilities) > 0 {
+		info.Capabilities = make([]sdk.Capability, len(resp.Capabilities))
+		for i, c := range resp.Capabilities {
+			info.Capabilities[i] = sdk.Capability(c)
+		}
+	}
 	info.Priority = resp.Priority
 
 	b.cachedInfo = &info

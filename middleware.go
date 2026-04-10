@@ -6,6 +6,23 @@ import (
 	"time"
 )
 
+// 中间件超时预算（ADR-0001 §6.1 R2 兜底）。
+//
+// Core 侧的 middleware chain 调度器应当对每次 hook 调用应用 DefaultMiddlewareDeadline，
+// 对整条 chain 的累计耗时应用 DefaultMiddlewareChainBudget。任何一项超时即 log warn
+// 并跳过对应 middleware，**不得**因此 block 主流程。
+//
+// 这里把它们暴露成 SDK 常量是为了：
+//  1. 给 core 端实现一个权威默认值，避免每个 forwarder 重新拍一个数字；
+//  2. 给 middleware 插件作者一个明确的预期（如果你的 hook 经常 > 200ms，
+//     就必须在自己的实现里另开 goroutine 异步处理，而不是寄希望于"也许 core
+//     给我更长时间")；
+//  3. 便于以后的 ADR 调整时一次改完。
+const (
+	DefaultMiddlewareDeadline    = 200 * time.Millisecond
+	DefaultMiddlewareChainBudget = 500 * time.Millisecond
+)
+
 // MiddlewarePlugin 中间件插件接口（ADR-0001 Decision 2）。
 //
 // 实现此接口 + PluginInfo.Type = PluginTypeMiddleware 即注册为"请求/响应拦截层"。
@@ -71,13 +88,14 @@ type MiddlewareRequest struct {
 // MiddlewareEvent OnForwardEnd 的 plain-Go 入参。
 type MiddlewareEvent struct {
 	// 元数据（和 MiddlewareRequest 对齐）
-	RequestID string
-	UserID    int64
-	GroupID   int64
-	AccountID int64
-	Platform  string
-	Model     string
-	Stream    bool
+	RequestID      string
+	UserID         int64
+	GroupID        int64
+	AccountID      int64
+	Platform       string
+	Model          string
+	Stream         bool
+	InputTokensEst int64 // core 侧粗略估算，与 MiddlewareRequest 对齐；插件可对比 InputTokens 看估算偏差
 
 	// 响应结果
 	StatusCode        int32

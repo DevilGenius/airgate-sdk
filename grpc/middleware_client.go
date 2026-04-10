@@ -78,6 +78,7 @@ func middlewareEventToProto(evt *sdk.MiddlewareEvent) *pb.MiddlewareEvent {
 		Platform:          evt.Platform,
 		Model:             evt.Model,
 		Stream:            evt.Stream,
+		InputTokensEst:    evt.InputTokensEst,
 		StatusCode:        int64(evt.StatusCode),
 		DurationMs:        int64(evt.Duration / time.Millisecond),
 		InputTokens:       evt.InputTokens,
