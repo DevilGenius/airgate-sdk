@@ -983,3 +983,415 @@ var ExtensionService_ServiceDesc = grpc.ServiceDesc{
 	},
 	Metadata: "plugin.proto",
 }
+
+const (
+	MiddlewareService_OnForwardBegin_FullMethodName = "/airgate.plugin.v1.MiddlewareService/OnForwardBegin"
+	MiddlewareService_OnForwardEnd_FullMethodName   = "/airgate.plugin.v1.MiddlewareService/OnForwardEnd"
+)
+
+// MiddlewareServiceClient is the client API for MiddlewareService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// ==================== 中间件服务（Core → Plugin，forward 路径拦截） ====================
+//
+// MiddlewareService 让"请求中间层"这种旁路插件能拿到每次 forward 的前后事件：
+//   - OnForwardBegin  — 选完账号 / 还没调 upstream 之前，能改 headers / 拒绝请求
+//   - OnForwardEnd    — upstream 返回之后 / 写 usage_log 之前，拿到完整 metadata
+//
+// 设计原则（详见 ADR-0001 Decision 2/3）：
+//  1. middleware 挂了不能 block 生产：返回 error 只 log warn，流程继续；
+//     只有 OnForwardBegin 明确返回 Action=DENY 才会拒绝请求
+//  2. 多个 middleware 按 priority 排序。Begin 升序、End 降序（LIFO）
+//  3. payload 两段式：默认只传元数据，声明 middleware.read_body capability 的插件
+//     才会收到 request_body / response_body
+//  4. 流式响应的 response_body 只给摘要（首次非空 chunk 拼装），完整流式内容留给
+//     未来的 OnStreamChunk（ADR-0002）
+//
+// 新角色：middleware 插件不是 gateway（不替代 upstream），也不是 extension
+// （不跑后台任务 + 自定义 HTTP）。它在 PluginInfo.type = "middleware" 中声明。
+type MiddlewareServiceClient interface {
+	OnForwardBegin(ctx context.Context, in *MiddlewareRequest, opts ...grpc.CallOption) (*MiddlewareDecision, error)
+	OnForwardEnd(ctx context.Context, in *MiddlewareEvent, opts ...grpc.CallOption) (*Empty, error)
+}
+
+type middlewareServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewMiddlewareServiceClient(cc grpc.ClientConnInterface) MiddlewareServiceClient {
+	return &middlewareServiceClient{cc}
+}
+
+func (c *middlewareServiceClient) OnForwardBegin(ctx context.Context, in *MiddlewareRequest, opts ...grpc.CallOption) (*MiddlewareDecision, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MiddlewareDecision)
+	err := c.cc.Invoke(ctx, MiddlewareService_OnForwardBegin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *middlewareServiceClient) OnForwardEnd(ctx context.Context, in *MiddlewareEvent, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, MiddlewareService_OnForwardEnd_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MiddlewareServiceServer is the server API for MiddlewareService service.
+// All implementations must embed UnimplementedMiddlewareServiceServer
+// for forward compatibility.
+//
+// ==================== 中间件服务（Core → Plugin，forward 路径拦截） ====================
+//
+// MiddlewareService 让"请求中间层"这种旁路插件能拿到每次 forward 的前后事件：
+//   - OnForwardBegin  — 选完账号 / 还没调 upstream 之前，能改 headers / 拒绝请求
+//   - OnForwardEnd    — upstream 返回之后 / 写 usage_log 之前，拿到完整 metadata
+//
+// 设计原则（详见 ADR-0001 Decision 2/3）：
+//  1. middleware 挂了不能 block 生产：返回 error 只 log warn，流程继续；
+//     只有 OnForwardBegin 明确返回 Action=DENY 才会拒绝请求
+//  2. 多个 middleware 按 priority 排序。Begin 升序、End 降序（LIFO）
+//  3. payload 两段式：默认只传元数据，声明 middleware.read_body capability 的插件
+//     才会收到 request_body / response_body
+//  4. 流式响应的 response_body 只给摘要（首次非空 chunk 拼装），完整流式内容留给
+//     未来的 OnStreamChunk（ADR-0002）
+//
+// 新角色：middleware 插件不是 gateway（不替代 upstream），也不是 extension
+// （不跑后台任务 + 自定义 HTTP）。它在 PluginInfo.type = "middleware" 中声明。
+type MiddlewareServiceServer interface {
+	OnForwardBegin(context.Context, *MiddlewareRequest) (*MiddlewareDecision, error)
+	OnForwardEnd(context.Context, *MiddlewareEvent) (*Empty, error)
+	mustEmbedUnimplementedMiddlewareServiceServer()
+}
+
+// UnimplementedMiddlewareServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedMiddlewareServiceServer struct{}
+
+func (UnimplementedMiddlewareServiceServer) OnForwardBegin(context.Context, *MiddlewareRequest) (*MiddlewareDecision, error) {
+	return nil, status.Error(codes.Unimplemented, "method OnForwardBegin not implemented")
+}
+func (UnimplementedMiddlewareServiceServer) OnForwardEnd(context.Context, *MiddlewareEvent) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method OnForwardEnd not implemented")
+}
+func (UnimplementedMiddlewareServiceServer) mustEmbedUnimplementedMiddlewareServiceServer() {}
+func (UnimplementedMiddlewareServiceServer) testEmbeddedByValue()                           {}
+
+// UnsafeMiddlewareServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MiddlewareServiceServer will
+// result in compilation errors.
+type UnsafeMiddlewareServiceServer interface {
+	mustEmbedUnimplementedMiddlewareServiceServer()
+}
+
+func RegisterMiddlewareServiceServer(s grpc.ServiceRegistrar, srv MiddlewareServiceServer) {
+	// If the following call panics, it indicates UnimplementedMiddlewareServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&MiddlewareService_ServiceDesc, srv)
+}
+
+func _MiddlewareService_OnForwardBegin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MiddlewareRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MiddlewareServiceServer).OnForwardBegin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MiddlewareService_OnForwardBegin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MiddlewareServiceServer).OnForwardBegin(ctx, req.(*MiddlewareRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MiddlewareService_OnForwardEnd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MiddlewareEvent)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MiddlewareServiceServer).OnForwardEnd(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MiddlewareService_OnForwardEnd_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MiddlewareServiceServer).OnForwardEnd(ctx, req.(*MiddlewareEvent))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// MiddlewareService_ServiceDesc is the grpc.ServiceDesc for MiddlewareService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var MiddlewareService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "airgate.plugin.v1.MiddlewareService",
+	HandlerType: (*MiddlewareServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "OnForwardBegin",
+			Handler:    _MiddlewareService_OnForwardBegin_Handler,
+		},
+		{
+			MethodName: "OnForwardEnd",
+			Handler:    _MiddlewareService_OnForwardEnd_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "plugin.proto",
+}
+
+const (
+	HostService_SelectAccount_FullMethodName       = "/airgate.plugin.v1.HostService/SelectAccount"
+	HostService_ProbeForward_FullMethodName        = "/airgate.plugin.v1.HostService/ProbeForward"
+	HostService_ListGroups_FullMethodName          = "/airgate.plugin.v1.HostService/ListGroups"
+	HostService_ReportAccountResult_FullMethodName = "/airgate.plugin.v1.HostService/ReportAccountResult"
+)
+
+// HostServiceClient is the client API for HostService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type HostServiceClient interface {
+	// 选号：根据 (group_id, model) 走和真实用户请求完全相同的调度路径。
+	// 探测插件用它"以分组为单位"找出当前活跃账号。
+	SelectAccount(ctx context.Context, in *HostSelectAccountRequest, opts ...grpc.CallOption) (*HostSelectAccountResponse, error)
+	// 黑盒探测：内部组装一次最小的 chat completion 请求并直接执行。
+	// - 跳过 usage_log 写入
+	// - 跳过用户余额扣款
+	// - 仍然调 scheduler.ReportResult（探测信号让账号状态机继续受益）
+	// model 为空时由 Core 取该 platform 的第一个 model。
+	ProbeForward(ctx context.Context, in *HostProbeForwardRequest, opts ...grpc.CallOption) (*HostProbeForwardResponse, error)
+	// 列出所有分组（带 platform / 状态等基础字段），供插件遍历探测目标。
+	ListGroups(ctx context.Context, in *HostListGroupsRequest, opts ...grpc.CallOption) (*HostListGroupsResponse, error)
+	// 把账号调用结果反馈给 scheduler 的失败计数器/状态机。
+	// 探测插件可在 ProbeForward 之外的链路（比如自己的二次重试）独立上报。
+	ReportAccountResult(ctx context.Context, in *HostReportAccountResultRequest, opts ...grpc.CallOption) (*Empty, error)
+}
+
+type hostServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewHostServiceClient(cc grpc.ClientConnInterface) HostServiceClient {
+	return &hostServiceClient{cc}
+}
+
+func (c *hostServiceClient) SelectAccount(ctx context.Context, in *HostSelectAccountRequest, opts ...grpc.CallOption) (*HostSelectAccountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HostSelectAccountResponse)
+	err := c.cc.Invoke(ctx, HostService_SelectAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hostServiceClient) ProbeForward(ctx context.Context, in *HostProbeForwardRequest, opts ...grpc.CallOption) (*HostProbeForwardResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HostProbeForwardResponse)
+	err := c.cc.Invoke(ctx, HostService_ProbeForward_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hostServiceClient) ListGroups(ctx context.Context, in *HostListGroupsRequest, opts ...grpc.CallOption) (*HostListGroupsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HostListGroupsResponse)
+	err := c.cc.Invoke(ctx, HostService_ListGroups_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hostServiceClient) ReportAccountResult(ctx context.Context, in *HostReportAccountResultRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, HostService_ReportAccountResult_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// HostServiceServer is the server API for HostService service.
+// All implementations must embed UnimplementedHostServiceServer
+// for forward compatibility.
+type HostServiceServer interface {
+	// 选号：根据 (group_id, model) 走和真实用户请求完全相同的调度路径。
+	// 探测插件用它"以分组为单位"找出当前活跃账号。
+	SelectAccount(context.Context, *HostSelectAccountRequest) (*HostSelectAccountResponse, error)
+	// 黑盒探测：内部组装一次最小的 chat completion 请求并直接执行。
+	// - 跳过 usage_log 写入
+	// - 跳过用户余额扣款
+	// - 仍然调 scheduler.ReportResult（探测信号让账号状态机继续受益）
+	// model 为空时由 Core 取该 platform 的第一个 model。
+	ProbeForward(context.Context, *HostProbeForwardRequest) (*HostProbeForwardResponse, error)
+	// 列出所有分组（带 platform / 状态等基础字段），供插件遍历探测目标。
+	ListGroups(context.Context, *HostListGroupsRequest) (*HostListGroupsResponse, error)
+	// 把账号调用结果反馈给 scheduler 的失败计数器/状态机。
+	// 探测插件可在 ProbeForward 之外的链路（比如自己的二次重试）独立上报。
+	ReportAccountResult(context.Context, *HostReportAccountResultRequest) (*Empty, error)
+	mustEmbedUnimplementedHostServiceServer()
+}
+
+// UnimplementedHostServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedHostServiceServer struct{}
+
+func (UnimplementedHostServiceServer) SelectAccount(context.Context, *HostSelectAccountRequest) (*HostSelectAccountResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SelectAccount not implemented")
+}
+func (UnimplementedHostServiceServer) ProbeForward(context.Context, *HostProbeForwardRequest) (*HostProbeForwardResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ProbeForward not implemented")
+}
+func (UnimplementedHostServiceServer) ListGroups(context.Context, *HostListGroupsRequest) (*HostListGroupsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListGroups not implemented")
+}
+func (UnimplementedHostServiceServer) ReportAccountResult(context.Context, *HostReportAccountResultRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReportAccountResult not implemented")
+}
+func (UnimplementedHostServiceServer) mustEmbedUnimplementedHostServiceServer() {}
+func (UnimplementedHostServiceServer) testEmbeddedByValue()                     {}
+
+// UnsafeHostServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to HostServiceServer will
+// result in compilation errors.
+type UnsafeHostServiceServer interface {
+	mustEmbedUnimplementedHostServiceServer()
+}
+
+func RegisterHostServiceServer(s grpc.ServiceRegistrar, srv HostServiceServer) {
+	// If the following call panics, it indicates UnimplementedHostServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&HostService_ServiceDesc, srv)
+}
+
+func _HostService_SelectAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostSelectAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).SelectAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_SelectAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).SelectAccount(ctx, req.(*HostSelectAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HostService_ProbeForward_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostProbeForwardRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).ProbeForward(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_ProbeForward_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).ProbeForward(ctx, req.(*HostProbeForwardRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HostService_ListGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostListGroupsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).ListGroups(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_ListGroups_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).ListGroups(ctx, req.(*HostListGroupsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HostService_ReportAccountResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostReportAccountResultRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).ReportAccountResult(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_ReportAccountResult_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).ReportAccountResult(ctx, req.(*HostReportAccountResultRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// HostService_ServiceDesc is the grpc.ServiceDesc for HostService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var HostService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "airgate.plugin.v1.HostService",
+	HandlerType: (*HostServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "SelectAccount",
+			Handler:    _HostService_SelectAccount_Handler,
+		},
+		{
+			MethodName: "ProbeForward",
+			Handler:    _HostService_ProbeForward_Handler,
+		},
+		{
+			MethodName: "ListGroups",
+			Handler:    _HostService_ListGroups_Handler,
+		},
+		{
+			MethodName: "ReportAccountResult",
+			Handler:    _HostService_ReportAccountResult_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "plugin.proto",
+}

@@ -4,14 +4,21 @@ import (
 	"context"
 	"encoding/json"
 
+	goplugin "github.com/hashicorp/go-plugin"
+
 	sdk "github.com/DouDOU-start/airgate-sdk"
 	pb "github.com/DouDOU-start/airgate-sdk/proto"
 )
 
 // PluginGRPCServer 将 sdk.Plugin 实现包装为 gRPC 服务端
+//
+// Broker 字段由 GatewayGRPCPlugin / ExtensionGRPCPlugin 在 GRPCServer 钩子里注入。
+// 它代表插件进程侧的 hashicorp/go-plugin GRPCBroker，用于通过 broker.Dial() 拿到
+// Core 暴露的 HostService 反向连接。
 type PluginGRPCServer struct {
 	pb.UnimplementedPluginServiceServer
-	Impl sdk.Plugin
+	Impl   sdk.Plugin
+	Broker *goplugin.GRPCBroker
 }
 
 func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginInfoResponse, error) {
@@ -75,6 +82,8 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 	}
 
 	resp.InstructionPresets = info.InstructionPresets
+	resp.Capabilities = append([]string(nil), info.Capabilities...)
+	resp.Priority = info.Priority
 
 	return resp, nil
 }
@@ -87,7 +96,9 @@ func (s *PluginGRPCServer) Init(_ context.Context, req *pb.InitRequest) (*pb.Emp
 	}
 
 	pctx := &grpcPluginContext{
-		config: &mapConfig{data: req.Config},
+		config:       &mapConfig{data: req.Config},
+		broker:       s.Broker,
+		hostBrokerID: req.HostBrokerId,
 	}
 	if err := s.Impl.Init(pctx); err != nil {
 		return nil, err

@@ -20,15 +20,41 @@ type Plugin interface {
 }
 
 // PluginType 插件类型
+//
+// 三种角色：
+//   - gateway    — upstream adapter（airgate-openai 这类），Core → Plugin 走 GatewayService.Forward
+//   - extension  — 后台任务 + 自定义 HTTP 路由（airgate-health / airgate-epay 这类）
+//   - middleware — forward 路径的旁路拦截层（请求/响应记录 / 审计 / 脱敏），
+//     Core → Plugin 走 MiddlewareService.OnForwardBegin/End（详见 ADR-0001 Decision 2/3）
 type PluginType string
 
 const (
-	PluginTypeGateway   PluginType = "gateway"
-	PluginTypeExtension PluginType = "extension"
+	PluginTypeGateway    PluginType = "gateway"
+	PluginTypeExtension  PluginType = "extension"
+	PluginTypeMiddleware PluginType = "middleware"
 )
 
-// SDKVersion 当前 SDK 版本，插件编译时自动嵌入
-const SDKVersion = "0.1.0"
+// SDKVersion 当前 SDK 版本，插件编译时自动嵌入。
+//
+// 0.3.0 起强制 Capability 声明：没有声明 capability 的插件调用 HostService RPC 会被
+// interceptor 以 PermissionDenied 拒绝（详见 ADR-0001 Decision 4）。SDK <= 0.2.x 的
+// 存量插件通过 sdk_version 字段豁免，但会在管理后台显示"兼容模式"警告。
+const SDKVersion = "0.3.0"
+
+// Capability 常量表。插件在 PluginInfo.Capabilities 里列出它要用的 capability，
+// Core 按 "PluginType → 允许集合" 做交集后得到有效权限集。
+//
+// 命名规范：<domain>.<action>。新增 capability 时在 ADR 里明确语义、owner、允许的插件类型。
+const (
+	// HostService 能力
+	CapabilityHostListGroups          = "host.list_groups"
+	CapabilityHostSelectAccount       = "host.select_account"
+	CapabilityHostProbeForward        = "host.probe_forward"
+	CapabilityHostReportAccountResult = "host.report_account_result"
+
+	// MiddlewareService 能力
+	CapabilityMiddlewareReadBody = "middleware.read_body"
+)
 
 // PluginInfo 插件元信息
 type PluginInfo struct {
@@ -38,13 +64,19 @@ type PluginInfo struct {
 	SDKVersion         string           `json:"sdk_version"`         // 编译时使用的 SDK 版本，Core 用于兼容性检查
 	Description        string           `json:"description"`         // 简要描述
 	Author             string           `json:"author"`              // 作者
-	Type               PluginType       `json:"type"`                // gateway / extension
+	Type               PluginType       `json:"type"`                // gateway / extension / middleware
 	Dependencies       []string         `json:"dependencies"`        // 依赖的其他插件 ID（Core 确保加载顺序）
 	ConfigSchema       []ConfigField    `json:"config_schema"`       // 配置项声明（Core 可据此验证 + 生成 UI）
 	AccountTypes       []AccountType    `json:"account_types"`       // 账号类型声明
 	FrontendPages      []FrontendPage   `json:"frontend_pages"`      // 前端页面声明
 	FrontendWidgets    []FrontendWidget `json:"frontend_widgets"`    // 前端组件嵌入声明
 	InstructionPresets []string         `json:"instruction_presets"` // 可用的 instructions 预设名称
+	// Capabilities 声明的 HostService / Middleware 能力列表（ADR-0001 Decision 4）。
+	// 使用 CapabilityXxx 常量。旧版 SDK 插件留空即可（sdk_version 豁免生效）。
+	Capabilities []string `json:"capabilities"`
+	// Priority 仅对 type=middleware 生效：Core 按 priority 升序调 OnForwardBegin、
+	// 降序调 OnForwardEnd（LIFO 栈语义）。默认 100。其他类型插件忽略此字段。
+	Priority int32 `json:"priority"`
 }
 
 // ConfigField 配置项声明

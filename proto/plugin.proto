@@ -45,6 +45,117 @@ service ExtensionService {
     rpc HandleStreamRequest(HttpRequest) returns (stream HttpResponseChunk);
 }
 
+// ==================== 中间件服务（Core → Plugin，forward 路径拦截） ====================
+//
+// MiddlewareService 让"请求中间层"这种旁路插件能拿到每次 forward 的前后事件：
+//   - OnForwardBegin  — 选完账号 / 还没调 upstream 之前，能改 headers / 拒绝请求
+//   - OnForwardEnd    — upstream 返回之后 / 写 usage_log 之前，拿到完整 metadata
+//
+// 设计原则（详见 ADR-0001 Decision 2/3）：
+//   1. middleware 挂了不能 block 生产：返回 error 只 log warn，流程继续；
+//      只有 OnForwardBegin 明确返回 Action=DENY 才会拒绝请求
+//   2. 多个 middleware 按 priority 排序。Begin 升序、End 降序（LIFO）
+//   3. payload 两段式：默认只传元数据，声明 middleware.read_body capability 的插件
+//      才会收到 request_body / response_body
+//   4. 流式响应的 response_body 只给摘要（首次非空 chunk 拼装），完整流式内容留给
+//      未来的 OnStreamChunk（ADR-0002）
+//
+// 新角色：middleware 插件不是 gateway（不替代 upstream），也不是 extension
+//（不跑后台任务 + 自定义 HTTP）。它在 PluginInfo.type = "middleware" 中声明。
+service MiddlewareService {
+    rpc OnForwardBegin(MiddlewareRequest) returns (MiddlewareDecision);
+    rpc OnForwardEnd(MiddlewareEvent) returns (Empty);
+}
+
+// ==================== Host 服务（反向调用：插件 → Core） ====================
+//
+// 由 Core 实现，通过 hashicorp/go-plugin 的 GRPCBroker 暴露给插件子进程。
+// 替代旧的 admin HTTP API + admin_api_key 模式：插件不再需要 HTTP client、
+// 不再需要 Bearer 鉴权——broker 的子进程隧道天然互信。
+//
+// 设计原则（克制暴露面）：
+//   1. 只暴露插件**确实需要**的 RPC，未来需要再加；
+//   2. 副作用类 RPC（Forward / ProbeForward / ReportAccountResult）必须明确语义边界；
+//   3. ProbeForward 与 Forward 分开，便于权限控制 + 计费跳过 + 日志区分。
+//
+// 当前提供的最小集（v1）：
+//   - SelectAccount       — 调度选号（同用户路径）
+//   - ProbeForward        — 黑盒探测请求：走完整调度但跳过 usage_log / 余额扣款
+//   - ListGroups          — 读取当前所有分组（用于探测目标遍历）
+//   - ReportAccountResult — 反馈账号调用结果到状态机
+//
+// 未来可能新增：Forward（普通业务转发，需要严格的用户上下文设计）、
+// ListAccounts、GetPlatformModels 等。
+
+service HostService {
+    // 选号：根据 (group_id, model) 走和真实用户请求完全相同的调度路径。
+    // 探测插件用它"以分组为单位"找出当前活跃账号。
+    rpc SelectAccount(HostSelectAccountRequest) returns (HostSelectAccountResponse);
+
+    // 黑盒探测：内部组装一次最小的 chat completion 请求并直接执行。
+    // - 跳过 usage_log 写入
+    // - 跳过用户余额扣款
+    // - 仍然调 scheduler.ReportResult（探测信号让账号状态机继续受益）
+    // model 为空时由 Core 取该 platform 的第一个 model。
+    rpc ProbeForward(HostProbeForwardRequest) returns (HostProbeForwardResponse);
+
+    // 列出所有分组（带 platform / 状态等基础字段），供插件遍历探测目标。
+    rpc ListGroups(HostListGroupsRequest) returns (HostListGroupsResponse);
+
+    // 把账号调用结果反馈给 scheduler 的失败计数器/状态机。
+    // 探测插件可在 ProbeForward 之外的链路（比如自己的二次重试）独立上报。
+    rpc ReportAccountResult(HostReportAccountResultRequest) returns (Empty);
+}
+
+message HostSelectAccountRequest {
+    int64  group_id    = 1;
+    string model       = 2; // 可空：空时 Core 用 platform 的第一个 model
+    string session_id  = 3; // 可空
+    repeated int64 exclude_account_ids = 4;
+}
+
+message HostSelectAccountResponse {
+    int64  account_id   = 1;
+    string account_name = 2;
+    string platform     = 3;
+}
+
+message HostProbeForwardRequest {
+    int64  group_id = 1;
+    string model    = 2; // 可空：自动取 platform 第一个 model
+}
+
+message HostProbeForwardResponse {
+    bool   success      = 1;
+    int64  account_id   = 2; // 本次实际命中的账号 ID（用于运维诊断）
+    string platform     = 3;
+    string model        = 4; // 实际探测用的 model
+    int64  status_code  = 5;
+    int64  latency_ms   = 6;
+    string error_kind   = 7; // "" / "no_account" / "scheduler" / "upstream_5xx" / "timeout" / ...
+    string error_msg    = 8;
+}
+
+message HostListGroupsRequest {}
+
+message HostGroup {
+    int64  id              = 1;
+    string name            = 2;
+    string platform        = 3;
+    bool   is_exclusive    = 4;
+    double rate_multiplier = 5;
+}
+
+message HostListGroupsResponse {
+    repeated HostGroup groups = 1;
+}
+
+message HostReportAccountResultRequest {
+    int64  account_id = 1;
+    bool   success    = 2;
+    string error_msg  = 3; // 失败时上报，便于调试
+}
+
 // ==================== 通用消息 ====================
 
 message Empty {}
@@ -74,6 +185,13 @@ message PluginInfoResponse {
     repeated string dependencies = 11;                // 依赖的其他插件 ID
     repeated ConfigFieldProto config_schema = 12;     // 配置项声明
     repeated string instruction_presets = 13;         // 可用的 instructions 预设名称列表
+    // capabilities 声明的 HostService / Middleware 能力。Core 启动时按
+    // "插件类型 → 允许集合" 做交集，gRPC interceptor 按此 set 做准入校验。
+    // SDK 版本 <= 0.2.x 的插件豁免（兼容存量），0.3.x 起强制。详见 ADR-0001 Decision 4。
+    repeated string capabilities = 14;
+    // priority 中间件链中的排序权重（数值越小越早进 Begin、越晚出 End）。
+    // 仅 type="middleware" 插件使用；其他类型忽略。默认 100。
+    int32 priority = 15;
 }
 
 message ConfigFieldProto {
@@ -119,6 +237,11 @@ message FrontendWidgetProto {
 message InitRequest {
     map<string, string> config = 1;
     string log_level = 2;
+    // host_broker_id 是 Core 通过 hashicorp/go-plugin GRPCBroker 启动的
+    // HostService stream 的 ID。插件 Init 时拿到 ID 后，可以通过 broker.Dial(id)
+    // 拿到 HostService 的 grpc client，回调 Core 提供的能力（SelectAccount /
+    // ProbeForward / ListGroups 等）。0 表示 Core 没启用 HostService。
+    uint32 host_broker_id = 3;
 }
 
 // ==================== 网关消息 ====================
@@ -298,4 +421,86 @@ message WebAssetFile {
 message WebAssetsResponse {
     repeated WebAssetFile files = 1;
     bool has_assets = 2;
+}
+
+// ==================== 中间件消息 ====================
+//
+// MiddlewareRequest / MiddlewareEvent / MiddlewareDecision 用于 MiddlewareService。
+// 详细字段语义见 ADR-0001 Decision 3。
+
+// MiddlewareRequest OnForwardBegin 的输入：请求元数据 + 可选的 request body。
+message MiddlewareRequest {
+    // === 核心元数据（默认总是填充）===
+    string request_id       = 1;  // core 为本次请求分配的唯一 ID（便于跨 Begin/End 关联）
+    int64  user_id          = 2;
+    int64  group_id         = 3;
+    int64  account_id       = 4;  // 已由 scheduler 选出
+    string platform         = 5;
+    string model            = 6;
+    bool   stream           = 7;
+    int64  input_tokens_est = 8;  // core 侧粗略估算，仅用于早期决策
+
+    // metadata KV bag：供多个 middleware 之间传递上下文（Open Question Q-open-3）。
+    // 命名空间规则暂不强制，未来可能收紧。
+    map<string, string> metadata = 9;
+
+    // === 按需字段（声明了 middleware.read_body capability 的插件才会收到）===
+    bytes request_body                         = 100;
+    map<string, HeaderValues> request_headers  = 101;
+}
+
+// MiddlewareEvent OnForwardEnd 的输入：完整的请求 + 响应元数据。
+message MiddlewareEvent {
+    // === 核心元数据（与 MiddlewareRequest 对齐）===
+    string request_id  = 1;
+    int64  user_id     = 2;
+    int64  group_id    = 3;
+    int64  account_id  = 4;
+    string platform    = 5;
+    string model       = 6;
+    bool   stream      = 7;
+
+    // === 响应结果 ===
+    int64  status_code    = 20;
+    int64  duration_ms    = 21;
+    int64  input_tokens   = 22;
+    int64  output_tokens  = 23;
+    int64  cached_input_tokens = 24;
+    int64  first_token_ms = 25;
+    string error_kind     = 26; // "" / "upstream_5xx" / "timeout" / "no_account" / ...
+    string error_msg      = 27; // 限长 512，见 core 实现
+
+    // 费用快照（core 已计算好）
+    double input_cost     = 30;
+    double output_cost    = 31;
+    double cached_input_cost = 32;
+
+    // metadata 延续自 OnForwardBegin 的 bag
+    map<string, string> metadata = 40;
+
+    // === 按需字段（声明了 middleware.read_body capability 的插件才会收到）===
+    // 流式响应时 response_body 只给摘要（首次非空 chunk 拼装），完整流式内容
+    // 留给未来的 OnStreamChunk（ADR-0002）。
+    bytes response_body                         = 100;
+    map<string, HeaderValues> response_headers  = 101;
+}
+
+// MiddlewareDecision OnForwardBegin 的输出：放行 / 拒绝 / 改请求。
+message MiddlewareDecision {
+    enum Action {
+        ALLOW  = 0; // 默认放行
+        DENY   = 1; // 拒绝请求，status_code + error_message 会直接返回给用户
+        MUTATE = 2; // 放行但修改请求（当前只支持 set_headers）
+    }
+    Action action = 1;
+
+    // action=DENY 时的错误码 / 文案（对用户可见）
+    int32  deny_status_code = 10; // 默认 403 if Action=DENY and 未指定
+    string deny_message     = 11;
+
+    // action=MUTATE 时要追加/覆盖的请求头
+    map<string, HeaderValues> set_headers = 20;
+
+    // 贯穿式 metadata：无论 allow/deny/mutate，都能往 bag 里写东西供后续 middleware / End 使用
+    map<string, string> metadata = 30;
 }

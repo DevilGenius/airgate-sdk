@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	goplugin "github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
@@ -15,24 +16,34 @@ import (
 var (
 	_ goplugin.GRPCPlugin = (*GatewayGRPCPlugin)(nil)
 	_ goplugin.GRPCPlugin = (*ExtensionGRPCPlugin)(nil)
+	_ goplugin.GRPCPlugin = (*MiddlewareGRPCPlugin)(nil)
 )
 
 // GatewayGRPCPlugin 实现 hashicorp/go-plugin.GRPCPlugin 接口
+//
+// HostImpl 字段由 Core 在构造 ClientConfig 时注入。当 HostImpl 非 nil 时，
+// GRPCClient 钩子会通过 GRPCBroker 启一条新的 stream，注册 HostService server，
+// 把 stream id 通过 pluginBase.hostBrokerID 透传给后续 Init 调用。
+//
+// 插件进程构造 GRPCServer 时不会用到 HostImpl（HostImpl 只在 host 侧有值），
+// 所以插件二进制 main.go 里 Serve(impl) 时不需要也不能填 HostImpl。
 type GatewayGRPCPlugin struct {
 	goplugin.Plugin
-	Impl sdk.GatewayPlugin
+	Impl     sdk.GatewayPlugin
+	HostImpl pb.HostServiceServer // host 侧注入；plugin 侧为 nil
 }
 
-func (p *GatewayGRPCPlugin) GRPCServer(_ *goplugin.GRPCBroker, s *grpc.Server) error {
-	pb.RegisterPluginServiceServer(s, &PluginGRPCServer{Impl: p.Impl})
+func (p *GatewayGRPCPlugin) GRPCServer(broker *goplugin.GRPCBroker, s *grpc.Server) error {
+	pb.RegisterPluginServiceServer(s, &PluginGRPCServer{Impl: p.Impl, Broker: broker})
 	pb.RegisterGatewayServiceServer(s, &GatewayGRPCServer{Impl: p.Impl})
 	return nil
 }
 
-func (p *GatewayGRPCPlugin) GRPCClient(_ context.Context, _ *goplugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+func (p *GatewayGRPCPlugin) GRPCClient(_ context.Context, broker *goplugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+	hostBrokerID := startHostStream(broker, p.HostImpl)
 	pluginClient := pb.NewPluginServiceClient(c)
 	return &GatewayGRPCClient{
-		pluginBase: pluginBase{plugin: pluginClient},
+		pluginBase: pluginBase{plugin: pluginClient, hostBrokerID: hostBrokerID},
 		gateway:    pb.NewGatewayServiceClient(c),
 	}, nil
 }
@@ -40,23 +51,74 @@ func (p *GatewayGRPCPlugin) GRPCClient(_ context.Context, _ *goplugin.GRPCBroker
 // ExtensionGRPCPlugin 实现扩展插件的 go-plugin 接口
 type ExtensionGRPCPlugin struct {
 	goplugin.Plugin
-	Impl sdk.ExtensionPlugin
+	Impl     sdk.ExtensionPlugin
+	HostImpl pb.HostServiceServer
 }
 
-func (p *ExtensionGRPCPlugin) GRPCServer(_ *goplugin.GRPCBroker, s *grpc.Server) error {
-	pb.RegisterPluginServiceServer(s, &PluginGRPCServer{Impl: p.Impl})
+func (p *ExtensionGRPCPlugin) GRPCServer(broker *goplugin.GRPCBroker, s *grpc.Server) error {
+	pb.RegisterPluginServiceServer(s, &PluginGRPCServer{Impl: p.Impl, Broker: broker})
 	extServer := &ExtensionGRPCServer{Impl: p.Impl}
 	extServer.initRouter()
 	pb.RegisterExtensionServiceServer(s, extServer)
 	return nil
 }
 
-func (p *ExtensionGRPCPlugin) GRPCClient(_ context.Context, _ *goplugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+func (p *ExtensionGRPCPlugin) GRPCClient(_ context.Context, broker *goplugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+	hostBrokerID := startHostStream(broker, p.HostImpl)
 	pluginClient := pb.NewPluginServiceClient(c)
 	return &ExtensionGRPCClient{
-		pluginBase: pluginBase{plugin: pluginClient},
+		pluginBase: pluginBase{plugin: pluginClient, hostBrokerID: hostBrokerID},
 		extension:  pb.NewExtensionServiceClient(c),
 	}, nil
+}
+
+// MiddlewareGRPCPlugin 实现中间件插件的 go-plugin 接口（ADR-0001 Decision 2）。
+//
+// HostImpl 用法与 GatewayGRPCPlugin 相同：core 侧注入 HostService 实现，
+// 在 GRPCClient 钩子里通过 GRPCBroker 启反向 stream。
+type MiddlewareGRPCPlugin struct {
+	goplugin.Plugin
+	Impl     sdk.MiddlewarePlugin
+	HostImpl pb.HostServiceServer
+}
+
+func (p *MiddlewareGRPCPlugin) GRPCServer(broker *goplugin.GRPCBroker, s *grpc.Server) error {
+	pb.RegisterPluginServiceServer(s, &PluginGRPCServer{Impl: p.Impl, Broker: broker})
+	pb.RegisterMiddlewareServiceServer(s, &MiddlewareGRPCServer{Impl: p.Impl})
+	return nil
+}
+
+func (p *MiddlewareGRPCPlugin) GRPCClient(_ context.Context, broker *goplugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+	hostBrokerID := startHostStream(broker, p.HostImpl)
+	pluginClient := pb.NewPluginServiceClient(c)
+	return &MiddlewareGRPCClient{
+		pluginBase: pluginBase{plugin: pluginClient, hostBrokerID: hostBrokerID},
+		mw:         pb.NewMiddlewareServiceClient(c),
+	}, nil
+}
+
+// startHostStream 在 host 进程侧通过 GRPCBroker 启动一条新的 stream，
+// 注册 HostService server，返回 stream id（作为 host_broker_id 透传给插件）。
+//
+// hostImpl 为 nil 时表示 Core 没启用 HostService，返回 0；插件 Init 收到 0
+// 后会在 ctx.Host() 时返回 nil。这是软失败：旧版 Core / 不需要 host 的部署
+// 都正常工作。
+func startHostStream(broker *goplugin.GRPCBroker, hostImpl pb.HostServiceServer) uint32 {
+	if hostImpl == nil || broker == nil {
+		return 0
+	}
+	id := broker.NextId()
+	go broker.AcceptAndServe(id, func(opts []grpc.ServerOption) *grpc.Server {
+		opts = append(opts,
+			grpc.MaxRecvMsgSize(PluginGRPCMaxMessageBytes),
+			grpc.MaxSendMsgSize(PluginGRPCMaxMessageBytes),
+		)
+		s := grpc.NewServer(opts...)
+		pb.RegisterHostServiceServer(s, hostImpl)
+		return s
+	})
+	slog.Debug("HostService stream 已就绪", "broker_id", id)
+	return id
 }
 
 // Serve 便捷函数：启动插件 gRPC 服务（插件的 main.go 中调用）
@@ -76,8 +138,10 @@ func Serve(impl interface{}) {
 		pluginMap[PluginKeyGateway] = &GatewayGRPCPlugin{Impl: p}
 	case sdk.ExtensionPlugin:
 		pluginMap[PluginKeyExtension] = &ExtensionGRPCPlugin{Impl: p}
+	case sdk.MiddlewarePlugin:
+		pluginMap[PluginKeyMiddleware] = &MiddlewareGRPCPlugin{Impl: p}
 	default:
-		panic(fmt.Sprintf("airgate-sdk: Serve() 收到未知的插件类型 %T，支持的类型: GatewayPlugin, ExtensionPlugin", impl))
+		panic(fmt.Sprintf("airgate-sdk: Serve() 收到未知的插件类型 %T，支持的类型: GatewayPlugin, ExtensionPlugin, MiddlewarePlugin", impl))
 	}
 
 	goplugin.Serve(&goplugin.ServeConfig{

@@ -11,6 +11,7 @@ var Handshake = plugin.HandshakeConfig{
 
 // PluginMap 插件类型到 go-plugin.Plugin 的映射键名
 const (
-	PluginKeyGateway   = "gateway"
-	PluginKeyExtension = "extension"
+	PluginKeyGateway    = "gateway"
+	PluginKeyExtension  = "extension"
+	PluginKeyMiddleware = "middleware"
 )

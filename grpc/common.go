@@ -19,9 +19,13 @@ func withTimeout() (context.Context, context.CancelFunc) {
 
 // pluginBase 封装所有 gRPC Client 共有的 Plugin 接口方法，
 // 通过嵌入到各具体 Client 中消除重复代码
+//
+// hostBrokerID 由 *GRPCPlugin.GRPCClient 钩子在启动 HostService stream 后填入，
+// 在 Init() 时透传给插件进程的 InitRequest。0 表示 host 不可用。
 type pluginBase struct {
-	plugin     pb.PluginServiceClient
-	cachedInfo *sdk.PluginInfo
+	plugin       pb.PluginServiceClient
+	cachedInfo   *sdk.PluginInfo
+	hostBrokerID uint32
 }
 
 // Info 获取插件信息（带缓存）
@@ -95,6 +99,8 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 	}
 
 	info.InstructionPresets = resp.InstructionPresets
+	info.Capabilities = append([]string(nil), resp.Capabilities...)
+	info.Priority = resp.Priority
 
 	b.cachedInfo = &info
 	return info
@@ -114,8 +120,9 @@ func (b *pluginBase) Init(ctx sdk.PluginContext) error {
 	grpcCtx, cancel := withTimeout()
 	defer cancel()
 	_, err := b.plugin.Init(grpcCtx, &pb.InitRequest{
-		Config:   config,
-		LogLevel: logLevel,
+		Config:       config,
+		LogLevel:     logLevel,
+		HostBrokerId: b.hostBrokerID,
 	})
 	return err
 }
