@@ -13,17 +13,38 @@ type Account struct {
 }
 
 // ModelInfo 模型信息（插件声明，Core 缓存用于计费）
+//
+// 定价遵循 OpenAI 官方规则：
+//   - 标准档（默认）：InputPrice / OutputPrice / CachedInputPrice
+//   - Priority 档：*Priority 字段；未配置时 CalculateCost 以标准价 × 2 兜底
+//   - Flex / Batch 档：*Flex 字段；未配置时以标准价 × 0.5 兜底
+//   - 长上下文档（仅 gpt-5.4 家族）：当完整 input_tokens 超过 LongContextThreshold
+//     且服务档不是 priority 时，整次请求按倍率计费
 type ModelInfo struct {
-	ID                       string  `json:"id"`                // 如 "claude-opus-4-20250514"
-	Name                     string  `json:"name"`              // 显示名 "Claude Opus 4"
-	ContextWindow            int     `json:"context_window"`    // 上下文窗口大小（tokens）
-	MaxOutputTokens          int     `json:"max_output_tokens"` // 最大输出 token 数
-	InputPrice               float64 `json:"input_price"`       // 每百万 input token 价格（USD）
-	OutputPrice              float64 `json:"output_price"`      // 每百万 output token 价格（USD）
-	CachedInputPrice         float64 `json:"cached_input_price"`
+	ID               string  `json:"id"`                // 如 "claude-opus-4-20250514"
+	Name             string  `json:"name"`              // 显示名 "Claude Opus 4"
+	ContextWindow    int     `json:"context_window"`    // 上下文窗口大小（tokens）
+	MaxOutputTokens  int     `json:"max_output_tokens"` // 最大输出 token 数
+	InputPrice       float64 `json:"input_price"`       // 每百万 input token 价格（USD）
+	OutputPrice      float64 `json:"output_price"`      // 每百万 output token 价格（USD）
+	CachedInputPrice float64 `json:"cached_input_price"`
+
+	// Priority 档单价（未设置时以标准价 × 2 兜底）
 	InputPricePriority       float64 `json:"input_price_priority,omitempty"`
 	OutputPricePriority      float64 `json:"output_price_priority,omitempty"`
 	CachedInputPricePriority float64 `json:"cached_input_price_priority,omitempty"`
+
+	// Flex / Batch 档单价（未设置时以标准价 × 0.5 兜底）
+	InputPriceFlex       float64 `json:"input_price_flex,omitempty"`
+	OutputPriceFlex      float64 `json:"output_price_flex,omitempty"`
+	CachedInputPriceFlex float64 `json:"cached_input_price_flex,omitempty"`
+
+	// 长上下文阶梯（仅 gpt-5.4 家族启用）
+	// 判定基于完整 input_tokens（= 非缓存输入 + 缓存命中），超过阈值整次请求全量按倍率计费
+	LongContextThreshold        int     `json:"long_context_threshold,omitempty"`
+	LongContextInputMultiplier  float64 `json:"long_context_input_multiplier,omitempty"`
+	LongContextOutputMultiplier float64 `json:"long_context_output_multiplier,omitempty"`
+	LongContextCachedMultiplier float64 `json:"long_context_cached_multiplier,omitempty"`
 }
 
 // RouteDefinition 路由声明（网关插件使用）

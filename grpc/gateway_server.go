@@ -75,10 +75,16 @@ func buildAccount(req *pb.ForwardRequest) *sdk.Account {
 	}
 }
 
-// toProtoResult 将 SDK ForwardResult 转为 proto ForwardResult
+// toProtoResult 将 SDK ForwardResult 转为 proto ForwardResult。
+//
+// Body / Headers 直接复制自 result，使得插件既可以通过 Writer 流式写入
+// （由 bufferWriter 捕获后在 Forward 里覆盖），也可以直接在 ForwardResult
+// 中返回一次性响应体（如本地合成的 /v1/models 清单）。
 func toProtoResult(result *sdk.ForwardResult) *pb.ForwardResult {
 	return &pb.ForwardResult{
 		StatusCode:            int64(result.StatusCode),
+		Body:                  result.Body,
+		Headers:               httpHeadersToProto(result.Headers),
 		InputTokens:           int64(result.InputTokens),
 		OutputTokens:          int64(result.OutputTokens),
 		CachedInputTokens:     int64(result.CachedInputTokens),
