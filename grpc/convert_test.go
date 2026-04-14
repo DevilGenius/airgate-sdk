@@ -88,6 +88,7 @@ func TestForwardResult_RoundTrip(t *testing.T) {
 		InputTokens:           150,
 		OutputTokens:          300,
 		CachedInputTokens:     50,
+		CacheCreationTokens:   80,
 		ReasoningOutputTokens: 25,
 		Model:                 "claude-opus-4-20250514",
 		Duration:              2500 * time.Millisecond,
@@ -99,6 +100,8 @@ func TestForwardResult_RoundTrip(t *testing.T) {
 		InputCost:             0.00375,
 		OutputCost:            0.0225,
 		CachedInputCost:       0.000125,
+		CacheCreationCost:     0.0005,
+		CacheCreationPrice:    6.25,
 	}
 
 	proto := toProtoResult(original)

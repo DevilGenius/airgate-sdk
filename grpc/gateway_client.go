@@ -133,6 +133,9 @@ func fromProtoResult(r *pb.ForwardResult) *sdk.ForwardResult {
 		InputTokens:           int(r.InputTokens),
 		OutputTokens:          int(r.OutputTokens),
 		CachedInputTokens:     int(r.CachedInputTokens),
+		CacheCreationTokens:   int(r.CacheCreationTokens),
+		CacheCreation5mTokens: int(r.CacheCreation_5MTokens),
+		CacheCreation1hTokens: int(r.CacheCreation_1HTokens),
 		ReasoningOutputTokens: int(r.ReasoningOutputTokens),
 		Model:                 r.Model,
 		Duration:              time.Duration(r.DurationMs) * time.Millisecond,
@@ -146,9 +149,12 @@ func fromProtoResult(r *pb.ForwardResult) *sdk.ForwardResult {
 		InputCost:             r.InputCost,
 		OutputCost:            r.OutputCost,
 		CachedInputCost:       r.CachedInputCost,
+		CacheCreationCost:     r.CacheCreationCost,
 		InputPrice:            r.InputPrice,
 		OutputPrice:           r.OutputPrice,
 		CachedInputPrice:      r.CachedInputPrice,
+		CacheCreationPrice:    r.CacheCreationPrice,
+		CacheCreation1hPrice:  r.CacheCreation_1HPrice,
 	}
 	if len(r.Headers) > 0 {
 		result.Headers = protoHeadersToHTTP(r.Headers)

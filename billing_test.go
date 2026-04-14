@@ -14,14 +14,16 @@ func almostEqual(a, b float64) bool {
 
 func TestCalculateCost_Standard(t *testing.T) {
 	model := ModelInfo{
-		InputPrice:       3.0,  // $3/1M tokens
-		OutputPrice:      15.0, // $15/1M tokens
-		CachedInputPrice: 0.3,  // $0.3/1M tokens
+		InputPrice:         3.0,  // $3/1M tokens
+		OutputPrice:        15.0, // $15/1M tokens
+		CachedInputPrice:   0.3,  // $0.3/1M tokens
+		CacheCreationPrice: 3.75, // $3.75/1M tokens (1.25x input)
 	}
 	result := CalculateCost(CostInput{
-		InputTokens:       1000,
-		OutputTokens:      500,
-		CachedInputTokens: 2000,
+		InputTokens:         1000,
+		OutputTokens:        500,
+		CachedInputTokens:   2000,
+		CacheCreationTokens: 1000,
 	}, model)
 
 	if !almostEqual(result.InputCost, 0.003) {
@@ -33,8 +35,88 @@ func TestCalculateCost_Standard(t *testing.T) {
 	if !almostEqual(result.CachedInputCost, 0.0006) {
 		t.Errorf("CachedInputCost = %v, want 0.0006", result.CachedInputCost)
 	}
-	if !almostEqual(result.TotalCost(), 0.0111) {
-		t.Errorf("TotalCost = %v, want 0.0111", result.TotalCost())
+	// cache creation: 1000 × 3.75/1e6 = 0.00375
+	if !almostEqual(result.CacheCreationCost, 0.00375) {
+		t.Errorf("CacheCreationCost = %v, want 0.00375", result.CacheCreationCost)
+	}
+	// total: 0.003 + 0.0075 + 0.0006 + 0.00375 = 0.01485
+	if !almostEqual(result.TotalCost(), 0.01485) {
+		t.Errorf("TotalCost = %v, want 0.01485", result.TotalCost())
+	}
+}
+
+func TestCalculateCost_CacheCreationFallback(t *testing.T) {
+	// CacheCreationPrice 未配置时，按 input × 1.25 兜底
+	model := ModelInfo{
+		InputPrice:       3.0,
+		OutputPrice:      15.0,
+		CachedInputPrice: 0.3,
+		// CacheCreationPrice 未设置
+	}
+	result := CalculateCost(CostInput{
+		CacheCreationTokens: 1000,
+	}, model)
+
+	// fallback: 1000 × (3.0 × 1.25 / 1e6) = 1000 × 3.75e-6 = 0.00375
+	if !almostEqual(result.CacheCreationCost, 0.00375) {
+		t.Errorf("CacheCreationCost fallback = %v, want 0.00375", result.CacheCreationCost)
+	}
+}
+
+func TestCalculateCost_CacheCreation5m1hBreakdown(t *testing.T) {
+	// 同时有 5m 和 1h breakdown 时分别计价
+	// Claude Sonnet: input $3, cache_5m $3.75, cache_1h $6
+	model := ModelInfo{
+		InputPrice:           3.0,
+		OutputPrice:          15.0,
+		CachedInputPrice:     0.3,
+		CacheCreationPrice:   3.75, // 5m
+		CacheCreation1hPrice: 6.0,  // 1h
+	}
+	result := CalculateCost(CostInput{
+		CacheCreationTokens:   3000, // 总数
+		CacheCreation5mTokens: 2000,
+		CacheCreation1hTokens: 1000,
+	}, model)
+
+	// 5m: 2000 × 3.75/1e6 = 0.0075
+	// 1h: 1000 × 6.0/1e6  = 0.006
+	// 合计: 0.0135
+	if !almostEqual(result.CacheCreationCost, 0.0135) {
+		t.Errorf("CacheCreationCost 5m/1h breakdown = %v, want 0.0135", result.CacheCreationCost)
+	}
+}
+
+func TestCalculateCost_CacheCreation1hFallback(t *testing.T) {
+	// 只配了 InputPrice，1h 价格按 input × 2 兜底
+	model := ModelInfo{
+		InputPrice: 3.0,
+	}
+	result := CalculateCost(CostInput{
+		CacheCreation1hTokens: 1000,
+	}, model)
+
+	// fallback: 1000 × (3.0 × 2.0 / 1e6) = 0.006
+	if !almostEqual(result.CacheCreationCost, 0.006) {
+		t.Errorf("CacheCreationCost 1h fallback = %v, want 0.006", result.CacheCreationCost)
+	}
+}
+
+func TestCalculateCost_CacheCreationBreakdownMissingFallsBackTo5m(t *testing.T) {
+	// 没有 5m/1h breakdown 时，所有 CacheCreationTokens 按 5m 价格计（向后兼容）
+	model := ModelInfo{
+		InputPrice:           3.0,
+		CacheCreationPrice:   3.75,
+		CacheCreation1hPrice: 6.0,
+	}
+	result := CalculateCost(CostInput{
+		CacheCreationTokens: 1000,
+		// 5m/1h 未设置
+	}, model)
+
+	// 全部按 5m: 1000 × 3.75/1e6 = 0.00375
+	if !almostEqual(result.CacheCreationCost, 0.00375) {
+		t.Errorf("CacheCreationCost aggregate fallback = %v, want 0.00375", result.CacheCreationCost)
 	}
 }
 

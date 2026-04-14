@@ -71,7 +71,10 @@ type ForwardResult struct {
 	StatusCode            int           // HTTP 状态码
 	InputTokens           int           // 输入 token 数（不含缓存部分）
 	OutputTokens          int           // 输出 token 数
-	CachedInputTokens     int           // 命中缓存的输入 token 数（仅 cache read）
+	CachedInputTokens     int           // 命中缓存的输入 token 数（cache read）
+	CacheCreationTokens   int           // 缓存写入的总 token 数（= 5m + 1h，向后兼容字段）
+	CacheCreation5mTokens int           // 缓存写入（5 分钟 TTL，价格 1.25x input）
+	CacheCreation1hTokens int           // 缓存写入（1 小时 TTL，价格 2.00x input）
 	ReasoningOutputTokens int           // 推理输出 token 数（o1/o3 等模型）
 	ServiceTier           string        // 服务层级，如 standard / flex / priority
 	Model                 string        // 实际使用的模型
@@ -80,14 +83,17 @@ type ForwardResult struct {
 
 	// 费用明细（插件计算，token × 单价，美元）
 	// Core 只做倍率乘法，不再关心模型定价
-	InputCost       float64 // 输入 token 费用
-	OutputCost      float64 // 输出 token 费用
-	CachedInputCost float64 // 缓存输入 token 费用
+	InputCost         float64 // 输入 token 费用
+	OutputCost        float64 // 输出 token 费用
+	CachedInputCost   float64 // 缓存读取 token 费用
+	CacheCreationCost float64 // 缓存写入 token 费用
 
 	// 单价（美元 / 1M token，插件填充，Core 透传存储）
-	InputPrice       float64 // 输入单价
-	OutputPrice      float64 // 输出单价
-	CachedInputPrice float64 // 缓存输入单价
+	InputPrice           float64 // 输入单价
+	OutputPrice          float64 // 输出单价
+	CachedInputPrice     float64 // 缓存读取单价
+	CacheCreationPrice   float64 // 缓存写入单价（5 分钟 TTL，1.25x input）
+	CacheCreation1hPrice float64 // 缓存写入单价（1 小时 TTL，2.00x input）
 
 	// 账号状态反馈（插件识别，Core 处置）
 	AccountStatus AccountStatus // "" 正常 / "rate_limited" / "disabled" / "expired"

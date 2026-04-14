@@ -21,13 +21,15 @@ type Account struct {
 //   - 长上下文档（仅 gpt-5.4 家族）：当完整 input_tokens 超过 LongContextThreshold
 //     且服务档不是 priority 时，整次请求按倍率计费
 type ModelInfo struct {
-	ID               string  `json:"id"`                // 如 "claude-opus-4-20250514"
-	Name             string  `json:"name"`              // 显示名 "Claude Opus 4"
-	ContextWindow    int     `json:"context_window"`    // 上下文窗口大小（tokens）
-	MaxOutputTokens  int     `json:"max_output_tokens"` // 最大输出 token 数
-	InputPrice       float64 `json:"input_price"`       // 每百万 input token 价格（USD）
-	OutputPrice      float64 `json:"output_price"`      // 每百万 output token 价格（USD）
-	CachedInputPrice float64 `json:"cached_input_price"`
+	ID                   string  `json:"id"`                      // 如 "claude-opus-4-20250514"
+	Name                 string  `json:"name"`                    // 显示名 "Claude Opus 4"
+	ContextWindow        int     `json:"context_window"`          // 上下文窗口大小（tokens）
+	MaxOutputTokens      int     `json:"max_output_tokens"`       // 最大输出 token 数
+	InputPrice           float64 `json:"input_price"`             // 每百万 input token 价格（USD）
+	OutputPrice          float64 `json:"output_price"`            // 每百万 output token 价格（USD）
+	CachedInputPrice     float64 `json:"cached_input_price"`      // 每百万 cache read token 价格（USD）
+	CacheCreationPrice   float64 `json:"cache_creation_price"`    // 每百万 cache write (5m TTL) 价格（USD，1.25x input）
+	CacheCreation1hPrice float64 `json:"cache_creation_1h_price"` // 每百万 cache write (1h TTL) 价格（USD，2.00x input）
 
 	// Priority 档单价（未设置时以标准价 × 2 兜底）
 	InputPricePriority       float64 `json:"input_price_priority,omitempty"`

@@ -195,6 +195,8 @@ func convertModels(pbModels []*pb.ModelInfoProto) []sdk.ModelInfo {
 			InputPrice:               m.InputPrice,
 			OutputPrice:              m.OutputPrice,
 			CachedInputPrice:         m.CachedInputPrice,
+			CacheCreationPrice:       m.CacheCreationPrice,
+			CacheCreation1hPrice:     m.GetCacheCreation_1HPrice(),
 			InputPricePriority:       m.InputPricePriority,
 			OutputPricePriority:      m.OutputPricePriority,
 			CachedInputPricePriority: m.CachedInputPricePriority,
