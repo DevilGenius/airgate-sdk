@@ -15,12 +15,6 @@ func TestSentinelErrorsAreDistinct(t *testing.T) {
 	}{
 		{"ErrNotSupported", sdk.ErrNotSupported},
 		{"ErrInvalidCredentials", sdk.ErrInvalidCredentials},
-		{"ErrUpstreamTimeout", sdk.ErrUpstreamTimeout},
-		{"ErrUpstreamUnavailable", sdk.ErrUpstreamUnavailable},
-		{"ErrAccountRateLimited", sdk.ErrAccountRateLimited},
-		{"ErrAccountDisabled", sdk.ErrAccountDisabled},
-		{"ErrAccountExpired", sdk.ErrAccountExpired},
-		{"ErrAccountQuotaExhausted", sdk.ErrAccountQuotaExhausted},
 	}
 
 	for i, a := range sentinels {
@@ -45,12 +39,6 @@ func TestSentinelErrorMessages(t *testing.T) {
 	}{
 		{sdk.ErrNotSupported, "not supported"},
 		{sdk.ErrInvalidCredentials, "invalid credentials"},
-		{sdk.ErrUpstreamTimeout, "upstream timeout"},
-		{sdk.ErrUpstreamUnavailable, "upstream unavailable"},
-		{sdk.ErrAccountRateLimited, "account rate limited"},
-		{sdk.ErrAccountDisabled, "account disabled"},
-		{sdk.ErrAccountExpired, "account expired"},
-		{sdk.ErrAccountQuotaExhausted, "account quota exhausted"},
 	}
 
 	for _, tc := range cases {
@@ -69,12 +57,6 @@ func TestErrorsIsWithWrapping(t *testing.T) {
 	}{
 		{"ErrNotSupported", sdk.ErrNotSupported},
 		{"ErrInvalidCredentials", sdk.ErrInvalidCredentials},
-		{"ErrUpstreamTimeout", sdk.ErrUpstreamTimeout},
-		{"ErrUpstreamUnavailable", sdk.ErrUpstreamUnavailable},
-		{"ErrAccountRateLimited", sdk.ErrAccountRateLimited},
-		{"ErrAccountDisabled", sdk.ErrAccountDisabled},
-		{"ErrAccountExpired", sdk.ErrAccountExpired},
-		{"ErrAccountQuotaExhausted", sdk.ErrAccountQuotaExhausted},
 	}
 
 	for _, tc := range sentinels {
@@ -85,54 +67,14 @@ func TestErrorsIsWithWrapping(t *testing.T) {
 				t.Errorf("errors.Is(wrapped, %s) should be true", tc.name)
 			}
 
-			// Double-wrap
 			doubleWrapped := fmt.Errorf("outer: %w", wrapped)
 			if !errors.Is(doubleWrapped, tc.err) {
 				t.Errorf("errors.Is(doubleWrapped, %s) should be true", tc.name)
 			}
 
-			// Wrapped error message should contain the sentinel message
 			if got := wrapped.Error(); got != "something went wrong: "+tc.err.Error() {
 				t.Errorf("unexpected wrapped message: %q", got)
 			}
 		})
-	}
-}
-
-func TestAccountStatusConstants(t *testing.T) {
-	cases := []struct {
-		name string
-		got  sdk.AccountStatus
-		want sdk.AccountStatus
-	}{
-		{"AccountStatusOK", sdk.AccountStatusOK, ""},
-		{"AccountStatusRateLimited", sdk.AccountStatusRateLimited, "rate_limited"},
-		{"AccountStatusDisabled", sdk.AccountStatusDisabled, "disabled"},
-		{"AccountStatusExpired", sdk.AccountStatusExpired, "expired"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.got != tc.want {
-				t.Errorf("%s = %q, want %q", tc.name, tc.got, tc.want)
-			}
-		})
-	}
-}
-
-func TestAccountStatusConstantsAreDistinct(t *testing.T) {
-	statuses := map[string]sdk.AccountStatus{
-		"AccountStatusOK":          sdk.AccountStatusOK,
-		"AccountStatusRateLimited": sdk.AccountStatusRateLimited,
-		"AccountStatusDisabled":    sdk.AccountStatusDisabled,
-		"AccountStatusExpired":     sdk.AccountStatusExpired,
-	}
-
-	seen := make(map[sdk.AccountStatus]string) // value -> name
-	for name, val := range statuses {
-		if prev, dup := seen[val]; dup {
-			t.Errorf("%s and %s have the same value %q", name, prev, val)
-		}
-		seen[val] = name
 	}
 }

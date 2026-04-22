@@ -76,7 +76,7 @@ func (c *stubGatewayServiceClient) GetModels(context.Context, *pb.Empty, ...grpc
 func (c *stubGatewayServiceClient) GetRoutes(context.Context, *pb.Empty, ...grpc.CallOption) (*pb.RoutesResponse, error) {
 	return nil, nil
 }
-func (c *stubGatewayServiceClient) Forward(context.Context, *pb.ForwardRequest, ...grpc.CallOption) (*pb.ForwardResult, error) {
+func (c *stubGatewayServiceClient) Forward(context.Context, *pb.ForwardRequest, ...grpc.CallOption) (*pb.ForwardOutcome, error) {
 	return nil, nil
 }
 func (c *stubGatewayServiceClient) ForwardStream(context.Context, *pb.ForwardRequest, ...grpc.CallOption) (grpc.ServerStreamingClient[pb.ForwardChunk], error) {
@@ -160,22 +160,22 @@ func TestGatewayGRPCClientForwardStreamAppliesStatusAndHeaders(t *testing.T) {
 						},
 					},
 					{Data: []byte("data: hello\n\n")},
-					{Done: true, FinalResult: &pb.ForwardResult{StatusCode: http.StatusOK}},
+					{Done: true, FinalOutcome: &pb.ForwardOutcome{Kind: pb.OutcomeKind_OUTCOME_SUCCESS, Upstream: &pb.UpstreamResponse{StatusCode: http.StatusOK}}},
 				},
 			},
 		},
 	}
 	writer := &captureWriter{}
 
-	result, err := client.forwardStream(context.Background(), &pb.ForwardRequest{}, &sdk.ForwardRequest{
+	outcome, err := client.forwardStream(context.Background(), &pb.ForwardRequest{}, &sdk.ForwardRequest{
 		Stream: true,
 		Writer: writer,
 	})
 	if err != nil {
 		t.Fatalf("forwardStream() error = %v", err)
 	}
-	if result == nil || result.StatusCode != http.StatusOK {
-		t.Fatalf("final result = %+v", result)
+	if outcome.Kind != sdk.OutcomeSuccess || outcome.Upstream.StatusCode != http.StatusOK {
+		t.Fatalf("final outcome = %+v", outcome)
 	}
 	if writer.status != http.StatusOK {
 		t.Fatalf("writer status = %d, want %d", writer.status, http.StatusOK)
@@ -197,7 +197,7 @@ func TestGatewayGRPCClientForwardStreamDefaultsTo200OnFirstDataChunk(t *testing.
 			stream: &stubForwardStreamClient{
 				chunks: []*pb.ForwardChunk{
 					{Data: []byte("data: hello\n\n")},
-					{Done: true, FinalResult: &pb.ForwardResult{StatusCode: http.StatusOK}},
+					{Done: true, FinalOutcome: &pb.ForwardOutcome{Kind: pb.OutcomeKind_OUTCOME_SUCCESS, Upstream: &pb.UpstreamResponse{StatusCode: http.StatusOK}}},
 				},
 			},
 		},

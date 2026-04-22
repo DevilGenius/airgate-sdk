@@ -7,19 +7,16 @@ import (
 	"sync"
 )
 
-// ConfigKeyLogLevel 约定的配置键名，Core 通过此键将日志级别传给插件
+// ConfigKeyLogLevel Core 通过此配置键把日志级别传给插件。
 const ConfigKeyLogLevel = "_log_level"
 
-// 当前日志格式，供 Init 时重新初始化使用
 var (
 	currentFormat string
 	formatMu      sync.RWMutex
 )
 
-// InitLogger 初始化全局 slog，统一日志格式
-// module: 日志来源标识，如 "core"、"plugin.gateway-openai"
-// level: debug/info/warn/error，默认 info
-// format: text/json，默认 text
+// InitLogger 初始化全局 slog。
+// module 日志来源标识（如 "core"、"plugin.gateway-openai"）；level: debug/info/warn/error；format: text/json。
 func InitLogger(module, level, format string) {
 	lvl := parseLevel(level)
 	opts := &slog.HandlerOptions{Level: lvl}
@@ -42,7 +39,7 @@ func InitLogger(module, level, format string) {
 	formatMu.Unlock()
 }
 
-// LogFormat 返回当前日志格式
+// LogFormat 返回当前日志格式。
 func LogFormat() string {
 	formatMu.RLock()
 	defer formatMu.RUnlock()

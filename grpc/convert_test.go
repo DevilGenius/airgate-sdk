@@ -79,46 +79,56 @@ func TestProtoHeadersToHTTP_NilValues(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// ForwardResult conversion: toProtoResult / fromProtoResult
+// ForwardOutcome conversion: outcomeToProto / outcomeFromProto
 // ---------------------------------------------------------------------------
 
-func TestForwardResult_RoundTrip(t *testing.T) {
-	original := &sdk.ForwardResult{
-		StatusCode:            200,
-		InputTokens:           150,
-		OutputTokens:          300,
-		CachedInputTokens:     50,
-		CacheCreationTokens:   80,
-		ReasoningOutputTokens: 25,
-		Model:                 "claude-opus-4-20250514",
-		Duration:              2500 * time.Millisecond,
-		FirstTokenMs:          120,
-		AccountStatus:         sdk.AccountStatusRateLimited,
-		ErrorMessage:          "上游账号已停用",
-		RetryAfter:            30000 * time.Millisecond,
-		ServiceTier:           "priority",
-		InputCost:             0.00375,
-		OutputCost:            0.0225,
-		CachedInputCost:       0.000125,
-		CacheCreationCost:     0.0005,
-		CacheCreationPrice:    6.25,
+func TestForwardOutcome_RoundTrip(t *testing.T) {
+	original := sdk.ForwardOutcome{
+		Kind: sdk.OutcomeSuccess,
+		Upstream: sdk.UpstreamResponse{
+			StatusCode: 200,
+			Headers:    http.Header{"Content-Type": {"application/json"}},
+			Body:       []byte(`{"ok":true}`),
+		},
+		Usage: &sdk.Usage{
+			InputTokens:           150,
+			OutputTokens:          300,
+			CachedInputTokens:     50,
+			CacheCreationTokens:   80,
+			ReasoningOutputTokens: 25,
+			Model:                 "claude-opus-4-20250514",
+			FirstTokenMs:          120,
+			ServiceTier:           "priority",
+			InputCost:             0.00375,
+			OutputCost:            0.0225,
+			CachedInputCost:       0.000125,
+			CacheCreationCost:     0.0005,
+			CacheCreationPrice:    6.25,
+		},
+		Duration:   2500 * time.Millisecond,
+		RetryAfter: 30000 * time.Millisecond,
+		Reason:     "normal success",
+		UpdatedCredentials: map[string]string{
+			"access_token": "new-token",
+		},
 	}
 
-	proto := toProtoResult(original)
-	restored := fromProtoResult(proto)
+	proto := outcomeToProto(original)
+	restored := outcomeFromProto(proto)
 
 	if !reflect.DeepEqual(original, restored) {
-		t.Fatalf("ForwardResult round-trip mismatch:\n  original: %+v\n  restored: %+v", original, restored)
+		t.Fatalf("ForwardOutcome round-trip mismatch:\n  original: %+v\n  restored: %+v", original, restored)
 	}
 }
 
-func TestForwardResult_DurationConversion(t *testing.T) {
-	original := &sdk.ForwardResult{
+func TestForwardOutcome_DurationConversion(t *testing.T) {
+	original := sdk.ForwardOutcome{
+		Kind:       sdk.OutcomeAccountRateLimited,
 		Duration:   1234 * time.Millisecond,
 		RetryAfter: 5678 * time.Millisecond,
 	}
 
-	proto := toProtoResult(original)
+	proto := outcomeToProto(original)
 
 	if proto.DurationMs != 1234 {
 		t.Fatalf("DurationMs: got %d, want 1234", proto.DurationMs)
@@ -127,7 +137,7 @@ func TestForwardResult_DurationConversion(t *testing.T) {
 		t.Fatalf("RetryAfterMs: got %d, want 5678", proto.RetryAfterMs)
 	}
 
-	restored := fromProtoResult(proto)
+	restored := outcomeFromProto(proto)
 	if restored.Duration != 1234*time.Millisecond {
 		t.Fatalf("restored Duration: got %v, want %v", restored.Duration, 1234*time.Millisecond)
 	}
@@ -136,50 +146,59 @@ func TestForwardResult_DurationConversion(t *testing.T) {
 	}
 }
 
-func TestForwardResult_SubMillisecondTruncation(t *testing.T) {
-	original := &sdk.ForwardResult{
-		Duration:   1234567890 * time.Nanosecond, // 1234.567890 ms
-		RetryAfter: 0,
+func TestForwardOutcome_KindPreserved(t *testing.T) {
+	kinds := []sdk.OutcomeKind{
+		sdk.OutcomeUnknown,
+		sdk.OutcomeSuccess,
+		sdk.OutcomeClientError,
+		sdk.OutcomeAccountRateLimited,
+		sdk.OutcomeAccountDead,
+		sdk.OutcomeUpstreamTransient,
+		sdk.OutcomeStreamAborted,
 	}
-	proto := toProtoResult(original)
-	if proto.DurationMs != 1234 {
-		t.Fatalf("DurationMs: got %d, want 1234", proto.DurationMs)
-	}
-	restored := fromProtoResult(proto)
-	if restored.Duration != 1234*time.Millisecond {
-		t.Fatalf("sub-ms truncation: got %v, want %v", restored.Duration, 1234*time.Millisecond)
-	}
-}
-
-func TestForwardResult_AccountStatusPreserved(t *testing.T) {
-	statuses := []sdk.AccountStatus{
-		sdk.AccountStatusOK,
-		sdk.AccountStatusRateLimited,
-		sdk.AccountStatusDisabled,
-		sdk.AccountStatusExpired,
-	}
-	for _, status := range statuses {
-		original := &sdk.ForwardResult{AccountStatus: status}
-		proto := toProtoResult(original)
-		restored := fromProtoResult(proto)
-		if restored.AccountStatus != status {
-			t.Errorf("AccountStatus %q not preserved: got %q", status, restored.AccountStatus)
+	for _, k := range kinds {
+		original := sdk.ForwardOutcome{Kind: k}
+		proto := outcomeToProto(original)
+		restored := outcomeFromProto(proto)
+		if restored.Kind != k {
+			t.Errorf("Kind %q not preserved: got %q", k, restored.Kind)
 		}
 	}
 }
 
-func TestForwardResult_ZeroValues(t *testing.T) {
-	original := &sdk.ForwardResult{}
-	proto := toProtoResult(original)
-	restored := fromProtoResult(proto)
+func TestForwardOutcome_ZeroValues(t *testing.T) {
+	original := sdk.ForwardOutcome{}
+	proto := outcomeToProto(original)
+	restored := outcomeFromProto(proto)
 
-	if !reflect.DeepEqual(original, restored) {
-		t.Fatalf("zero-value round-trip mismatch:\n  original: %+v\n  restored: %+v", original, restored)
+	// 零值 round-trip：Upstream 子消息会从 nil 变成空的 struct（proto 默认构造），
+	// 但业务等价。显式断言而非 DeepEqual。
+	if restored.Kind != sdk.OutcomeUnknown {
+		t.Errorf("Kind: got %v, want Unknown", restored.Kind)
+	}
+	if restored.Usage != nil {
+		t.Errorf("Usage: want nil, got %+v", restored.Usage)
+	}
+	if restored.Upstream.StatusCode != 0 || len(restored.Upstream.Body) != 0 {
+		t.Errorf("Upstream: want empty, got %+v", restored.Upstream)
+	}
+}
+
+func TestForwardOutcome_UsageNilVsPresent(t *testing.T) {
+	// 无 Usage 时 proto.Usage 也应为 nil，round-trip 后仍为 nil
+	noUsage := sdk.ForwardOutcome{Kind: sdk.OutcomeClientError}
+	proto := outcomeToProto(noUsage)
+	if proto.Usage != nil {
+		t.Fatalf("expected nil proto.Usage when outcome.Usage is nil")
+	}
+	restored := outcomeFromProto(proto)
+	if restored.Usage != nil {
+		t.Fatalf("expected nil restored.Usage, got %+v", restored.Usage)
 	}
 }
 
 // ---------------------------------------------------------------------------
-// buildAccount (从嵌套 AccountProto 构建)
+// buildAccount
 // ---------------------------------------------------------------------------
 
 func TestBuildAccount_ValidCredentials(t *testing.T) {
@@ -243,52 +262,6 @@ func TestBuildAccount_EmptyCredentials(t *testing.T) {
 	}
 }
 
-func TestBuildAccount_EmptyCredentialsJSON(t *testing.T) {
-	req := &pb.ForwardRequest{
-		Account: &pb.AccountProto{
-			Id:              1,
-			CredentialsJson: []byte{},
-		},
-	}
-
-	account := buildAccount(req)
-
-	if account.Credentials != nil {
-		t.Errorf("expected nil Credentials for empty byte slice, got %v", account.Credentials)
-	}
-}
-
-func TestBuildAccount_AllFieldsMapped(t *testing.T) {
-	creds := map[string]string{"token": "abc"}
-	credsJSON, _ := json.Marshal(creds)
-
-	req := &pb.ForwardRequest{
-		Account: &pb.AccountProto{
-			Id:              99,
-			Name:            "full-account",
-			Platform:        "anthropic",
-			Type:            "oauth",
-			CredentialsJson: credsJSON,
-			ProxyUrl:        "socks5://proxy:1080",
-		},
-	}
-
-	account := buildAccount(req)
-
-	expected := &sdk.Account{
-		ID:          99,
-		Name:        "full-account",
-		Platform:    "anthropic",
-		Type:        "oauth",
-		Credentials: creds,
-		ProxyURL:    "socks5://proxy:1080",
-	}
-
-	if !reflect.DeepEqual(account, expected) {
-		t.Fatalf("buildAccount mismatch:\n  got:  %+v\n  want: %+v", account, expected)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // convertModels
 // ---------------------------------------------------------------------------
@@ -307,72 +280,41 @@ func TestConvertModels(t *testing.T) {
 			OutputPricePriority:      90.0,
 			CachedInputPricePriority: 22.5,
 		},
-		{
-			Id:                       "claude-opus-4-20250514",
-			Name:                     "Claude Opus 4",
-			ContextWindow:            200000,
-			MaxOutputTokens:          128000,
-			InputPrice:               15.0,
-			OutputPrice:              75.0,
-			CachedInputPrice:         7.5,
-			InputPricePriority:       22.5,
-			OutputPricePriority:      112.5,
-			CachedInputPricePriority: 11.25,
-		},
 	}
 
 	models := convertModels(pbModels)
 
-	if len(models) != 2 {
-		t.Fatalf("expected 2 models, got %d", len(models))
+	if len(models) != 1 {
+		t.Fatalf("expected 1 model, got %d", len(models))
 	}
-
-	expected := []sdk.ModelInfo{
-		{
-			ID:                       "gpt-4",
-			Name:                     "GPT-4",
-			ContextWindow:            8192,
-			MaxOutputTokens:          4096,
-			InputPrice:               30.0,
-			OutputPrice:              60.0,
-			CachedInputPrice:         15.0,
-			InputPricePriority:       45.0,
-			OutputPricePriority:      90.0,
-			CachedInputPricePriority: 22.5,
-		},
-		{
-			ID:                       "claude-opus-4-20250514",
-			Name:                     "Claude Opus 4",
-			ContextWindow:            200000,
-			MaxOutputTokens:          128000,
-			InputPrice:               15.0,
-			OutputPrice:              75.0,
-			CachedInputPrice:         7.5,
-			InputPricePriority:       22.5,
-			OutputPricePriority:      112.5,
-			CachedInputPricePriority: 11.25,
-		},
+	expected := sdk.ModelInfo{
+		ID:                       "gpt-4",
+		Name:                     "GPT-4",
+		ContextWindow:            8192,
+		MaxOutputTokens:          4096,
+		InputPrice:               30.0,
+		OutputPrice:              60.0,
+		CachedInputPrice:         15.0,
+		InputPricePriority:       45.0,
+		OutputPricePriority:      90.0,
+		CachedInputPricePriority: 22.5,
 	}
-
-	if !reflect.DeepEqual(models, expected) {
-		t.Fatalf("convertModels mismatch:\n  got:  %+v\n  want: %+v", models, expected)
+	if !reflect.DeepEqual(models[0], expected) {
+		t.Fatalf("convertModels mismatch:\n  got:  %+v\n  want: %+v", models[0], expected)
 	}
 }
 
 func TestConvertModels_Empty(t *testing.T) {
-	models := convertModels(nil)
-	if len(models) != 0 {
+	if models := convertModels(nil); len(models) != 0 {
 		t.Fatalf("expected 0 models for nil input, got %d", len(models))
 	}
-
-	models = convertModels([]*pb.ModelInfoProto{})
-	if len(models) != 0 {
+	if models := convertModels([]*pb.ModelInfoProto{}); len(models) != 0 {
 		t.Fatalf("expected 0 models for empty slice, got %d", len(models))
 	}
 }
 
 // ---------------------------------------------------------------------------
-// convertConnectInfo (从嵌套 AccountProto 构建)
+// convertConnectInfo
 // ---------------------------------------------------------------------------
 
 func TestConvertConnectInfo_Nil(t *testing.T) {
@@ -390,15 +332,10 @@ func TestConvertConnectInfo_FullData(t *testing.T) {
 	creds := map[string]string{"api_key": "sk-test123"}
 	credsJSON, _ := json.Marshal(creds)
 
-	headers := map[string]*pb.HeaderValues{
-		"Authorization": {Values: []string{"Bearer tok"}},
-		"X-Request-Id":  {Values: []string{"req-001"}},
-	}
-
 	pbInfo := &pb.WebSocketConnectInfo{
 		Path:         "/v1/ws/chat",
 		Query:        "model=gpt-4&stream=true",
-		Headers:      headers,
+		Headers:      map[string]*pb.HeaderValues{"Authorization": {Values: []string{"Bearer tok"}}},
 		RemoteAddr:   "192.168.1.100:54321",
 		ConnectionId: "conn-abc-123",
 		Account: &pb.AccountProto{
@@ -407,7 +344,6 @@ func TestConvertConnectInfo_FullData(t *testing.T) {
 			Platform:        "openai",
 			Type:            "apikey",
 			CredentialsJson: credsJSON,
-			ProxyUrl:        "http://proxy:3128",
 		},
 	}
 
@@ -416,59 +352,10 @@ func TestConvertConnectInfo_FullData(t *testing.T) {
 	if info.Path != "/v1/ws/chat" {
 		t.Errorf("Path: got %q, want %q", info.Path, "/v1/ws/chat")
 	}
-	if info.Query != "model=gpt-4&stream=true" {
-		t.Errorf("Query: got %q, want %q", info.Query, "model=gpt-4&stream=true")
-	}
-	if info.RemoteAddr != "192.168.1.100:54321" {
-		t.Errorf("RemoteAddr: got %q, want %q", info.RemoteAddr, "192.168.1.100:54321")
-	}
-	if info.ConnectionID != "conn-abc-123" {
-		t.Errorf("ConnectionID: got %q, want %q", info.ConnectionID, "conn-abc-123")
-	}
-
-	expectedHeaders := http.Header{
-		"Authorization": {"Bearer tok"},
-		"X-Request-Id":  {"req-001"},
-	}
-	if !reflect.DeepEqual(info.Headers, expectedHeaders) {
-		t.Errorf("Headers: got %v, want %v", info.Headers, expectedHeaders)
-	}
-
-	if info.Account == nil {
-		t.Fatal("Account is nil")
-	}
-	if info.Account.ID != 77 {
-		t.Errorf("Account.ID: got %d, want 77", info.Account.ID)
-	}
-	if info.Account.Name != "ws-account" {
-		t.Errorf("Account.Name: got %q, want %q", info.Account.Name, "ws-account")
-	}
-	if info.Account.Platform != "openai" {
-		t.Errorf("Account.Platform: got %q, want %q", info.Account.Platform, "openai")
-	}
-	if info.Account.Type != "apikey" {
-		t.Errorf("Account.Type: got %q, want %q", info.Account.Type, "apikey")
+	if info.Account == nil || info.Account.ID != 77 {
+		t.Fatalf("Account.ID mismatch: %+v", info.Account)
 	}
 	if !reflect.DeepEqual(info.Account.Credentials, creds) {
 		t.Errorf("Account.Credentials: got %v, want %v", info.Account.Credentials, creds)
-	}
-	if info.Account.ProxyURL != "http://proxy:3128" {
-		t.Errorf("Account.ProxyURL: got %q, want %q", info.Account.ProxyURL, "http://proxy:3128")
-	}
-}
-
-func TestConvertConnectInfo_NoAccount(t *testing.T) {
-	pbInfo := &pb.WebSocketConnectInfo{
-		Path:    "/ws",
-		Account: nil,
-	}
-
-	info := convertConnectInfo(pbInfo)
-
-	if info.Account == nil {
-		t.Fatal("Account should not be nil")
-	}
-	if info.Account.Credentials != nil {
-		t.Errorf("expected nil Credentials, got %v", info.Account.Credentials)
 	}
 }

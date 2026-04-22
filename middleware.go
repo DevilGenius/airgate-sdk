@@ -6,57 +6,31 @@ import (
 	"time"
 )
 
-// 中间件超时预算（ADR-0001 §6.1 R2 兜底）。
-//
-// Core 侧的 middleware chain 调度器应当对每次 hook 调用应用 DefaultMiddlewareDeadline，
-// 对整条 chain 的累计耗时应用 DefaultMiddlewareChainBudget。任何一项超时即 log warn
-// 并跳过对应 middleware，**不得**因此 block 主流程。
-//
-// 这里把它们暴露成 SDK 常量是为了：
-//  1. 给 core 端实现一个权威默认值，避免每个 forwarder 重新拍一个数字；
-//  2. 给 middleware 插件作者一个明确的预期（如果你的 hook 经常 > 200ms，
-//     就必须在自己的实现里另开 goroutine 异步处理，而不是寄希望于"也许 core
-//     给我更长时间")；
-//  3. 便于以后的 ADR 调整时一次改完。
+// DefaultMiddlewareDeadline / DefaultMiddlewareChainBudget 单 hook / 整条链的默认超时预算。
+// Core 侧按此兜底，middleware 超时不得 block 主流程，只会被跳过并 log warn。
 const (
 	DefaultMiddlewareDeadline    = 200 * time.Millisecond
 	DefaultMiddlewareChainBudget = 500 * time.Millisecond
 )
 
-// MiddlewarePlugin 中间件插件接口（ADR-0001 Decision 2）。
+// MiddlewarePlugin 中间件插件接口。
 //
-// 实现此接口 + PluginInfo.Type = PluginTypeMiddleware 即注册为"请求/响应拦截层"。
-// Core 在每次 forward 的前后回调 OnForwardBegin / OnForwardEnd。
+// PluginInfo.Type = PluginTypeMiddleware 时注册为"请求/响应拦截层"。Core 在每次 forward 的
+// 前后回调 OnForwardBegin / OnForwardEnd，按 PluginInfo.Priority 升序进 Begin、降序出 End。
 //
-// 失败语义（重要）：
-//   - OnForwardBegin / OnForwardEnd 返回 error 只会在 Core 侧 log warn，不影响主流程。
-//     middleware 插件永远不应该能 block 生产流量。
-//   - 唯一的例外：OnForwardBegin 返回的 MiddlewareDecision.Action == DecisionDeny
-//     会明确拒绝本次请求，用户看到的错误信息来自 Decision 字段。
+// 失败语义：Begin/End 返回 error 只会被 log warn，不 block 主流程。唯一例外是
+// OnForwardBegin 返回 DecisionDeny——此时请求被拒绝，用户看到的错误文案来自 Decision。
 //
-// 顺序（多个 middleware 插件同时加载时）：
-//   - Core 按 PluginInfo.Priority 升序调 OnForwardBegin
-//   - Core 按 PluginInfo.Priority 降序调 OnForwardEnd（LIFO 栈语义）
-//
-// Payload 范围（ADR-0001 Decision 3）：
-//   - 默认只传元数据（request_id / user_id / group_id / account_id / platform / model / ...）
-//   - 声明 CapabilityMiddlewareReadBody 的插件额外收到 request_body / response_body +
-//     request_headers / response_headers
-//   - 流式响应的 response_body 只给摘要（首次非空 chunk 拼装），完整流式留给未来的
-//     OnStreamChunk（ADR-0002）
+// Payload：默认只给元数据；插件声明 CapabilityMiddlewareReadBody 才会收到
+// request_body / response_body。流式响应的 response_body 只给摘要。
 type MiddlewarePlugin interface {
 	Plugin
 
-	// OnForwardBegin 在 scheduler 选完账号、但还没调 upstream 之前被触发。
-	// 可以返回 Decision 修改请求头、拒绝请求、或贯穿 metadata 给后续 middleware / OnForwardEnd。
 	OnForwardBegin(ctx context.Context, req *MiddlewareRequest) (*MiddlewareDecision, error)
-
-	// OnForwardEnd 在 upstream 返回之后、Core 写 usage_log 之前被触发。
-	// 拿到完整的请求 + 响应元数据（body 取决于 Capability）。返回 error 只 log warn。
 	OnForwardEnd(ctx context.Context, evt *MiddlewareEvent) error
 }
 
-// DecisionAction 对应 proto 的 MiddlewareDecision.Action 枚举。
+// DecisionAction 对应 proto MiddlewareDecision.Action。
 type DecisionAction int32
 
 const (
@@ -65,9 +39,8 @@ const (
 	DecisionMutate DecisionAction = 2
 )
 
-// MiddlewareRequest OnForwardBegin 的 plain-Go 入参。grpc 层负责与 pb 类型互转。
+// MiddlewareRequest OnForwardBegin 的入参。
 type MiddlewareRequest struct {
-	// === 元数据（默认总是填充）===
 	RequestID      string
 	UserID         int64
 	GroupID        int64
@@ -77,17 +50,16 @@ type MiddlewareRequest struct {
 	Stream         bool
 	InputTokensEst int64
 
-	// Metadata 多个 middleware 之间共享的 KV bag。贯穿 Begin / End。
+	// Metadata 贯穿 Begin/End 的 KV bag，多个 middleware 之间共享。
 	Metadata map[string]string
 
-	// === 按需字段（需要 CapabilityMiddlewareReadBody）===
+	// RequestBody / RequestHeaders 仅在插件声明 CapabilityMiddlewareReadBody 时填充。
 	RequestBody    []byte
 	RequestHeaders http.Header
 }
 
-// MiddlewareEvent OnForwardEnd 的 plain-Go 入参。
+// MiddlewareEvent OnForwardEnd 的入参。
 type MiddlewareEvent struct {
-	// 元数据（和 MiddlewareRequest 对齐）
 	RequestID      string
 	UserID         int64
 	GroupID        int64
@@ -95,43 +67,40 @@ type MiddlewareEvent struct {
 	Platform       string
 	Model          string
 	Stream         bool
-	InputTokensEst int64 // core 侧粗略估算，与 MiddlewareRequest 对齐；插件可对比 InputTokens 看估算偏差
+	InputTokensEst int64
 
-	// 响应结果
 	StatusCode        int32
 	Duration          time.Duration
 	InputTokens       int64
 	OutputTokens      int64
 	CachedInputTokens int64
 	FirstTokenMs      int64
-	ErrorKind         string
+	ErrorKind         string // "" / "upstream_5xx" / "timeout" / "no_account" / ...
 	ErrorMsg          string
 
-	// 费用快照
 	InputCost       float64
 	OutputCost      float64
 	CachedInputCost float64
 
 	Metadata map[string]string
 
-	// === 按需字段（需要 CapabilityMiddlewareReadBody）===
+	// ResponseBody / ResponseHeaders 仅在插件声明 CapabilityMiddlewareReadBody 时填充。
+	// 流式响应下 ResponseBody 只含摘要（首个非空 chunk）。
 	ResponseBody    []byte
 	ResponseHeaders http.Header
 }
 
-// MiddlewareDecision OnForwardBegin 的返回值。nil 等价于 DecisionAllow 不改任何东西。
+// MiddlewareDecision OnForwardBegin 的返回值。nil 等价于 DecisionAllow 且不改任何东西。
 type MiddlewareDecision struct {
 	Action DecisionAction
 
-	// Action=DecisionDeny 时：直接返回给用户的 HTTP 状态码和错误文案。
-	// DenyStatusCode 默认 403。
+	// DenyStatusCode / DenyMessage 仅 DecisionDeny 使用；默认 403。
 	DenyStatusCode int32
 	DenyMessage    string
 
-	// Action=DecisionMutate 时：要追加或覆盖的请求头。
+	// SetHeaders 仅 DecisionMutate 使用：追加或覆盖的请求头。
 	SetHeaders http.Header
 
-	// Metadata 贯穿到后续 middleware 和 OnForwardEnd 的 KV bag。
-	// 无论 Action 是什么，Metadata 都会被 merge 到请求上下文的 bag 里。
+	// Metadata 无论 Action 是什么都会 merge 进请求上下文的 bag。
 	Metadata map[string]string
 }

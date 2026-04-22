@@ -27,20 +27,15 @@ func (s *GatewayGRPCServer) HandleWebSocket(stream pb.GatewayService_HandleWebSo
 		connectInfo: convertConnectInfo(firstFrame.ConnectInfo),
 	}
 
-	// 调用插件 HandleWebSocket，获取 ForwardResult
-	result, err := s.Impl.HandleWebSocket(stream.Context(), conn)
+	outcome, err := s.Impl.HandleWebSocket(stream.Context(), conn)
 	if err != nil {
 		return err
 	}
 
-	// 通过 RESULT 帧返回 ForwardResult
-	if result != nil {
-		return stream.Send(&pb.WebSocketFrame{
-			Type:   pb.WebSocketFrame_RESULT,
-			Result: toProtoResult(result),
-		})
-	}
-	return nil
+	return stream.Send(&pb.WebSocketFrame{
+		Type:    pb.WebSocketFrame_RESULT,
+		Outcome: outcomeToProto(outcome),
+	})
 }
 
 // grpcWebSocketConn 将 gRPC 双向流包装为 sdk.WebSocketConn

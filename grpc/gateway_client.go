@@ -3,31 +3,27 @@ package grpc
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"sync"
-	"time"
 
 	sdk "github.com/DouDOU-start/airgate-sdk"
 	pb "github.com/DouDOU-start/airgate-sdk/proto"
 )
 
-// GatewayGRPCClient 将 gRPC 客户端包装为 GatewayPlugin 接口（核心侧使用）
+// GatewayGRPCClient 把 gRPC 客户端包装成 GatewayPlugin 接口，供 Core 消费。
 type GatewayGRPCClient struct {
-	pluginBase // 嵌入公共基类，自动获得 Info/Init/Start/Stop/GetWebAssets
-	gateway    pb.GatewayServiceClient
+	pluginBase
+	gateway pb.GatewayServiceClient
 
-	// 缓存（mu 保护并发安全）
 	mu             sync.RWMutex
 	cachedPlatform string
 	cachedModels   []sdk.ModelInfo
 	cachedRoutes   []sdk.RouteDefinition
 }
 
-// InvalidateCache 清除所有缓存的元数据（Platform/Models/Routes/Info），
-// 下次调用时将重新从插件获取最新数据。
+// InvalidateCache 清除所有元数据缓存，下次调用时重新从插件获取。
 // 典型场景：ConfigWatcher.OnConfigUpdate 后调用。
 func (c *GatewayGRPCClient) InvalidateCache() {
 	c.mu.Lock()
@@ -107,9 +103,8 @@ func (c *GatewayGRPCClient) Routes() []sdk.RouteDefinition {
 	return routes
 }
 
-// buildProtoRequest 将 SDK ForwardRequest 转为 proto ForwardRequest
 func buildProtoRequest(req *sdk.ForwardRequest) *pb.ForwardRequest {
-	credsJSON, _ := json.Marshal(req.Account.Credentials) //nolint:errcheck // Credentials 是 map[string]string，Marshal 不会失败
+	credsJSON, _ := json.Marshal(req.Account.Credentials) //nolint:errcheck // map[string]string Marshal 不会失败
 	return &pb.ForwardRequest{
 		Account: &pb.AccountProto{
 			Id:              req.Account.ID,
@@ -126,72 +121,28 @@ func buildProtoRequest(req *sdk.ForwardRequest) *pb.ForwardRequest {
 	}
 }
 
-// fromProtoResult 将 proto ForwardResult 转为 SDK ForwardResult
-func fromProtoResult(r *pb.ForwardResult) *sdk.ForwardResult {
-	result := &sdk.ForwardResult{
-		StatusCode:            int(r.StatusCode),
-		InputTokens:           int(r.InputTokens),
-		OutputTokens:          int(r.OutputTokens),
-		CachedInputTokens:     int(r.CachedInputTokens),
-		CacheCreationTokens:   int(r.CacheCreationTokens),
-		CacheCreation5mTokens: int(r.CacheCreation_5MTokens),
-		CacheCreation1hTokens: int(r.CacheCreation_1HTokens),
-		ReasoningOutputTokens: int(r.ReasoningOutputTokens),
-		Model:                 r.Model,
-		Duration:              time.Duration(r.DurationMs) * time.Millisecond,
-		FirstTokenMs:          r.FirstTokenMs,
-		AccountStatus:         sdk.AccountStatus(r.AccountStatus),
-		ErrorMessage:          r.ErrorMessage,
-		RetryAfter:            time.Duration(r.RetryAfterMs) * time.Millisecond,
-		ServiceTier:           r.ServiceTier,
-		Body:                  r.Body,
-		UpdatedCredentials:    r.UpdatedCredentials,
-		InputCost:             r.InputCost,
-		OutputCost:            r.OutputCost,
-		CachedInputCost:       r.CachedInputCost,
-		CacheCreationCost:     r.CacheCreationCost,
-		InputPrice:            r.InputPrice,
-		OutputPrice:           r.OutputPrice,
-		CachedInputPrice:      r.CachedInputPrice,
-		CacheCreationPrice:    r.CacheCreationPrice,
-		CacheCreation1hPrice:  r.CacheCreation_1HPrice,
-	}
-	if len(r.Headers) > 0 {
-		result.Headers = protoHeadersToHTTP(r.Headers)
-	}
-	return result
-}
-
-func (c *GatewayGRPCClient) Forward(ctx context.Context, req *sdk.ForwardRequest) (*sdk.ForwardResult, error) {
+func (c *GatewayGRPCClient) Forward(ctx context.Context, req *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
 	pbReq := buildProtoRequest(req)
 
-	// 流式请求
 	if req.Stream && req.Writer != nil {
 		return c.forwardStream(ctx, pbReq, req)
 	}
 
-	// 非流式请求
 	resp, err := c.gateway.Forward(ctx, pbReq)
 	if err != nil {
-		return nil, fmt.Errorf("gRPC Forward 调用失败: %w", err)
+		return sdk.ForwardOutcome{}, fmt.Errorf("gRPC Forward 调用失败: %w", err)
 	}
-	result := fromProtoResult(resp)
-	// 服务端在插件返回 (result, err) 时会把 err 文案塞进 result.ErrorMessage 透传过来。
-	// 客户端这里还原成 (result, error) 的双值返回，让 core 既能拿到调度信号
-	// （AccountStatus / StatusCode），又能感知到失败本身。
-	if result != nil && result.ErrorMessage != "" {
-		return result, errors.New(result.ErrorMessage)
-	}
-	return result, nil
+	return outcomeFromProto(resp), nil
 }
 
-func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.ForwardRequest, req *sdk.ForwardRequest) (*sdk.ForwardResult, error) {
+func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.ForwardRequest, req *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
 	stream, err := c.gateway.ForwardStream(ctx, pbReq)
 	if err != nil {
-		return nil, fmt.Errorf("gRPC ForwardStream 调用失败: %w", err)
+		return sdk.ForwardOutcome{}, fmt.Errorf("gRPC ForwardStream 调用失败: %w", err)
 	}
 
-	var finalResult *sdk.ForwardResult
+	var finalOutcome sdk.ForwardOutcome
+	haveFinal := false
 	responseStarted := false
 	for {
 		chunk, err := stream.Recv()
@@ -199,7 +150,7 @@ func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.Forward
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("gRPC 流接收失败: %w", err)
+			return sdk.ForwardOutcome{}, fmt.Errorf("gRPC 流接收失败: %w", err)
 		}
 
 		if !responseStarted && req.Writer != nil && (chunk.StatusCode != 0 || len(chunk.Headers) > 0 || len(chunk.Data) > 0) {
@@ -218,38 +169,32 @@ func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.Forward
 
 		if len(chunk.Data) > 0 && req.Writer != nil {
 			if _, writeErr := req.Writer.Write(chunk.Data); writeErr != nil {
-				return nil, fmt.Errorf("写入响应失败: %w", writeErr)
+				return sdk.ForwardOutcome{}, fmt.Errorf("写入响应失败: %w", writeErr)
 			}
 			if flusher, ok := req.Writer.(interface{ Flush() }); ok {
 				flusher.Flush()
 			}
 		}
 
-		if chunk.Done && chunk.FinalResult != nil {
-			finalResult = fromProtoResult(chunk.FinalResult)
+		if chunk.Done && chunk.FinalOutcome != nil {
+			finalOutcome = outcomeFromProto(chunk.FinalOutcome)
+			haveFinal = true
 		}
 	}
 
-	if finalResult == nil {
-		return nil, fmt.Errorf("未收到最终结果")
+	if !haveFinal {
+		return sdk.ForwardOutcome{}, fmt.Errorf("未收到最终 outcome")
 	}
-	if finalResult.ErrorMessage != "" {
-		return finalResult, errors.New(finalResult.ErrorMessage)
-	}
-	return finalResult, nil
+	return finalOutcome, nil
 }
 
 func (c *GatewayGRPCClient) ValidateAccount(ctx context.Context, credentials map[string]string) error {
-	_, err := c.gateway.ValidateAccount(ctx, &pb.CredentialsRequest{
-		Credentials: credentials,
-	})
+	_, err := c.gateway.ValidateAccount(ctx, &pb.CredentialsRequest{Credentials: credentials})
 	return err
 }
 
 func (c *GatewayGRPCClient) QueryQuota(ctx context.Context, credentials map[string]string) (*sdk.QuotaInfo, error) {
-	resp, err := c.gateway.QueryQuota(ctx, &pb.CredentialsRequest{
-		Credentials: credentials,
-	})
+	resp, err := c.gateway.QueryQuota(ctx, &pb.CredentialsRequest{Credentials: credentials})
 	if err != nil {
 		return nil, err
 	}
@@ -263,17 +208,16 @@ func (c *GatewayGRPCClient) QueryQuota(ctx context.Context, credentials map[stri
 	}, nil
 }
 
-// HandleWebSocket 通过 gRPC 双向流处理 WebSocket（Core 侧调用）
-func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSocketConn) (*sdk.ForwardResult, error) {
+// HandleWebSocket 通过 gRPC 双向流处理 WebSocket（Core 侧调用）。
+func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSocketConn) (sdk.ForwardOutcome, error) {
 	stream, err := c.gateway.HandleWebSocket(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("gRPC HandleWebSocket 调用失败: %w", err)
+		return sdk.ForwardOutcome{}, fmt.Errorf("gRPC HandleWebSocket 调用失败: %w", err)
 	}
 
 	info := conn.ConnectInfo()
-	credsJSON, _ := json.Marshal(info.Account.Credentials) //nolint:errcheck // Credentials 是 map[string]string，Marshal 不会失败
+	credsJSON, _ := json.Marshal(info.Account.Credentials) //nolint:errcheck
 
-	// 发送 CONNECT 帧
 	if err := stream.Send(&pb.WebSocketFrame{
 		Type: pb.WebSocketFrame_CONNECT,
 		ConnectInfo: &pb.WebSocketConnectInfo{
@@ -292,21 +236,16 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 			},
 		},
 	}); err != nil {
-		return nil, fmt.Errorf("发送 CONNECT 帧失败: %w", err)
+		return sdk.ForwardOutcome{}, fmt.Errorf("发送 CONNECT 帧失败: %w", err)
 	}
 
-	// 启动客户端 → 插件的消息转发
-	clientConn := &grpcClientWebSocketConn{
-		stream: stream,
-		info:   info,
-	}
+	clientConn := &grpcClientWebSocketConn{stream: stream, info: info}
 
-	// 双向转发 goroutine：读取客户端消息发到插件
 	readerCtx, readerCancel := context.WithCancel(ctx)
 	defer readerCancel()
 	errCh := make(chan error, 1)
 	go func() {
-		defer func() { close(errCh) }()
+		defer close(errCh)
 		for {
 			select {
 			case <-readerCtx.Done():
@@ -315,9 +254,7 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 			}
 			msgType, data, readErr := conn.ReadMessage()
 			if readErr != nil {
-				_ = stream.Send(&pb.WebSocketFrame{
-					Type: pb.WebSocketFrame_CLOSE,
-				})
+				_ = stream.Send(&pb.WebSocketFrame{Type: pb.WebSocketFrame_CLOSE})
 				errCh <- readErr
 				return
 			}
@@ -325,59 +262,57 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 			if msgType == sdk.WSMessageBinary {
 				frameType = pb.WebSocketFrame_BINARY
 			}
-			if sendErr := stream.Send(&pb.WebSocketFrame{
-				Type: frameType,
-				Data: data,
-			}); sendErr != nil {
+			if sendErr := stream.Send(&pb.WebSocketFrame{Type: frameType, Data: data}); sendErr != nil {
 				errCh <- sendErr
 				return
 			}
 		}
 	}()
 
-	// 读取插件 → 客户端的消息
-	var result *sdk.ForwardResult
+	var outcome sdk.ForwardOutcome
+	haveOutcome := false
 	for {
 		frame, recvErr := stream.Recv()
 		if recvErr == io.EOF {
 			break
 		}
 		if recvErr != nil {
-			return nil, fmt.Errorf("gRPC WebSocket 流接收失败: %w", recvErr)
+			return sdk.ForwardOutcome{}, fmt.Errorf("gRPC WebSocket 流接收失败: %w", recvErr)
 		}
 
 		switch frame.Type {
 		case pb.WebSocketFrame_TEXT:
 			if writeErr := conn.WriteMessage(sdk.WSMessageText, frame.Data); writeErr != nil {
-				return nil, writeErr
+				return sdk.ForwardOutcome{}, writeErr
 			}
 		case pb.WebSocketFrame_BINARY:
 			if writeErr := conn.WriteMessage(sdk.WSMessageBinary, frame.Data); writeErr != nil {
-				return nil, writeErr
+				return sdk.ForwardOutcome{}, writeErr
 			}
 		case pb.WebSocketFrame_CLOSE:
 			_ = conn.Close(int(frame.CloseCode), frame.CloseReason)
 			goto done
 		case pb.WebSocketFrame_RESULT:
-			if frame.Result != nil {
-				result = fromProtoResult(frame.Result)
+			if frame.Outcome != nil {
+				outcome = outcomeFromProto(frame.Outcome)
+				haveOutcome = true
 			}
 			goto done
 		}
 	}
 
 done:
-	_ = clientConn // 保持引用
-	readerCancel() // 通知读取 goroutine 退出
-	<-errCh        // 等待 goroutine 完成
+	_ = clientConn
+	readerCancel()
+	<-errCh
 
-	if result == nil {
-		return &sdk.ForwardResult{}, nil
+	if !haveOutcome {
+		return sdk.ForwardOutcome{}, nil
 	}
-	return result, nil
+	return outcome, nil
 }
 
-// grpcClientWebSocketConn 用于保持 gRPC 流引用
+// grpcClientWebSocketConn 保持 gRPC 流引用，便于后续扩展。
 type grpcClientWebSocketConn struct {
 	stream pb.GatewayService_HandleWebSocketClient
 	info   *sdk.WebSocketConnectInfo

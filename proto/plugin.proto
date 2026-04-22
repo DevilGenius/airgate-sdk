@@ -25,7 +25,7 @@ service GatewayService {
     rpc GetPlatform(Empty) returns (StringResponse);
     rpc GetModels(Empty) returns (ModelsResponse);
     rpc GetRoutes(Empty) returns (RoutesResponse);
-    rpc Forward(ForwardRequest) returns (ForwardResult);
+    rpc Forward(ForwardRequest) returns (ForwardOutcome);
     rpc ForwardStream(ForwardRequest) returns (stream ForwardChunk);
     rpc ValidateAccount(CredentialsRequest) returns (Empty);
     rpc QueryQuota(CredentialsRequest) returns (QuotaInfoResponse);
@@ -294,40 +294,66 @@ message ForwardRequest {
     AccountProto account = 11;
 }
 
-message ForwardResult {
-    int64  status_code = 1;
-    int64  input_tokens = 2;
-    int64  output_tokens = 3;
-    int64  cached_input_tokens = 4;
-    string model = 5;
-    int64  duration_ms = 6;
-    string account_status = 7;   // "" / "rate_limited" / "disabled" / "expired"
-    string error_message = 13;   // 上游错误信息（记录到账号 error_msg）
-    int64  retry_after_ms = 8;   // 限流时建议等待时间（毫秒）
-    bytes  body = 9;             // 非流式响应体
-    map<string, HeaderValues> headers = 10;  // 非流式响应头
-    string service_tier = 11;
-    map<string, string> updated_credentials = 12;
-    int64  reasoning_output_tokens = 14;  // 推理输出 token 数（o1/o3 等模型）
-    int64  first_token_ms = 15;           // 首 token 延迟（毫秒）
-    double input_cost = 16;               // 输入费用（USD，插件计算）
-    double output_cost = 17;              // 输出费用（USD，插件计算）
-    double cached_input_cost = 18;        // 缓存读取费用（USD，插件计算）
-    double input_price = 19;              // 输入单价（$/1M token）
-    double output_price = 20;             // 输出单价（$/1M token）
-    double cached_input_price = 21;       // 缓存读取单价（$/1M token）
-    int64  cache_creation_tokens = 22;     // 缓存写入总 token 数（= 5m + 1h）
-    double cache_creation_cost = 23;       // 缓存写入费用（USD，插件计算）
-    double cache_creation_price = 24;      // 缓存写入 5m TTL 单价（$/1M token）
-    int64  cache_creation_5m_tokens = 25;  // 缓存写入（5 分钟 TTL）token 数
-    int64  cache_creation_1h_tokens = 26;  // 缓存写入（1 小时 TTL）token 数
-    double cache_creation_1h_price = 27;   // 缓存写入 1h TTL 单价（$/1M token）
+// OutcomeKind 插件对一次 Forward 的判决。
+// 字段值与 sdk.OutcomeKind 常量一一对应；0 = UNKNOWN（插件未声明）。
+enum OutcomeKind {
+    OUTCOME_UNKNOWN               = 0;
+    OUTCOME_SUCCESS               = 1;
+    OUTCOME_CLIENT_ERROR          = 2;
+    OUTCOME_ACCOUNT_RATE_LIMITED  = 3;
+    OUTCOME_ACCOUNT_DEAD          = 4;
+    OUTCOME_UPSTREAM_TRANSIENT    = 5;
+    OUTCOME_STREAM_ABORTED        = 6;
+}
+
+// UpstreamResponse 上游返回的原始 HTTP 快照。
+message UpstreamResponse {
+    int32 status_code = 1;
+    map<string, HeaderValues> headers = 2;
+    bytes body = 3;
+}
+
+// Usage 单次调用的 token / 费用统计。非 Success 判决下应为空。
+message Usage {
+    int64  input_tokens             = 1;
+    int64  output_tokens            = 2;
+    int64  cached_input_tokens      = 3;
+    int64  cache_creation_tokens    = 4;
+    int64  cache_creation_5m_tokens = 5;
+    int64  cache_creation_1h_tokens = 6;
+    int64  reasoning_output_tokens  = 7;
+
+    double input_cost            = 10;
+    double output_cost           = 11;
+    double cached_input_cost     = 12;
+    double cache_creation_cost   = 13;
+
+    double input_price            = 20;
+    double output_price           = 21;
+    double cached_input_price     = 22;
+    double cache_creation_price   = 23;
+    double cache_creation_1h_price = 24;
+
+    string model          = 30;
+    string service_tier   = 31;
+    int64  first_token_ms = 32;
+}
+
+// ForwardOutcome 插件对一次 Forward 的完整判决结果。
+message ForwardOutcome {
+    OutcomeKind kind = 1;
+    UpstreamResponse upstream = 2;
+    Usage usage = 3;
+    int64 duration_ms = 4;
+    int64 retry_after_ms = 5;
+    string reason = 6;
+    map<string, string> updated_credentials = 7;
 }
 
 message ForwardChunk {
     bytes data = 1;
     bool  done = 2;
-    ForwardResult final_result = 3;
+    ForwardOutcome final_outcome = 3;
     int32 status_code = 4;
     map<string, HeaderValues> headers = 5;
 }
@@ -406,7 +432,7 @@ message WebSocketFrame {
     string close_reason = 5;
 
     // 仅 RESULT 帧使用
-    ForwardResult result = 6;
+    ForwardOutcome outcome = 6;
 }
 
 message WebSocketConnectInfo {

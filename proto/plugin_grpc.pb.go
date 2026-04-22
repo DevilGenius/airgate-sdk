@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.0
 // - protoc             v5.29.5
-// source: proto/plugin.proto
+// source: plugin.proto
 
 package proto
 
@@ -351,7 +351,7 @@ var PluginService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/plugin.proto",
+	Metadata: "plugin.proto",
 }
 
 const (
@@ -372,7 +372,7 @@ type GatewayServiceClient interface {
 	GetPlatform(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*StringResponse, error)
 	GetModels(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ModelsResponse, error)
 	GetRoutes(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*RoutesResponse, error)
-	Forward(ctx context.Context, in *ForwardRequest, opts ...grpc.CallOption) (*ForwardResult, error)
+	Forward(ctx context.Context, in *ForwardRequest, opts ...grpc.CallOption) (*ForwardOutcome, error)
 	ForwardStream(ctx context.Context, in *ForwardRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ForwardChunk], error)
 	ValidateAccount(ctx context.Context, in *CredentialsRequest, opts ...grpc.CallOption) (*Empty, error)
 	QueryQuota(ctx context.Context, in *CredentialsRequest, opts ...grpc.CallOption) (*QuotaInfoResponse, error)
@@ -418,9 +418,9 @@ func (c *gatewayServiceClient) GetRoutes(ctx context.Context, in *Empty, opts ..
 	return out, nil
 }
 
-func (c *gatewayServiceClient) Forward(ctx context.Context, in *ForwardRequest, opts ...grpc.CallOption) (*ForwardResult, error) {
+func (c *gatewayServiceClient) Forward(ctx context.Context, in *ForwardRequest, opts ...grpc.CallOption) (*ForwardOutcome, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ForwardResult)
+	out := new(ForwardOutcome)
 	err := c.cc.Invoke(ctx, GatewayService_Forward_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -487,7 +487,7 @@ type GatewayServiceServer interface {
 	GetPlatform(context.Context, *Empty) (*StringResponse, error)
 	GetModels(context.Context, *Empty) (*ModelsResponse, error)
 	GetRoutes(context.Context, *Empty) (*RoutesResponse, error)
-	Forward(context.Context, *ForwardRequest) (*ForwardResult, error)
+	Forward(context.Context, *ForwardRequest) (*ForwardOutcome, error)
 	ForwardStream(*ForwardRequest, grpc.ServerStreamingServer[ForwardChunk]) error
 	ValidateAccount(context.Context, *CredentialsRequest) (*Empty, error)
 	QueryQuota(context.Context, *CredentialsRequest) (*QuotaInfoResponse, error)
@@ -512,7 +512,7 @@ func (UnimplementedGatewayServiceServer) GetModels(context.Context, *Empty) (*Mo
 func (UnimplementedGatewayServiceServer) GetRoutes(context.Context, *Empty) (*RoutesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetRoutes not implemented")
 }
-func (UnimplementedGatewayServiceServer) Forward(context.Context, *ForwardRequest) (*ForwardResult, error) {
+func (UnimplementedGatewayServiceServer) Forward(context.Context, *ForwardRequest) (*ForwardOutcome, error) {
 	return nil, status.Error(codes.Unimplemented, "method Forward not implemented")
 }
 func (UnimplementedGatewayServiceServer) ForwardStream(*ForwardRequest, grpc.ServerStreamingServer[ForwardChunk]) error {
@@ -719,7 +719,7 @@ var GatewayService_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "proto/plugin.proto",
+	Metadata: "plugin.proto",
 }
 
 const (
@@ -981,7 +981,7 @@ var ExtensionService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "proto/plugin.proto",
+	Metadata: "plugin.proto",
 }
 
 const (
@@ -1157,7 +1157,7 @@ var MiddlewareService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/plugin.proto",
+	Metadata: "plugin.proto",
 }
 
 const (
@@ -1393,5 +1393,5 @@ var HostService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/plugin.proto",
+	Metadata: "plugin.proto",
 }

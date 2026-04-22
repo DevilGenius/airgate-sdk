@@ -86,30 +86,35 @@ func (p *ProxyHandler) handleHTTP(w http.ResponseWriter, r *http.Request) {
 			Writer:  w,
 		}
 
-		result, fwdErr := p.plugin.Forward(r.Context(), fwdReq)
+		outcome, fwdErr := p.plugin.Forward(r.Context(), fwdReq)
 
-		// 上报结果给调度器
-		if p.scheduler != nil && result != nil {
-			p.scheduler.ReportResult(account.ID, result)
+		if p.scheduler != nil {
+			p.scheduler.ReportResult(account.ID, outcome)
 		}
 
-		// 判断是否可以 failover 重试
-		if p.scheduler != nil && p.scheduler.IsRetryable(result, fwdErr) {
-			log.Printf("[调度] 账号 %d (%s) 返回 %d (%s)，尝试 failover",
-				account.ID, account.Name, result.StatusCode, result.AccountStatus)
+		if p.scheduler != nil && p.scheduler.IsRetryable(outcome, fwdErr) {
+			log.Printf("[调度] 账号 %d (%s) 判决 %s (status=%d)，尝试 failover",
+				account.ID, account.Name, outcome.Kind, outcome.Upstream.StatusCode)
 			continue
 		}
 
 		if fwdErr != nil {
 			log.Printf("Forward 失败: %v", fwdErr)
-			if result == nil || result.StatusCode == 0 {
+			if outcome.Upstream.StatusCode == 0 {
 				http.Error(w, `{"error":"`+fwdErr.Error()+`"}`, http.StatusBadGateway)
 			}
 			return
 		}
 
-		log.Printf("Forward 完成: status=%d model=%s input=%d output=%d duration=%s account=%d(%s)",
-			result.StatusCode, result.Model, result.InputTokens, result.OutputTokens, result.Duration,
+		var tokensIn, tokensOut int
+		var model string
+		if outcome.Usage != nil {
+			tokensIn = outcome.Usage.InputTokens
+			tokensOut = outcome.Usage.OutputTokens
+			model = outcome.Usage.Model
+		}
+		log.Printf("Forward 完成: kind=%s status=%d model=%s input=%d output=%d duration=%s account=%d(%s)",
+			outcome.Kind, outcome.Upstream.StatusCode, model, tokensIn, tokensOut, outcome.Duration,
 			account.ID, account.Name)
 		return
 	}

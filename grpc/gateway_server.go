@@ -10,7 +10,7 @@ import (
 	pb "github.com/DouDOU-start/airgate-sdk/proto"
 )
 
-// GatewayGRPCServer 将 GatewayPlugin 包装为 gRPC 服务端
+// GatewayGRPCServer 将 GatewayPlugin 包装为 gRPC 服务端。
 type GatewayGRPCServer struct {
 	pb.UnimplementedGatewayServiceServer
 	Impl sdk.GatewayPlugin
@@ -55,7 +55,6 @@ func (s *GatewayGRPCServer) GetRoutes(_ context.Context, _ *pb.Empty) (*pb.Route
 	return resp, nil
 }
 
-// buildAccount 从 proto AccountProto 构建 SDK Account
 func buildAccount(req *pb.ForwardRequest) *sdk.Account {
 	a := req.Account
 	if a == nil {
@@ -77,44 +76,147 @@ func buildAccount(req *pb.ForwardRequest) *sdk.Account {
 	}
 }
 
-// toProtoResult 将 SDK ForwardResult 转为 proto ForwardResult。
-//
-// Body / Headers 直接复制自 result，使得插件既可以通过 Writer 流式写入
-// （由 bufferWriter 捕获后在 Forward 里覆盖），也可以直接在 ForwardResult
-// 中返回一次性响应体（如本地合成的 /v1/models 清单）。
-func toProtoResult(result *sdk.ForwardResult) *pb.ForwardResult {
-	return &pb.ForwardResult{
-		StatusCode:             int64(result.StatusCode),
-		Body:                   result.Body,
-		Headers:                httpHeadersToProto(result.Headers),
-		InputTokens:            int64(result.InputTokens),
-		OutputTokens:           int64(result.OutputTokens),
-		CachedInputTokens:      int64(result.CachedInputTokens),
-		CacheCreationTokens:    int64(result.CacheCreationTokens),
-		CacheCreation_5MTokens: int64(result.CacheCreation5mTokens),
-		CacheCreation_1HTokens: int64(result.CacheCreation1hTokens),
-		ReasoningOutputTokens:  int64(result.ReasoningOutputTokens),
-		Model:                  result.Model,
-		DurationMs:             result.Duration.Milliseconds(),
-		FirstTokenMs:           result.FirstTokenMs,
-		AccountStatus:          string(result.AccountStatus),
-		ErrorMessage:           result.ErrorMessage,
-		RetryAfterMs:           result.RetryAfter.Milliseconds(),
-		ServiceTier:            result.ServiceTier,
-		UpdatedCredentials:     result.UpdatedCredentials,
-		InputCost:              result.InputCost,
-		OutputCost:             result.OutputCost,
-		CachedInputCost:        result.CachedInputCost,
-		CacheCreationCost:      result.CacheCreationCost,
-		InputPrice:             result.InputPrice,
-		OutputPrice:            result.OutputPrice,
-		CachedInputPrice:       result.CachedInputPrice,
-		CacheCreationPrice:     result.CacheCreationPrice,
-		CacheCreation_1HPrice:  result.CacheCreation1hPrice,
+// outcomeToProto 把 SDK 判决转为 proto 消息。
+func outcomeToProto(o sdk.ForwardOutcome) *pb.ForwardOutcome {
+	out := &pb.ForwardOutcome{
+		Kind:               outcomeKindToProto(o.Kind),
+		Upstream:           upstreamToProto(o.Upstream),
+		DurationMs:         o.Duration.Milliseconds(),
+		RetryAfterMs:       o.RetryAfter.Milliseconds(),
+		Reason:             o.Reason,
+		UpdatedCredentials: o.UpdatedCredentials,
+	}
+	if o.Usage != nil {
+		out.Usage = usageToProto(*o.Usage)
+	}
+	return out
+}
+
+// outcomeFromProto 把 proto 消息转为 SDK 判决。
+func outcomeFromProto(p *pb.ForwardOutcome) sdk.ForwardOutcome {
+	if p == nil {
+		return sdk.ForwardOutcome{}
+	}
+	out := sdk.ForwardOutcome{
+		Kind:               outcomeKindFromProto(p.Kind),
+		Upstream:           upstreamFromProto(p.Upstream),
+		Duration:           time.Duration(p.DurationMs) * time.Millisecond,
+		RetryAfter:         time.Duration(p.RetryAfterMs) * time.Millisecond,
+		Reason:             p.Reason,
+		UpdatedCredentials: p.UpdatedCredentials,
+	}
+	if p.Usage != nil {
+		u := usageFromProto(p.Usage)
+		out.Usage = &u
+	}
+	return out
+}
+
+func outcomeKindToProto(k sdk.OutcomeKind) pb.OutcomeKind {
+	switch k {
+	case sdk.OutcomeSuccess:
+		return pb.OutcomeKind_OUTCOME_SUCCESS
+	case sdk.OutcomeClientError:
+		return pb.OutcomeKind_OUTCOME_CLIENT_ERROR
+	case sdk.OutcomeAccountRateLimited:
+		return pb.OutcomeKind_OUTCOME_ACCOUNT_RATE_LIMITED
+	case sdk.OutcomeAccountDead:
+		return pb.OutcomeKind_OUTCOME_ACCOUNT_DEAD
+	case sdk.OutcomeUpstreamTransient:
+		return pb.OutcomeKind_OUTCOME_UPSTREAM_TRANSIENT
+	case sdk.OutcomeStreamAborted:
+		return pb.OutcomeKind_OUTCOME_STREAM_ABORTED
+	default:
+		return pb.OutcomeKind_OUTCOME_UNKNOWN
 	}
 }
 
-// protoHeadersToHTTP 将 proto 多值 Headers 转为 http.Header
+func outcomeKindFromProto(k pb.OutcomeKind) sdk.OutcomeKind {
+	switch k {
+	case pb.OutcomeKind_OUTCOME_SUCCESS:
+		return sdk.OutcomeSuccess
+	case pb.OutcomeKind_OUTCOME_CLIENT_ERROR:
+		return sdk.OutcomeClientError
+	case pb.OutcomeKind_OUTCOME_ACCOUNT_RATE_LIMITED:
+		return sdk.OutcomeAccountRateLimited
+	case pb.OutcomeKind_OUTCOME_ACCOUNT_DEAD:
+		return sdk.OutcomeAccountDead
+	case pb.OutcomeKind_OUTCOME_UPSTREAM_TRANSIENT:
+		return sdk.OutcomeUpstreamTransient
+	case pb.OutcomeKind_OUTCOME_STREAM_ABORTED:
+		return sdk.OutcomeStreamAborted
+	default:
+		return sdk.OutcomeUnknown
+	}
+}
+
+func upstreamToProto(u sdk.UpstreamResponse) *pb.UpstreamResponse {
+	return &pb.UpstreamResponse{
+		StatusCode: int32(u.StatusCode),
+		Headers:    httpHeadersToProto(u.Headers),
+		Body:       u.Body,
+	}
+}
+
+func upstreamFromProto(p *pb.UpstreamResponse) sdk.UpstreamResponse {
+	if p == nil {
+		return sdk.UpstreamResponse{}
+	}
+	return sdk.UpstreamResponse{
+		StatusCode: int(p.StatusCode),
+		Headers:    protoHeadersToHTTP(p.Headers),
+		Body:       p.Body,
+	}
+}
+
+func usageToProto(u sdk.Usage) *pb.Usage {
+	return &pb.Usage{
+		InputTokens:            int64(u.InputTokens),
+		OutputTokens:           int64(u.OutputTokens),
+		CachedInputTokens:      int64(u.CachedInputTokens),
+		CacheCreationTokens:    int64(u.CacheCreationTokens),
+		CacheCreation_5MTokens: int64(u.CacheCreation5mTokens),
+		CacheCreation_1HTokens: int64(u.CacheCreation1hTokens),
+		ReasoningOutputTokens:  int64(u.ReasoningOutputTokens),
+		InputCost:              u.InputCost,
+		OutputCost:             u.OutputCost,
+		CachedInputCost:        u.CachedInputCost,
+		CacheCreationCost:      u.CacheCreationCost,
+		InputPrice:             u.InputPrice,
+		OutputPrice:            u.OutputPrice,
+		CachedInputPrice:       u.CachedInputPrice,
+		CacheCreationPrice:     u.CacheCreationPrice,
+		CacheCreation_1HPrice:  u.CacheCreation1hPrice,
+		Model:                  u.Model,
+		ServiceTier:            u.ServiceTier,
+		FirstTokenMs:           u.FirstTokenMs,
+	}
+}
+
+func usageFromProto(p *pb.Usage) sdk.Usage {
+	return sdk.Usage{
+		InputTokens:           int(p.InputTokens),
+		OutputTokens:          int(p.OutputTokens),
+		CachedInputTokens:     int(p.CachedInputTokens),
+		CacheCreationTokens:   int(p.CacheCreationTokens),
+		CacheCreation5mTokens: int(p.CacheCreation_5MTokens),
+		CacheCreation1hTokens: int(p.CacheCreation_1HTokens),
+		ReasoningOutputTokens: int(p.ReasoningOutputTokens),
+		InputCost:             p.InputCost,
+		OutputCost:            p.OutputCost,
+		CachedInputCost:       p.CachedInputCost,
+		CacheCreationCost:     p.CacheCreationCost,
+		InputPrice:            p.InputPrice,
+		OutputPrice:           p.OutputPrice,
+		CachedInputPrice:      p.CachedInputPrice,
+		CacheCreationPrice:    p.CacheCreationPrice,
+		CacheCreation1hPrice:  p.CacheCreation_1HPrice,
+		Model:                 p.Model,
+		ServiceTier:           p.ServiceTier,
+		FirstTokenMs:          p.FirstTokenMs,
+	}
+}
+
 func protoHeadersToHTTP(ph map[string]*pb.HeaderValues) http.Header {
 	h := make(http.Header, len(ph))
 	for k, v := range ph {
@@ -125,7 +227,6 @@ func protoHeadersToHTTP(ph map[string]*pb.HeaderValues) http.Header {
 	return h
 }
 
-// httpHeadersToProto 将 http.Header 转为 proto 多值 Headers
 func httpHeadersToProto(h http.Header) map[string]*pb.HeaderValues {
 	ph := make(map[string]*pb.HeaderValues, len(h))
 	for k, v := range h {
@@ -134,82 +235,67 @@ func httpHeadersToProto(h http.Header) map[string]*pb.HeaderValues {
 	return ph
 }
 
-func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest) (*pb.ForwardResult, error) {
-	headers := protoHeadersToHTTP(req.Headers)
-
-	// 非流式请求：使用 bufferWriter 捕获响应体
+func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest) (*pb.ForwardOutcome, error) {
+	// 非流式：用 bufferWriter 兜底捕获插件可能意外写入 Writer 的内容
+	// （正常实现应通过 Outcome.Upstream.Body 返回）。
 	bw := &bufferWriter{}
 	fwdReq := &sdk.ForwardRequest{
 		Account: buildAccount(req),
 		Body:    req.Body,
-		Headers: headers,
+		Headers: protoHeadersToHTTP(req.Headers),
 		Model:   req.Model,
 		Stream:  req.Stream,
 		Writer:  bw,
 	}
 
-	result, err := s.Impl.Forward(ctx, fwdReq)
-	// 即便插件返回了 err，只要带回了 result（其中可能包含 AccountStatus、StatusCode、
-	// ErrorMessage 等用于 core 端调度决策的关键字段），也要把 result 透传给客户端，
-	// 不要让 err 把这些信号吞掉。err 文本回填到 ErrorMessage。
+	outcome, err := s.Impl.Forward(ctx, fwdReq)
 	if err != nil {
-		if result == nil {
-			return nil, err
+		return nil, err
+	}
+
+	pbOutcome := outcomeToProto(outcome)
+	// 如果插件用了 Writer 而不是 Outcome.Upstream，把 buffer 补回 Upstream
+	if len(bw.body) > 0 && (pbOutcome.Upstream == nil || len(pbOutcome.Upstream.Body) == 0) {
+		if pbOutcome.Upstream == nil {
+			pbOutcome.Upstream = &pb.UpstreamResponse{}
 		}
-		if result.ErrorMessage == "" {
-			result.ErrorMessage = err.Error()
+		pbOutcome.Upstream.Body = bw.body
+		if pbOutcome.Upstream.StatusCode == 0 && bw.code > 0 {
+			pbOutcome.Upstream.StatusCode = int32(bw.code)
+		}
+		if len(pbOutcome.Upstream.Headers) == 0 {
+			pbOutcome.Upstream.Headers = httpHeadersToProto(bw.Header())
 		}
 	}
-	pbResult := toProtoResult(result)
-	// 优先使用 bufferWriter 捕获的响应，回退到 result 自身
-	if len(bw.body) > 0 {
-		pbResult.Body = bw.body
-		pbResult.Headers = httpHeadersToProto(bw.Header())
-	}
-	if pbResult.StatusCode == 0 && bw.code > 0 {
-		pbResult.StatusCode = int64(bw.code)
-	}
-	return pbResult, nil
+	return pbOutcome, nil
 }
 
 func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.GatewayService_ForwardStreamServer) error {
-	headers := protoHeadersToHTTP(req.Headers)
-
 	sw := &streamWriter{stream: stream}
 	fwdReq := &sdk.ForwardRequest{
 		Account: buildAccount(req),
 		Body:    req.Body,
-		Headers: headers,
+		Headers: protoHeadersToHTTP(req.Headers),
 		Model:   req.Model,
 		Stream:  true,
 		Writer:  sw,
 	}
 
 	startTime := time.Now()
-	result, err := s.Impl.Forward(stream.Context(), fwdReq)
-	// 与非流式 Forward 同理：err 非 nil 但 result 也非 nil 时，把 result 透传给客户端，
-	// 让 AccountStatus 等调度信号能传递回 core，避免客户端侧的请求错误被记到账号头上。
+	outcome, err := s.Impl.Forward(stream.Context(), fwdReq)
 	if err != nil {
-		if result == nil {
-			return err
-		}
-		if result.ErrorMessage == "" {
-			result.ErrorMessage = err.Error()
-		}
+		return err
 	}
-
-	// 补充耗时
-	if result.Duration == 0 {
-		result.Duration = time.Since(startTime)
+	if outcome.Duration == 0 {
+		outcome.Duration = time.Since(startTime)
 	}
 
 	if err := sw.flushMeta(); err != nil {
 		return err
 	}
-
 	return stream.Send(&pb.ForwardChunk{
-		Done:        true,
-		FinalResult: toProtoResult(result),
+		Done:         true,
+		FinalOutcome: outcomeToProto(outcome),
 	})
 }
 
@@ -235,7 +321,7 @@ func (s *GatewayGRPCServer) QueryQuota(ctx context.Context, req *pb.CredentialsR
 	}, nil
 }
 
-// streamWriter 将 gRPC 流包装为 http.ResponseWriter
+// streamWriter 把 gRPC 流包装成 http.ResponseWriter。
 type streamWriter struct {
 	stream  pb.GatewayService_ForwardStreamServer
 	headers http.Header
@@ -250,17 +336,14 @@ func (w *streamWriter) Header() http.Header {
 	return w.headers
 }
 
-// streamChunkSize 是单条 ForwardChunk 携带的最大字节数。
-// 故意远小于 PluginGRPCMaxMessageBytes（64 MB），既留足 proto 编码 / metadata 余量，
-// 又能让上游一次性 dump 的大事件被切片成多条 gRPC 消息发送，避免击穿对端的接收上限。
+// streamChunkSize 单条 ForwardChunk 携带的最大字节数。远小于 gRPC message 上限，
+// 给 proto 编码 / metadata 留足余量，同时把上游的大事件切片避免击穿对端接收限制。
 const streamChunkSize = 256 * 1024
 
 func (w *streamWriter) Write(data []byte) (int, error) {
 	if err := w.flushMeta(); err != nil {
 		return 0, err
 	}
-	// 切块发送：单条 gRPC 消息最大 streamChunkSize 字节，避免大事件击穿对端接收上限。
-	// data 的所有内容都需要发送，所以即便长度为 0 也保留一次空 Send 的语义（与原行为一致）。
 	total := len(data)
 	if total == 0 {
 		if err := w.stream.Send(&pb.ForwardChunk{Data: data}); err != nil {
@@ -280,15 +363,13 @@ func (w *streamWriter) Write(data []byte) (int, error) {
 	return total, nil
 }
 
-func (w *streamWriter) WriteHeader(statusCode int) {
-	w.code = statusCode
-}
+func (w *streamWriter) WriteHeader(statusCode int) { w.code = statusCode }
 
 func (w *streamWriter) flushMeta() error {
 	if w.sent {
 		return nil
 	}
-	w.sent = true // 提前标记，防止失败后重复发送
+	w.sent = true // 提前置位，失败后不再重发
 	statusCode := w.code
 	if statusCode == 0 {
 		statusCode = http.StatusOK
@@ -299,7 +380,7 @@ func (w *streamWriter) flushMeta() error {
 	})
 }
 
-// bufferWriter 缓冲响应体的 http.ResponseWriter 实现（非流式 gRPC 用）
+// bufferWriter 兜底捕获插件意外写入 Writer 的非流式响应。
 type bufferWriter struct {
 	headers http.Header
 	code    int
@@ -318,6 +399,4 @@ func (w *bufferWriter) Write(data []byte) (int, error) {
 	return len(data), nil
 }
 
-func (w *bufferWriter) WriteHeader(statusCode int) {
-	w.code = statusCode
-}
+func (w *bufferWriter) WriteHeader(statusCode int) { w.code = statusCode }

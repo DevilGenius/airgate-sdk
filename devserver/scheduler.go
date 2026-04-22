@@ -101,43 +101,42 @@ func (s *Scheduler) selectWeightedRR() *DevAccount {
 	return &cp
 }
 
-// ReportResult 上报转发结果，用于标记冷却
-func (s *Scheduler) ReportResult(accountID int64, result *sdk.ForwardResult) {
-	if result == nil || s.policy == ScheduleNone {
+// ReportResult 上报转发结果，用于标记冷却。
+func (s *Scheduler) ReportResult(accountID int64, outcome sdk.ForwardOutcome) {
+	if s.policy == ScheduleNone {
 		return
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	switch result.AccountStatus {
-	case sdk.AccountStatusRateLimited:
-		cooldown := result.RetryAfter
+	switch outcome.Kind {
+	case sdk.OutcomeAccountRateLimited:
+		cooldown := outcome.RetryAfter
 		if cooldown <= 0 {
 			cooldown = 60 * time.Second
 		}
 		s.cooldown[accountID] = time.Now().Add(cooldown)
 		log.Printf("[调度] 账号 %d 被限流，冷却 %s", accountID, cooldown)
 
-	case sdk.AccountStatusDisabled, sdk.AccountStatusExpired:
+	case sdk.OutcomeAccountDead:
 		s.cooldown[accountID] = time.Now().Add(5 * time.Minute)
-		log.Printf("[调度] 账号 %d 状态 %s，冷却 5 分钟", accountID, result.AccountStatus)
+		log.Printf("[调度] 账号 %d 凭证失效，冷却 5 分钟", accountID)
 
 	default:
-		// 正常结果，清除冷却
 		delete(s.cooldown, accountID)
 	}
 }
 
-// IsRetryable 判断转发结果是否可重试
-func (s *Scheduler) IsRetryable(result *sdk.ForwardResult, err error) bool {
-	if s.policy == ScheduleNone || err == nil {
+// IsRetryable 判断转发结果是否可 failover。
+func (s *Scheduler) IsRetryable(outcome sdk.ForwardOutcome, err error) bool {
+	if s.policy == ScheduleNone {
 		return false
 	}
-	if result == nil {
-		return false
+	if err != nil {
+		return true
 	}
-	return result.AccountStatus != "" && result.AccountStatus != sdk.AccountStatusOK
+	return outcome.Kind.ShouldFailover()
 }
 
 // SetPolicy 运行时切换策略

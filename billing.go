@@ -5,9 +5,7 @@ import (
 	"time"
 )
 
-// ==================== 费用计算 ====================
-
-// CostInput 费用计算输入
+// CostInput 费用计算输入。
 type CostInput struct {
 	InputTokens           int
 	OutputTokens          int
@@ -141,8 +139,6 @@ func CalculateCost(input CostInput, model ModelInfo) CostResult {
 		CacheCreationCost: cacheCreationCost,
 	}
 }
-
-// ==================== 账号用量 ====================
 
 // AccountUsageWindow 描述账号的单个用量窗口。
 // 插件负责把平台专属窗口语义归一化到这个结构，Core 只做通用展示。
