@@ -28,8 +28,12 @@ func (s *GatewayGRPCServer) HandleWebSocket(stream pb.GatewayService_HandleWebSo
 	}
 
 	outcome, err := s.Impl.HandleWebSocket(stream.Context(), conn)
-	if err != nil {
+	// 与 Forward 一致：Kind=Unknown 才通过 gRPC error 上抛，否则合并 err 进 Reason 保留判决。
+	if err != nil && outcome.Kind == sdk.OutcomeUnknown {
 		return err
+	}
+	if err != nil && outcome.Reason == "" {
+		outcome.Reason = err.Error()
 	}
 
 	return stream.Send(&pb.WebSocketFrame{

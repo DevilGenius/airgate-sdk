@@ -236,8 +236,7 @@ func httpHeadersToProto(h http.Header) map[string]*pb.HeaderValues {
 }
 
 func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest) (*pb.ForwardOutcome, error) {
-	// 非流式：用 bufferWriter 兜底捕获插件可能意外写入 Writer 的内容
-	// （正常实现应通过 Outcome.Upstream.Body 返回）。
+	// 非流式：用 bufferWriter 兜底捕获插件可能意外写入 Writer 的内容。
 	bw := &bufferWriter{}
 	fwdReq := &sdk.ForwardRequest{
 		Account: buildAccount(req),
@@ -249,12 +248,17 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 	}
 
 	outcome, err := s.Impl.Forward(ctx, fwdReq)
-	if err != nil {
+	// 契约：Kind 是权威。插件常见写法 `return (outcome, err)` 同时给 Kind 和 err 文本。
+	// 只有当 Kind=Unknown 时才通过 gRPC error 上抛（真正的"插件自己崩了"）；
+	// 否则把 err 合并进 outcome.Reason，保证 Core 端能拿到判决。
+	if err != nil && outcome.Kind == sdk.OutcomeUnknown {
 		return nil, err
+	}
+	if err != nil && outcome.Reason == "" {
+		outcome.Reason = err.Error()
 	}
 
 	pbOutcome := outcomeToProto(outcome)
-	// 如果插件用了 Writer 而不是 Outcome.Upstream，把 buffer 补回 Upstream
 	if len(bw.body) > 0 && (pbOutcome.Upstream == nil || len(pbOutcome.Upstream.Body) == 0) {
 		if pbOutcome.Upstream == nil {
 			pbOutcome.Upstream = &pb.UpstreamResponse{}
@@ -283,8 +287,12 @@ func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.Gate
 
 	startTime := time.Now()
 	outcome, err := s.Impl.Forward(stream.Context(), fwdReq)
-	if err != nil {
+	// 同 Forward：Kind=Unknown 才走 gRPC error；否则合并 err 进 Reason，保留判决。
+	if err != nil && outcome.Kind == sdk.OutcomeUnknown {
 		return err
+	}
+	if err != nil && outcome.Reason == "" {
+		outcome.Reason = err.Error()
 	}
 	if outcome.Duration == 0 {
 		outcome.Duration = time.Since(startTime)
