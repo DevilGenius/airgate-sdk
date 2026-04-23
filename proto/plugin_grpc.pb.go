@@ -1162,9 +1162,14 @@ var MiddlewareService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	HostService_SelectAccount_FullMethodName       = "/airgate.plugin.v1.HostService/SelectAccount"
-	HostService_ProbeForward_FullMethodName        = "/airgate.plugin.v1.HostService/ProbeForward"
-	HostService_ListGroups_FullMethodName          = "/airgate.plugin.v1.HostService/ListGroups"
 	HostService_ReportAccountResult_FullMethodName = "/airgate.plugin.v1.HostService/ReportAccountResult"
+	HostService_ProbeForward_FullMethodName        = "/airgate.plugin.v1.HostService/ProbeForward"
+	HostService_Forward_FullMethodName             = "/airgate.plugin.v1.HostService/Forward"
+	HostService_ForwardStream_FullMethodName       = "/airgate.plugin.v1.HostService/ForwardStream"
+	HostService_ListGroups_FullMethodName          = "/airgate.plugin.v1.HostService/ListGroups"
+	HostService_ListPlatforms_FullMethodName       = "/airgate.plugin.v1.HostService/ListPlatforms"
+	HostService_ListModels_FullMethodName          = "/airgate.plugin.v1.HostService/ListModels"
+	HostService_GetUserInfo_FullMethodName         = "/airgate.plugin.v1.HostService/GetUserInfo"
 )
 
 // HostServiceClient is the client API for HostService service.
@@ -1172,19 +1177,26 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HostServiceClient interface {
 	// 选号：根据 (group_id, model) 走和真实用户请求完全相同的调度路径。
-	// 探测插件用它"以分组为单位"找出当前活跃账号。
 	SelectAccount(ctx context.Context, in *HostSelectAccountRequest, opts ...grpc.CallOption) (*HostSelectAccountResponse, error)
-	// 黑盒探测：内部组装一次最小的 chat completion 请求并直接执行。
-	// - 跳过 usage_log 写入
-	// - 跳过用户余额扣款
-	// - 仍然调 scheduler.ReportResult（探测信号让账号状态机继续受益）
-	// model 为空时由 Core 取该 platform 的第一个 model。
-	ProbeForward(ctx context.Context, in *HostProbeForwardRequest, opts ...grpc.CallOption) (*HostProbeForwardResponse, error)
-	// 列出所有分组（带 platform / 状态等基础字段），供插件遍历探测目标。
-	ListGroups(ctx context.Context, in *HostListGroupsRequest, opts ...grpc.CallOption) (*HostListGroupsResponse, error)
 	// 把账号调用结果反馈给 scheduler 的失败计数器/状态机。
-	// 探测插件可在 ProbeForward 之外的链路（比如自己的二次重试）独立上报。
 	ReportAccountResult(ctx context.Context, in *HostReportAccountResultRequest, opts ...grpc.CallOption) (*Empty, error)
+	// 黑盒探测：内部组装一次最小的 chat completion 请求并直接执行。
+	// 跳过 usage_log 写入、跳过用户余额扣款，仍然 ReportResult 反哺账号状态机。
+	ProbeForward(ctx context.Context, in *HostProbeForwardRequest, opts ...grpc.CallOption) (*HostProbeForwardResponse, error)
+	// 非流式业务转发：走完整管线（调度 → 网关插件 → 计费 → usage_log）。
+	// 调用方需提供 user_id + group_id 以确定计费主体和调度路径。
+	Forward(ctx context.Context, in *HostForwardRequest, opts ...grpc.CallOption) (*HostForwardResponse, error)
+	// 流式业务转发：与 Forward 相同管线，结果通过 server stream 逐块返回。
+	// 最后一块 done=true 携带 usage 信息（计费已在 Core 侧完成）。
+	ForwardStream(ctx context.Context, in *HostForwardRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[HostForwardChunk], error)
+	// 列出所有分组。
+	ListGroups(ctx context.Context, in *HostListGroupsRequest, opts ...grpc.CallOption) (*HostListGroupsResponse, error)
+	// 列出已加载的网关平台（每个 gateway 插件对应一个 platform）。
+	ListPlatforms(ctx context.Context, in *HostListPlatformsRequest, opts ...grpc.CallOption) (*HostListPlatformsResponse, error)
+	// 列出指定平台的模型列表。
+	ListModels(ctx context.Context, in *HostListModelsRequest, opts ...grpc.CallOption) (*HostListModelsResponse, error)
+	// 获取用户基本信息（余额、角色、状态）。
+	GetUserInfo(ctx context.Context, in *HostGetUserInfoRequest, opts ...grpc.CallOption) (*HostGetUserInfoResponse, error)
 }
 
 type hostServiceClient struct {
@@ -1205,6 +1217,16 @@ func (c *hostServiceClient) SelectAccount(ctx context.Context, in *HostSelectAcc
 	return out, nil
 }
 
+func (c *hostServiceClient) ReportAccountResult(ctx context.Context, in *HostReportAccountResultRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, HostService_ReportAccountResult_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *hostServiceClient) ProbeForward(ctx context.Context, in *HostProbeForwardRequest, opts ...grpc.CallOption) (*HostProbeForwardResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HostProbeForwardResponse)
@@ -1214,6 +1236,35 @@ func (c *hostServiceClient) ProbeForward(ctx context.Context, in *HostProbeForwa
 	}
 	return out, nil
 }
+
+func (c *hostServiceClient) Forward(ctx context.Context, in *HostForwardRequest, opts ...grpc.CallOption) (*HostForwardResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HostForwardResponse)
+	err := c.cc.Invoke(ctx, HostService_Forward_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hostServiceClient) ForwardStream(ctx context.Context, in *HostForwardRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[HostForwardChunk], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &HostService_ServiceDesc.Streams[0], HostService_ForwardStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[HostForwardRequest, HostForwardChunk]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type HostService_ForwardStreamClient = grpc.ServerStreamingClient[HostForwardChunk]
 
 func (c *hostServiceClient) ListGroups(ctx context.Context, in *HostListGroupsRequest, opts ...grpc.CallOption) (*HostListGroupsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -1225,10 +1276,30 @@ func (c *hostServiceClient) ListGroups(ctx context.Context, in *HostListGroupsRe
 	return out, nil
 }
 
-func (c *hostServiceClient) ReportAccountResult(ctx context.Context, in *HostReportAccountResultRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *hostServiceClient) ListPlatforms(ctx context.Context, in *HostListPlatformsRequest, opts ...grpc.CallOption) (*HostListPlatformsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, HostService_ReportAccountResult_FullMethodName, in, out, cOpts...)
+	out := new(HostListPlatformsResponse)
+	err := c.cc.Invoke(ctx, HostService_ListPlatforms_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hostServiceClient) ListModels(ctx context.Context, in *HostListModelsRequest, opts ...grpc.CallOption) (*HostListModelsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HostListModelsResponse)
+	err := c.cc.Invoke(ctx, HostService_ListModels_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hostServiceClient) GetUserInfo(ctx context.Context, in *HostGetUserInfoRequest, opts ...grpc.CallOption) (*HostGetUserInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HostGetUserInfoResponse)
+	err := c.cc.Invoke(ctx, HostService_GetUserInfo_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1240,19 +1311,26 @@ func (c *hostServiceClient) ReportAccountResult(ctx context.Context, in *HostRep
 // for forward compatibility.
 type HostServiceServer interface {
 	// 选号：根据 (group_id, model) 走和真实用户请求完全相同的调度路径。
-	// 探测插件用它"以分组为单位"找出当前活跃账号。
 	SelectAccount(context.Context, *HostSelectAccountRequest) (*HostSelectAccountResponse, error)
-	// 黑盒探测：内部组装一次最小的 chat completion 请求并直接执行。
-	// - 跳过 usage_log 写入
-	// - 跳过用户余额扣款
-	// - 仍然调 scheduler.ReportResult（探测信号让账号状态机继续受益）
-	// model 为空时由 Core 取该 platform 的第一个 model。
-	ProbeForward(context.Context, *HostProbeForwardRequest) (*HostProbeForwardResponse, error)
-	// 列出所有分组（带 platform / 状态等基础字段），供插件遍历探测目标。
-	ListGroups(context.Context, *HostListGroupsRequest) (*HostListGroupsResponse, error)
 	// 把账号调用结果反馈给 scheduler 的失败计数器/状态机。
-	// 探测插件可在 ProbeForward 之外的链路（比如自己的二次重试）独立上报。
 	ReportAccountResult(context.Context, *HostReportAccountResultRequest) (*Empty, error)
+	// 黑盒探测：内部组装一次最小的 chat completion 请求并直接执行。
+	// 跳过 usage_log 写入、跳过用户余额扣款，仍然 ReportResult 反哺账号状态机。
+	ProbeForward(context.Context, *HostProbeForwardRequest) (*HostProbeForwardResponse, error)
+	// 非流式业务转发：走完整管线（调度 → 网关插件 → 计费 → usage_log）。
+	// 调用方需提供 user_id + group_id 以确定计费主体和调度路径。
+	Forward(context.Context, *HostForwardRequest) (*HostForwardResponse, error)
+	// 流式业务转发：与 Forward 相同管线，结果通过 server stream 逐块返回。
+	// 最后一块 done=true 携带 usage 信息（计费已在 Core 侧完成）。
+	ForwardStream(*HostForwardRequest, grpc.ServerStreamingServer[HostForwardChunk]) error
+	// 列出所有分组。
+	ListGroups(context.Context, *HostListGroupsRequest) (*HostListGroupsResponse, error)
+	// 列出已加载的网关平台（每个 gateway 插件对应一个 platform）。
+	ListPlatforms(context.Context, *HostListPlatformsRequest) (*HostListPlatformsResponse, error)
+	// 列出指定平台的模型列表。
+	ListModels(context.Context, *HostListModelsRequest) (*HostListModelsResponse, error)
+	// 获取用户基本信息（余额、角色、状态）。
+	GetUserInfo(context.Context, *HostGetUserInfoRequest) (*HostGetUserInfoResponse, error)
 	mustEmbedUnimplementedHostServiceServer()
 }
 
@@ -1266,14 +1344,29 @@ type UnimplementedHostServiceServer struct{}
 func (UnimplementedHostServiceServer) SelectAccount(context.Context, *HostSelectAccountRequest) (*HostSelectAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SelectAccount not implemented")
 }
+func (UnimplementedHostServiceServer) ReportAccountResult(context.Context, *HostReportAccountResultRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReportAccountResult not implemented")
+}
 func (UnimplementedHostServiceServer) ProbeForward(context.Context, *HostProbeForwardRequest) (*HostProbeForwardResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ProbeForward not implemented")
+}
+func (UnimplementedHostServiceServer) Forward(context.Context, *HostForwardRequest) (*HostForwardResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Forward not implemented")
+}
+func (UnimplementedHostServiceServer) ForwardStream(*HostForwardRequest, grpc.ServerStreamingServer[HostForwardChunk]) error {
+	return status.Error(codes.Unimplemented, "method ForwardStream not implemented")
 }
 func (UnimplementedHostServiceServer) ListGroups(context.Context, *HostListGroupsRequest) (*HostListGroupsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListGroups not implemented")
 }
-func (UnimplementedHostServiceServer) ReportAccountResult(context.Context, *HostReportAccountResultRequest) (*Empty, error) {
-	return nil, status.Error(codes.Unimplemented, "method ReportAccountResult not implemented")
+func (UnimplementedHostServiceServer) ListPlatforms(context.Context, *HostListPlatformsRequest) (*HostListPlatformsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPlatforms not implemented")
+}
+func (UnimplementedHostServiceServer) ListModels(context.Context, *HostListModelsRequest) (*HostListModelsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListModels not implemented")
+}
+func (UnimplementedHostServiceServer) GetUserInfo(context.Context, *HostGetUserInfoRequest) (*HostGetUserInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserInfo not implemented")
 }
 func (UnimplementedHostServiceServer) mustEmbedUnimplementedHostServiceServer() {}
 func (UnimplementedHostServiceServer) testEmbeddedByValue()                     {}
@@ -1314,6 +1407,24 @@ func _HostService_SelectAccount_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HostService_ReportAccountResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostReportAccountResultRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).ReportAccountResult(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_ReportAccountResult_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).ReportAccountResult(ctx, req.(*HostReportAccountResultRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _HostService_ProbeForward_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HostProbeForwardRequest)
 	if err := dec(in); err != nil {
@@ -1331,6 +1442,35 @@ func _HostService_ProbeForward_Handler(srv interface{}, ctx context.Context, dec
 	}
 	return interceptor(ctx, in, info, handler)
 }
+
+func _HostService_Forward_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostForwardRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).Forward(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_Forward_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).Forward(ctx, req.(*HostForwardRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HostService_ForwardStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(HostForwardRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(HostServiceServer).ForwardStream(m, &grpc.GenericServerStream[HostForwardRequest, HostForwardChunk]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type HostService_ForwardStreamServer = grpc.ServerStreamingServer[HostForwardChunk]
 
 func _HostService_ListGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HostListGroupsRequest)
@@ -1350,20 +1490,56 @@ func _HostService_ListGroups_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HostService_ReportAccountResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HostReportAccountResultRequest)
+func _HostService_ListPlatforms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostListPlatformsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HostServiceServer).ReportAccountResult(ctx, in)
+		return srv.(HostServiceServer).ListPlatforms(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: HostService_ReportAccountResult_FullMethodName,
+		FullMethod: HostService_ListPlatforms_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HostServiceServer).ReportAccountResult(ctx, req.(*HostReportAccountResultRequest))
+		return srv.(HostServiceServer).ListPlatforms(ctx, req.(*HostListPlatformsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HostService_ListModels_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostListModelsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).ListModels(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_ListModels_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).ListModels(ctx, req.(*HostListModelsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HostService_GetUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostGetUserInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).GetUserInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_GetUserInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).GetUserInfo(ctx, req.(*HostGetUserInfoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1380,18 +1556,40 @@ var HostService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _HostService_SelectAccount_Handler,
 		},
 		{
+			MethodName: "ReportAccountResult",
+			Handler:    _HostService_ReportAccountResult_Handler,
+		},
+		{
 			MethodName: "ProbeForward",
 			Handler:    _HostService_ProbeForward_Handler,
+		},
+		{
+			MethodName: "Forward",
+			Handler:    _HostService_Forward_Handler,
 		},
 		{
 			MethodName: "ListGroups",
 			Handler:    _HostService_ListGroups_Handler,
 		},
 		{
-			MethodName: "ReportAccountResult",
-			Handler:    _HostService_ReportAccountResult_Handler,
+			MethodName: "ListPlatforms",
+			Handler:    _HostService_ListPlatforms_Handler,
+		},
+		{
+			MethodName: "ListModels",
+			Handler:    _HostService_ListModels_Handler,
+		},
+		{
+			MethodName: "GetUserInfo",
+			Handler:    _HostService_GetUserInfo_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ForwardStream",
+			Handler:       _HostService_ForwardStream_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "plugin.proto",
 }

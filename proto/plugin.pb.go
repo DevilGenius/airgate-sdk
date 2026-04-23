@@ -136,7 +136,7 @@ func (x WebSocketFrame_FrameType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WebSocketFrame_FrameType.Descriptor instead.
 func (WebSocketFrame_FrameType) EnumDescriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{36, 0}
+	return file_plugin_proto_rawDescGZIP(), []int{47, 0}
 }
 
 type MiddlewareDecision_Action int32
@@ -185,7 +185,7 @@ func (x MiddlewareDecision_Action) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MiddlewareDecision_Action.Descriptor instead.
 func (MiddlewareDecision_Action) EnumDescriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{42, 0}
+	return file_plugin_proto_rawDescGZIP(), []int{53, 0}
 }
 
 type HostSelectAccountRequest struct {
@@ -684,6 +684,672 @@ func (x *HostReportAccountResultRequest) GetErrorMsg() string {
 	return ""
 }
 
+// HostForwardRequest 业务转发入参。
+// user_id + group_id 共同确定计费主体和调度路径。
+type HostForwardRequest struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	UserId        int64                    `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`    // 计费主体（扣余额的用户）
+	GroupId       int64                    `protobuf:"varint,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"` // 调度分组
+	Model         string                   `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`                     // 可空：空时 Core 取该 platform 的第一个 model
+	Method        string                   `protobuf:"bytes,4,opt,name=method,proto3" json:"method,omitempty"`                   // HTTP method（POST / GET / ...）
+	Path          string                   `protobuf:"bytes,5,opt,name=path,proto3" json:"path,omitempty"`                       // 请求路径（如 /v1/chat/completions）
+	Headers       map[string]*HeaderValues `protobuf:"bytes,6,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Body          []byte                   `protobuf:"bytes,7,opt,name=body,proto3" json:"body,omitempty"`
+	Stream        bool                     `protobuf:"varint,8,opt,name=stream,proto3" json:"stream,omitempty"` // 是否流式
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostForwardRequest) Reset() {
+	*x = HostForwardRequest{}
+	mi := &file_plugin_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostForwardRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostForwardRequest) ProtoMessage() {}
+
+func (x *HostForwardRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostForwardRequest.ProtoReflect.Descriptor instead.
+func (*HostForwardRequest) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *HostForwardRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *HostForwardRequest) GetGroupId() int64 {
+	if x != nil {
+		return x.GroupId
+	}
+	return 0
+}
+
+func (x *HostForwardRequest) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *HostForwardRequest) GetMethod() string {
+	if x != nil {
+		return x.Method
+	}
+	return ""
+}
+
+func (x *HostForwardRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *HostForwardRequest) GetHeaders() map[string]*HeaderValues {
+	if x != nil {
+		return x.Headers
+	}
+	return nil
+}
+
+func (x *HostForwardRequest) GetBody() []byte {
+	if x != nil {
+		return x.Body
+	}
+	return nil
+}
+
+func (x *HostForwardRequest) GetStream() bool {
+	if x != nil {
+		return x.Stream
+	}
+	return false
+}
+
+// HostForwardResponse 非流式转发结果。
+type HostForwardResponse struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	StatusCode    int32                    `protobuf:"varint,1,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
+	Headers       map[string]*HeaderValues `protobuf:"bytes,2,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Body          []byte                   `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
+	Usage         *HostForwardUsage        `protobuf:"bytes,4,opt,name=usage,proto3" json:"usage,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostForwardResponse) Reset() {
+	*x = HostForwardResponse{}
+	mi := &file_plugin_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostForwardResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostForwardResponse) ProtoMessage() {}
+
+func (x *HostForwardResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostForwardResponse.ProtoReflect.Descriptor instead.
+func (*HostForwardResponse) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *HostForwardResponse) GetStatusCode() int32 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *HostForwardResponse) GetHeaders() map[string]*HeaderValues {
+	if x != nil {
+		return x.Headers
+	}
+	return nil
+}
+
+func (x *HostForwardResponse) GetBody() []byte {
+	if x != nil {
+		return x.Body
+	}
+	return nil
+}
+
+func (x *HostForwardResponse) GetUsage() *HostForwardUsage {
+	if x != nil {
+		return x.Usage
+	}
+	return nil
+}
+
+// HostForwardChunk 流式转发的单块数据。
+// 第一块携带 status_code + headers；最后一块 done=true 携带 usage。
+type HostForwardChunk struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Data          []byte                   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	Done          bool                     `protobuf:"varint,2,opt,name=done,proto3" json:"done,omitempty"`
+	StatusCode    int32                    `protobuf:"varint,3,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`                                                  // 仅首块
+	Headers       map[string]*HeaderValues `protobuf:"bytes,4,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 仅首块
+	Usage         *HostForwardUsage        `protobuf:"bytes,5,opt,name=usage,proto3" json:"usage,omitempty"`                                                                               // 仅末块
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostForwardChunk) Reset() {
+	*x = HostForwardChunk{}
+	mi := &file_plugin_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostForwardChunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostForwardChunk) ProtoMessage() {}
+
+func (x *HostForwardChunk) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostForwardChunk.ProtoReflect.Descriptor instead.
+func (*HostForwardChunk) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *HostForwardChunk) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *HostForwardChunk) GetDone() bool {
+	if x != nil {
+		return x.Done
+	}
+	return false
+}
+
+func (x *HostForwardChunk) GetStatusCode() int32 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *HostForwardChunk) GetHeaders() map[string]*HeaderValues {
+	if x != nil {
+		return x.Headers
+	}
+	return nil
+}
+
+func (x *HostForwardChunk) GetUsage() *HostForwardUsage {
+	if x != nil {
+		return x.Usage
+	}
+	return nil
+}
+
+// HostForwardUsage 转发的 token / 费用摘要（Core 侧计算后回传给调用方插件）。
+type HostForwardUsage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InputTokens   int64                  `protobuf:"varint,1,opt,name=input_tokens,json=inputTokens,proto3" json:"input_tokens,omitempty"`
+	OutputTokens  int64                  `protobuf:"varint,2,opt,name=output_tokens,json=outputTokens,proto3" json:"output_tokens,omitempty"`
+	Cost          float64                `protobuf:"fixed64,3,opt,name=cost,proto3" json:"cost,omitempty"` // 总费用（已计入倍率）
+	Model         string                 `protobuf:"bytes,4,opt,name=model,proto3" json:"model,omitempty"` // 实际使用的 model（可能被 Core 改写）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostForwardUsage) Reset() {
+	*x = HostForwardUsage{}
+	mi := &file_plugin_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostForwardUsage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostForwardUsage) ProtoMessage() {}
+
+func (x *HostForwardUsage) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostForwardUsage.ProtoReflect.Descriptor instead.
+func (*HostForwardUsage) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *HostForwardUsage) GetInputTokens() int64 {
+	if x != nil {
+		return x.InputTokens
+	}
+	return 0
+}
+
+func (x *HostForwardUsage) GetOutputTokens() int64 {
+	if x != nil {
+		return x.OutputTokens
+	}
+	return 0
+}
+
+func (x *HostForwardUsage) GetCost() float64 {
+	if x != nil {
+		return x.Cost
+	}
+	return 0
+}
+
+func (x *HostForwardUsage) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+type HostListPlatformsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostListPlatformsRequest) Reset() {
+	*x = HostListPlatformsRequest{}
+	mi := &file_plugin_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostListPlatformsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostListPlatformsRequest) ProtoMessage() {}
+
+func (x *HostListPlatformsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostListPlatformsRequest.ProtoReflect.Descriptor instead.
+func (*HostListPlatformsRequest) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{12}
+}
+
+type HostPlatform struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`                                  // 平台标识（如 "openai"）
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"` // 展示名称（如 "OpenAI 网关"）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostPlatform) Reset() {
+	*x = HostPlatform{}
+	mi := &file_plugin_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostPlatform) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostPlatform) ProtoMessage() {}
+
+func (x *HostPlatform) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostPlatform.ProtoReflect.Descriptor instead.
+func (*HostPlatform) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *HostPlatform) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *HostPlatform) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+type HostListPlatformsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Platforms     []*HostPlatform        `protobuf:"bytes,1,rep,name=platforms,proto3" json:"platforms,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostListPlatformsResponse) Reset() {
+	*x = HostListPlatformsResponse{}
+	mi := &file_plugin_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostListPlatformsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostListPlatformsResponse) ProtoMessage() {}
+
+func (x *HostListPlatformsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostListPlatformsResponse.ProtoReflect.Descriptor instead.
+func (*HostListPlatformsResponse) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *HostListPlatformsResponse) GetPlatforms() []*HostPlatform {
+	if x != nil {
+		return x.Platforms
+	}
+	return nil
+}
+
+type HostListModelsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Platform      string                 `protobuf:"bytes,1,opt,name=platform,proto3" json:"platform,omitempty"` // 必填：平台标识
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostListModelsRequest) Reset() {
+	*x = HostListModelsRequest{}
+	mi := &file_plugin_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostListModelsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostListModelsRequest) ProtoMessage() {}
+
+func (x *HostListModelsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostListModelsRequest.ProtoReflect.Descriptor instead.
+func (*HostListModelsRequest) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *HostListModelsRequest) GetPlatform() string {
+	if x != nil {
+		return x.Platform
+	}
+	return ""
+}
+
+type HostListModelsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Models        []*ModelInfoProto      `protobuf:"bytes,1,rep,name=models,proto3" json:"models,omitempty"` // 复用已有 ModelInfoProto，避免平行数据结构漂移
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostListModelsResponse) Reset() {
+	*x = HostListModelsResponse{}
+	mi := &file_plugin_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostListModelsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostListModelsResponse) ProtoMessage() {}
+
+func (x *HostListModelsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostListModelsResponse.ProtoReflect.Descriptor instead.
+func (*HostListModelsResponse) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *HostListModelsResponse) GetModels() []*ModelInfoProto {
+	if x != nil {
+		return x.Models
+	}
+	return nil
+}
+
+type HostGetUserInfoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostGetUserInfoRequest) Reset() {
+	*x = HostGetUserInfoRequest{}
+	mi := &file_plugin_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostGetUserInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostGetUserInfoRequest) ProtoMessage() {}
+
+func (x *HostGetUserInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostGetUserInfoRequest.ProtoReflect.Descriptor instead.
+func (*HostGetUserInfoRequest) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *HostGetUserInfoRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type HostGetUserInfoResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Role          string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"` // "admin" / "user"
+	Balance       float64                `protobuf:"fixed64,5,opt,name=balance,proto3" json:"balance,omitempty"`
+	Status        string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"` // "active" / "disabled"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostGetUserInfoResponse) Reset() {
+	*x = HostGetUserInfoResponse{}
+	mi := &file_plugin_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostGetUserInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostGetUserInfoResponse) ProtoMessage() {}
+
+func (x *HostGetUserInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostGetUserInfoResponse.ProtoReflect.Descriptor instead.
+func (*HostGetUserInfoResponse) Descriptor() ([]byte, []int) {
+	return file_plugin_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *HostGetUserInfoResponse) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *HostGetUserInfoResponse) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *HostGetUserInfoResponse) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *HostGetUserInfoResponse) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *HostGetUserInfoResponse) GetBalance() float64 {
+	if x != nil {
+		return x.Balance
+	}
+	return 0
+}
+
+func (x *HostGetUserInfoResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
 type Empty struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -692,7 +1358,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_plugin_proto_msgTypes[8]
+	mi := &file_plugin_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -704,7 +1370,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[8]
+	mi := &file_plugin_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -717,7 +1383,7 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{8}
+	return file_plugin_proto_rawDescGZIP(), []int{19}
 }
 
 type StringResponse struct {
@@ -729,7 +1395,7 @@ type StringResponse struct {
 
 func (x *StringResponse) Reset() {
 	*x = StringResponse{}
-	mi := &file_plugin_proto_msgTypes[9]
+	mi := &file_plugin_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -741,7 +1407,7 @@ func (x *StringResponse) String() string {
 func (*StringResponse) ProtoMessage() {}
 
 func (x *StringResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[9]
+	mi := &file_plugin_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -754,7 +1420,7 @@ func (x *StringResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StringResponse.ProtoReflect.Descriptor instead.
 func (*StringResponse) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{9}
+	return file_plugin_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *StringResponse) GetValue() string {
@@ -774,7 +1440,7 @@ type HeaderValues struct {
 
 func (x *HeaderValues) Reset() {
 	*x = HeaderValues{}
-	mi := &file_plugin_proto_msgTypes[10]
+	mi := &file_plugin_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -786,7 +1452,7 @@ func (x *HeaderValues) String() string {
 func (*HeaderValues) ProtoMessage() {}
 
 func (x *HeaderValues) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[10]
+	mi := &file_plugin_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -799,7 +1465,7 @@ func (x *HeaderValues) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HeaderValues.ProtoReflect.Descriptor instead.
 func (*HeaderValues) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{10}
+	return file_plugin_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *HeaderValues) GetValues() []string {
@@ -837,7 +1503,7 @@ type PluginInfoResponse struct {
 
 func (x *PluginInfoResponse) Reset() {
 	*x = PluginInfoResponse{}
-	mi := &file_plugin_proto_msgTypes[11]
+	mi := &file_plugin_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -849,7 +1515,7 @@ func (x *PluginInfoResponse) String() string {
 func (*PluginInfoResponse) ProtoMessage() {}
 
 func (x *PluginInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[11]
+	mi := &file_plugin_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -862,7 +1528,7 @@ func (x *PluginInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginInfoResponse.ProtoReflect.Descriptor instead.
 func (*PluginInfoResponse) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{11}
+	return file_plugin_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *PluginInfoResponse) GetId() string {
@@ -985,7 +1651,7 @@ type ConfigFieldProto struct {
 
 func (x *ConfigFieldProto) Reset() {
 	*x = ConfigFieldProto{}
-	mi := &file_plugin_proto_msgTypes[12]
+	mi := &file_plugin_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -997,7 +1663,7 @@ func (x *ConfigFieldProto) String() string {
 func (*ConfigFieldProto) ProtoMessage() {}
 
 func (x *ConfigFieldProto) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[12]
+	mi := &file_plugin_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1010,7 +1676,7 @@ func (x *ConfigFieldProto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigFieldProto.ProtoReflect.Descriptor instead.
 func (*ConfigFieldProto) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{12}
+	return file_plugin_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ConfigFieldProto) GetKey() string {
@@ -1074,7 +1740,7 @@ type AccountTypeProto struct {
 
 func (x *AccountTypeProto) Reset() {
 	*x = AccountTypeProto{}
-	mi := &file_plugin_proto_msgTypes[13]
+	mi := &file_plugin_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1086,7 +1752,7 @@ func (x *AccountTypeProto) String() string {
 func (*AccountTypeProto) ProtoMessage() {}
 
 func (x *AccountTypeProto) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[13]
+	mi := &file_plugin_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1099,7 +1765,7 @@ func (x *AccountTypeProto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AccountTypeProto.ProtoReflect.Descriptor instead.
 func (*AccountTypeProto) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{13}
+	return file_plugin_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *AccountTypeProto) GetKey() string {
@@ -1144,7 +1810,7 @@ type CredentialFieldProto struct {
 
 func (x *CredentialFieldProto) Reset() {
 	*x = CredentialFieldProto{}
-	mi := &file_plugin_proto_msgTypes[14]
+	mi := &file_plugin_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1156,7 +1822,7 @@ func (x *CredentialFieldProto) String() string {
 func (*CredentialFieldProto) ProtoMessage() {}
 
 func (x *CredentialFieldProto) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[14]
+	mi := &file_plugin_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1169,7 +1835,7 @@ func (x *CredentialFieldProto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CredentialFieldProto.ProtoReflect.Descriptor instead.
 func (*CredentialFieldProto) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{14}
+	return file_plugin_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *CredentialFieldProto) GetKey() string {
@@ -1227,7 +1893,7 @@ type FrontendPageProto struct {
 
 func (x *FrontendPageProto) Reset() {
 	*x = FrontendPageProto{}
-	mi := &file_plugin_proto_msgTypes[15]
+	mi := &file_plugin_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1239,7 +1905,7 @@ func (x *FrontendPageProto) String() string {
 func (*FrontendPageProto) ProtoMessage() {}
 
 func (x *FrontendPageProto) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[15]
+	mi := &file_plugin_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1252,7 +1918,7 @@ func (x *FrontendPageProto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FrontendPageProto.ProtoReflect.Descriptor instead.
 func (*FrontendPageProto) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{15}
+	return file_plugin_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *FrontendPageProto) GetPath() string {
@@ -1301,7 +1967,7 @@ type FrontendWidgetProto struct {
 
 func (x *FrontendWidgetProto) Reset() {
 	*x = FrontendWidgetProto{}
-	mi := &file_plugin_proto_msgTypes[16]
+	mi := &file_plugin_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1313,7 +1979,7 @@ func (x *FrontendWidgetProto) String() string {
 func (*FrontendWidgetProto) ProtoMessage() {}
 
 func (x *FrontendWidgetProto) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[16]
+	mi := &file_plugin_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1326,7 +1992,7 @@ func (x *FrontendWidgetProto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FrontendWidgetProto.ProtoReflect.Descriptor instead.
 func (*FrontendWidgetProto) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{16}
+	return file_plugin_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *FrontendWidgetProto) GetSlot() string {
@@ -1365,7 +2031,7 @@ type InitRequest struct {
 
 func (x *InitRequest) Reset() {
 	*x = InitRequest{}
-	mi := &file_plugin_proto_msgTypes[17]
+	mi := &file_plugin_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1377,7 +2043,7 @@ func (x *InitRequest) String() string {
 func (*InitRequest) ProtoMessage() {}
 
 func (x *InitRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[17]
+	mi := &file_plugin_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1390,7 +2056,7 @@ func (x *InitRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InitRequest.ProtoReflect.Descriptor instead.
 func (*InitRequest) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{17}
+	return file_plugin_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *InitRequest) GetConfig() map[string]string {
@@ -1434,7 +2100,7 @@ type ModelInfoProto struct {
 
 func (x *ModelInfoProto) Reset() {
 	*x = ModelInfoProto{}
-	mi := &file_plugin_proto_msgTypes[18]
+	mi := &file_plugin_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1446,7 +2112,7 @@ func (x *ModelInfoProto) String() string {
 func (*ModelInfoProto) ProtoMessage() {}
 
 func (x *ModelInfoProto) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[18]
+	mi := &file_plugin_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1459,7 +2125,7 @@ func (x *ModelInfoProto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelInfoProto.ProtoReflect.Descriptor instead.
 func (*ModelInfoProto) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{18}
+	return file_plugin_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ModelInfoProto) GetId() string {
@@ -1555,7 +2221,7 @@ type ModelsResponse struct {
 
 func (x *ModelsResponse) Reset() {
 	*x = ModelsResponse{}
-	mi := &file_plugin_proto_msgTypes[19]
+	mi := &file_plugin_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1567,7 +2233,7 @@ func (x *ModelsResponse) String() string {
 func (*ModelsResponse) ProtoMessage() {}
 
 func (x *ModelsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[19]
+	mi := &file_plugin_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1580,7 +2246,7 @@ func (x *ModelsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelsResponse.ProtoReflect.Descriptor instead.
 func (*ModelsResponse) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{19}
+	return file_plugin_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ModelsResponse) GetModels() []*ModelInfoProto {
@@ -1601,7 +2267,7 @@ type RouteDefinitionProto struct {
 
 func (x *RouteDefinitionProto) Reset() {
 	*x = RouteDefinitionProto{}
-	mi := &file_plugin_proto_msgTypes[20]
+	mi := &file_plugin_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1613,7 +2279,7 @@ func (x *RouteDefinitionProto) String() string {
 func (*RouteDefinitionProto) ProtoMessage() {}
 
 func (x *RouteDefinitionProto) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[20]
+	mi := &file_plugin_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1626,7 +2292,7 @@ func (x *RouteDefinitionProto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteDefinitionProto.ProtoReflect.Descriptor instead.
 func (*RouteDefinitionProto) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{20}
+	return file_plugin_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *RouteDefinitionProto) GetMethod() string {
@@ -1659,7 +2325,7 @@ type RoutesResponse struct {
 
 func (x *RoutesResponse) Reset() {
 	*x = RoutesResponse{}
-	mi := &file_plugin_proto_msgTypes[21]
+	mi := &file_plugin_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1671,7 +2337,7 @@ func (x *RoutesResponse) String() string {
 func (*RoutesResponse) ProtoMessage() {}
 
 func (x *RoutesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[21]
+	mi := &file_plugin_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1684,7 +2350,7 @@ func (x *RoutesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoutesResponse.ProtoReflect.Descriptor instead.
 func (*RoutesResponse) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{21}
+	return file_plugin_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *RoutesResponse) GetRoutes() []*RouteDefinitionProto {
@@ -1708,7 +2374,7 @@ type AccountProto struct {
 
 func (x *AccountProto) Reset() {
 	*x = AccountProto{}
-	mi := &file_plugin_proto_msgTypes[22]
+	mi := &file_plugin_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1720,7 +2386,7 @@ func (x *AccountProto) String() string {
 func (*AccountProto) ProtoMessage() {}
 
 func (x *AccountProto) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[22]
+	mi := &file_plugin_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1733,7 +2399,7 @@ func (x *AccountProto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AccountProto.ProtoReflect.Descriptor instead.
 func (*AccountProto) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{22}
+	return file_plugin_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *AccountProto) GetId() int64 {
@@ -1791,7 +2457,7 @@ type ForwardRequest struct {
 
 func (x *ForwardRequest) Reset() {
 	*x = ForwardRequest{}
-	mi := &file_plugin_proto_msgTypes[23]
+	mi := &file_plugin_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1803,7 +2469,7 @@ func (x *ForwardRequest) String() string {
 func (*ForwardRequest) ProtoMessage() {}
 
 func (x *ForwardRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[23]
+	mi := &file_plugin_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1816,7 +2482,7 @@ func (x *ForwardRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForwardRequest.ProtoReflect.Descriptor instead.
 func (*ForwardRequest) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{23}
+	return file_plugin_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ForwardRequest) GetBody() []byte {
@@ -1866,7 +2532,7 @@ type UpstreamResponse struct {
 
 func (x *UpstreamResponse) Reset() {
 	*x = UpstreamResponse{}
-	mi := &file_plugin_proto_msgTypes[24]
+	mi := &file_plugin_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1878,7 +2544,7 @@ func (x *UpstreamResponse) String() string {
 func (*UpstreamResponse) ProtoMessage() {}
 
 func (x *UpstreamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[24]
+	mi := &file_plugin_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1891,7 +2557,7 @@ func (x *UpstreamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpstreamResponse.ProtoReflect.Descriptor instead.
 func (*UpstreamResponse) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{24}
+	return file_plugin_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *UpstreamResponse) GetStatusCode() int32 {
@@ -1943,7 +2609,7 @@ type Usage struct {
 
 func (x *Usage) Reset() {
 	*x = Usage{}
-	mi := &file_plugin_proto_msgTypes[25]
+	mi := &file_plugin_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1955,7 +2621,7 @@ func (x *Usage) String() string {
 func (*Usage) ProtoMessage() {}
 
 func (x *Usage) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[25]
+	mi := &file_plugin_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1968,7 +2634,7 @@ func (x *Usage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Usage.ProtoReflect.Descriptor instead.
 func (*Usage) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{25}
+	return file_plugin_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *Usage) GetInputTokens() int64 {
@@ -2120,7 +2786,7 @@ type ForwardOutcome struct {
 
 func (x *ForwardOutcome) Reset() {
 	*x = ForwardOutcome{}
-	mi := &file_plugin_proto_msgTypes[26]
+	mi := &file_plugin_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2132,7 +2798,7 @@ func (x *ForwardOutcome) String() string {
 func (*ForwardOutcome) ProtoMessage() {}
 
 func (x *ForwardOutcome) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[26]
+	mi := &file_plugin_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2145,7 +2811,7 @@ func (x *ForwardOutcome) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForwardOutcome.ProtoReflect.Descriptor instead.
 func (*ForwardOutcome) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{26}
+	return file_plugin_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ForwardOutcome) GetKind() OutcomeKind {
@@ -2210,7 +2876,7 @@ type ForwardChunk struct {
 
 func (x *ForwardChunk) Reset() {
 	*x = ForwardChunk{}
-	mi := &file_plugin_proto_msgTypes[27]
+	mi := &file_plugin_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2222,7 +2888,7 @@ func (x *ForwardChunk) String() string {
 func (*ForwardChunk) ProtoMessage() {}
 
 func (x *ForwardChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[27]
+	mi := &file_plugin_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2235,7 +2901,7 @@ func (x *ForwardChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForwardChunk.ProtoReflect.Descriptor instead.
 func (*ForwardChunk) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{27}
+	return file_plugin_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ForwardChunk) GetData() []byte {
@@ -2282,7 +2948,7 @@ type CredentialsRequest struct {
 
 func (x *CredentialsRequest) Reset() {
 	*x = CredentialsRequest{}
-	mi := &file_plugin_proto_msgTypes[28]
+	mi := &file_plugin_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2294,7 +2960,7 @@ func (x *CredentialsRequest) String() string {
 func (*CredentialsRequest) ProtoMessage() {}
 
 func (x *CredentialsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[28]
+	mi := &file_plugin_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2307,7 +2973,7 @@ func (x *CredentialsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CredentialsRequest.ProtoReflect.Descriptor instead.
 func (*CredentialsRequest) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{28}
+	return file_plugin_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *CredentialsRequest) GetCredentials() map[string]string {
@@ -2331,7 +2997,7 @@ type QuotaInfoResponse struct {
 
 func (x *QuotaInfoResponse) Reset() {
 	*x = QuotaInfoResponse{}
-	mi := &file_plugin_proto_msgTypes[29]
+	mi := &file_plugin_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2343,7 +3009,7 @@ func (x *QuotaInfoResponse) String() string {
 func (*QuotaInfoResponse) ProtoMessage() {}
 
 func (x *QuotaInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[29]
+	mi := &file_plugin_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2356,7 +3022,7 @@ func (x *QuotaInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QuotaInfoResponse.ProtoReflect.Descriptor instead.
 func (*QuotaInfoResponse) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{29}
+	return file_plugin_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *QuotaInfoResponse) GetTotal() float64 {
@@ -2415,7 +3081,7 @@ type HttpRequest struct {
 
 func (x *HttpRequest) Reset() {
 	*x = HttpRequest{}
-	mi := &file_plugin_proto_msgTypes[30]
+	mi := &file_plugin_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2427,7 +3093,7 @@ func (x *HttpRequest) String() string {
 func (*HttpRequest) ProtoMessage() {}
 
 func (x *HttpRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[30]
+	mi := &file_plugin_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2440,7 +3106,7 @@ func (x *HttpRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HttpRequest.ProtoReflect.Descriptor instead.
 func (*HttpRequest) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{30}
+	return file_plugin_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *HttpRequest) GetMethod() string {
@@ -2496,7 +3162,7 @@ type HttpResponse struct {
 
 func (x *HttpResponse) Reset() {
 	*x = HttpResponse{}
-	mi := &file_plugin_proto_msgTypes[31]
+	mi := &file_plugin_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2508,7 +3174,7 @@ func (x *HttpResponse) String() string {
 func (*HttpResponse) ProtoMessage() {}
 
 func (x *HttpResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[31]
+	mi := &file_plugin_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2521,7 +3187,7 @@ func (x *HttpResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HttpResponse.ProtoReflect.Descriptor instead.
 func (*HttpResponse) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{31}
+	return file_plugin_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *HttpResponse) GetStatusCode() int32 {
@@ -2557,7 +3223,7 @@ type HttpResponseChunk struct {
 
 func (x *HttpResponseChunk) Reset() {
 	*x = HttpResponseChunk{}
-	mi := &file_plugin_proto_msgTypes[32]
+	mi := &file_plugin_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2569,7 +3235,7 @@ func (x *HttpResponseChunk) String() string {
 func (*HttpResponseChunk) ProtoMessage() {}
 
 func (x *HttpResponseChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[32]
+	mi := &file_plugin_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2582,7 +3248,7 @@ func (x *HttpResponseChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HttpResponseChunk.ProtoReflect.Descriptor instead.
 func (*HttpResponseChunk) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{32}
+	return file_plugin_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *HttpResponseChunk) GetData() []byte {
@@ -2623,7 +3289,7 @@ type BackgroundTaskProto struct {
 
 func (x *BackgroundTaskProto) Reset() {
 	*x = BackgroundTaskProto{}
-	mi := &file_plugin_proto_msgTypes[33]
+	mi := &file_plugin_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2635,7 +3301,7 @@ func (x *BackgroundTaskProto) String() string {
 func (*BackgroundTaskProto) ProtoMessage() {}
 
 func (x *BackgroundTaskProto) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[33]
+	mi := &file_plugin_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2648,7 +3314,7 @@ func (x *BackgroundTaskProto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackgroundTaskProto.ProtoReflect.Descriptor instead.
 func (*BackgroundTaskProto) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{33}
+	return file_plugin_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *BackgroundTaskProto) GetName() string {
@@ -2674,7 +3340,7 @@ type BackgroundTasksResponse struct {
 
 func (x *BackgroundTasksResponse) Reset() {
 	*x = BackgroundTasksResponse{}
-	mi := &file_plugin_proto_msgTypes[34]
+	mi := &file_plugin_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2686,7 +3352,7 @@ func (x *BackgroundTasksResponse) String() string {
 func (*BackgroundTasksResponse) ProtoMessage() {}
 
 func (x *BackgroundTasksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[34]
+	mi := &file_plugin_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2699,7 +3365,7 @@ func (x *BackgroundTasksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackgroundTasksResponse.ProtoReflect.Descriptor instead.
 func (*BackgroundTasksResponse) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{34}
+	return file_plugin_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *BackgroundTasksResponse) GetTasks() []*BackgroundTaskProto {
@@ -2718,7 +3384,7 @@ type RunBackgroundTaskRequest struct {
 
 func (x *RunBackgroundTaskRequest) Reset() {
 	*x = RunBackgroundTaskRequest{}
-	mi := &file_plugin_proto_msgTypes[35]
+	mi := &file_plugin_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2730,7 +3396,7 @@ func (x *RunBackgroundTaskRequest) String() string {
 func (*RunBackgroundTaskRequest) ProtoMessage() {}
 
 func (x *RunBackgroundTaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[35]
+	mi := &file_plugin_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2743,7 +3409,7 @@ func (x *RunBackgroundTaskRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunBackgroundTaskRequest.ProtoReflect.Descriptor instead.
 func (*RunBackgroundTaskRequest) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{35}
+	return file_plugin_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *RunBackgroundTaskRequest) GetName() string {
@@ -2770,7 +3436,7 @@ type WebSocketFrame struct {
 
 func (x *WebSocketFrame) Reset() {
 	*x = WebSocketFrame{}
-	mi := &file_plugin_proto_msgTypes[36]
+	mi := &file_plugin_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2782,7 +3448,7 @@ func (x *WebSocketFrame) String() string {
 func (*WebSocketFrame) ProtoMessage() {}
 
 func (x *WebSocketFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[36]
+	mi := &file_plugin_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2795,7 +3461,7 @@ func (x *WebSocketFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebSocketFrame.ProtoReflect.Descriptor instead.
 func (*WebSocketFrame) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{36}
+	return file_plugin_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *WebSocketFrame) GetType() WebSocketFrame_FrameType {
@@ -2854,7 +3520,7 @@ type WebSocketConnectInfo struct {
 
 func (x *WebSocketConnectInfo) Reset() {
 	*x = WebSocketConnectInfo{}
-	mi := &file_plugin_proto_msgTypes[37]
+	mi := &file_plugin_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2866,7 +3532,7 @@ func (x *WebSocketConnectInfo) String() string {
 func (*WebSocketConnectInfo) ProtoMessage() {}
 
 func (x *WebSocketConnectInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[37]
+	mi := &file_plugin_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2879,7 +3545,7 @@ func (x *WebSocketConnectInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebSocketConnectInfo.ProtoReflect.Descriptor instead.
 func (*WebSocketConnectInfo) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{37}
+	return file_plugin_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *WebSocketConnectInfo) GetPath() string {
@@ -2934,7 +3600,7 @@ type WebAssetFile struct {
 
 func (x *WebAssetFile) Reset() {
 	*x = WebAssetFile{}
-	mi := &file_plugin_proto_msgTypes[38]
+	mi := &file_plugin_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2946,7 +3612,7 @@ func (x *WebAssetFile) String() string {
 func (*WebAssetFile) ProtoMessage() {}
 
 func (x *WebAssetFile) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[38]
+	mi := &file_plugin_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2959,7 +3625,7 @@ func (x *WebAssetFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebAssetFile.ProtoReflect.Descriptor instead.
 func (*WebAssetFile) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{38}
+	return file_plugin_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *WebAssetFile) GetPath() string {
@@ -2986,7 +3652,7 @@ type WebAssetsResponse struct {
 
 func (x *WebAssetsResponse) Reset() {
 	*x = WebAssetsResponse{}
-	mi := &file_plugin_proto_msgTypes[39]
+	mi := &file_plugin_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2998,7 +3664,7 @@ func (x *WebAssetsResponse) String() string {
 func (*WebAssetsResponse) ProtoMessage() {}
 
 func (x *WebAssetsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[39]
+	mi := &file_plugin_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3011,7 +3677,7 @@ func (x *WebAssetsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebAssetsResponse.ProtoReflect.Descriptor instead.
 func (*WebAssetsResponse) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{39}
+	return file_plugin_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *WebAssetsResponse) GetFiles() []*WebAssetFile {
@@ -3052,7 +3718,7 @@ type MiddlewareRequest struct {
 
 func (x *MiddlewareRequest) Reset() {
 	*x = MiddlewareRequest{}
-	mi := &file_plugin_proto_msgTypes[40]
+	mi := &file_plugin_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3064,7 +3730,7 @@ func (x *MiddlewareRequest) String() string {
 func (*MiddlewareRequest) ProtoMessage() {}
 
 func (x *MiddlewareRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[40]
+	mi := &file_plugin_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3077,7 +3743,7 @@ func (x *MiddlewareRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MiddlewareRequest.ProtoReflect.Descriptor instead.
 func (*MiddlewareRequest) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{40}
+	return file_plugin_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *MiddlewareRequest) GetRequestId() string {
@@ -3195,7 +3861,7 @@ type MiddlewareEvent struct {
 
 func (x *MiddlewareEvent) Reset() {
 	*x = MiddlewareEvent{}
-	mi := &file_plugin_proto_msgTypes[41]
+	mi := &file_plugin_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3207,7 +3873,7 @@ func (x *MiddlewareEvent) String() string {
 func (*MiddlewareEvent) ProtoMessage() {}
 
 func (x *MiddlewareEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[41]
+	mi := &file_plugin_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3220,7 +3886,7 @@ func (x *MiddlewareEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MiddlewareEvent.ProtoReflect.Descriptor instead.
 func (*MiddlewareEvent) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{41}
+	return file_plugin_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *MiddlewareEvent) GetRequestId() string {
@@ -3394,7 +4060,7 @@ type MiddlewareDecision struct {
 
 func (x *MiddlewareDecision) Reset() {
 	*x = MiddlewareDecision{}
-	mi := &file_plugin_proto_msgTypes[42]
+	mi := &file_plugin_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3406,7 +4072,7 @@ func (x *MiddlewareDecision) String() string {
 func (*MiddlewareDecision) ProtoMessage() {}
 
 func (x *MiddlewareDecision) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_proto_msgTypes[42]
+	mi := &file_plugin_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3419,7 +4085,7 @@ func (x *MiddlewareDecision) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MiddlewareDecision.ProtoReflect.Descriptor instead.
 func (*MiddlewareDecision) Descriptor() ([]byte, []int) {
-	return file_plugin_proto_rawDescGZIP(), []int{42}
+	return file_plugin_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *MiddlewareDecision) GetAction() MiddlewareDecision_Action {
@@ -3502,7 +4168,62 @@ const file_plugin_proto_rawDesc = "" +
 	"\n" +
 	"account_id\x18\x01 \x01(\x03R\taccountId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x1b\n" +
-	"\terror_msg\x18\x03 \x01(\tR\berrorMsg\"\a\n" +
+	"\terror_msg\x18\x03 \x01(\tR\berrorMsg\"\xe1\x02\n" +
+	"\x12HostForwardRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x19\n" +
+	"\bgroup_id\x18\x02 \x01(\x03R\agroupId\x12\x14\n" +
+	"\x05model\x18\x03 \x01(\tR\x05model\x12\x16\n" +
+	"\x06method\x18\x04 \x01(\tR\x06method\x12\x12\n" +
+	"\x04path\x18\x05 \x01(\tR\x04path\x12L\n" +
+	"\aheaders\x18\x06 \x03(\v22.airgate.plugin.v1.HostForwardRequest.HeadersEntryR\aheaders\x12\x12\n" +
+	"\x04body\x18\a \x01(\fR\x04body\x12\x16\n" +
+	"\x06stream\x18\b \x01(\bR\x06stream\x1a[\n" +
+	"\fHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xb1\x02\n" +
+	"\x13HostForwardResponse\x12\x1f\n" +
+	"\vstatus_code\x18\x01 \x01(\x05R\n" +
+	"statusCode\x12M\n" +
+	"\aheaders\x18\x02 \x03(\v23.airgate.plugin.v1.HostForwardResponse.HeadersEntryR\aheaders\x12\x12\n" +
+	"\x04body\x18\x03 \x01(\fR\x04body\x129\n" +
+	"\x05usage\x18\x04 \x01(\v2#.airgate.plugin.v1.HostForwardUsageR\x05usage\x1a[\n" +
+	"\fHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xbf\x02\n" +
+	"\x10HostForwardChunk\x12\x12\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\x12\x12\n" +
+	"\x04done\x18\x02 \x01(\bR\x04done\x12\x1f\n" +
+	"\vstatus_code\x18\x03 \x01(\x05R\n" +
+	"statusCode\x12J\n" +
+	"\aheaders\x18\x04 \x03(\v20.airgate.plugin.v1.HostForwardChunk.HeadersEntryR\aheaders\x129\n" +
+	"\x05usage\x18\x05 \x01(\v2#.airgate.plugin.v1.HostForwardUsageR\x05usage\x1a[\n" +
+	"\fHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\x84\x01\n" +
+	"\x10HostForwardUsage\x12!\n" +
+	"\finput_tokens\x18\x01 \x01(\x03R\vinputTokens\x12#\n" +
+	"\routput_tokens\x18\x02 \x01(\x03R\foutputTokens\x12\x12\n" +
+	"\x04cost\x18\x03 \x01(\x01R\x04cost\x12\x14\n" +
+	"\x05model\x18\x04 \x01(\tR\x05model\"\x1a\n" +
+	"\x18HostListPlatformsRequest\"E\n" +
+	"\fHostPlatform\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\"Z\n" +
+	"\x19HostListPlatformsResponse\x12=\n" +
+	"\tplatforms\x18\x01 \x03(\v2\x1f.airgate.plugin.v1.HostPlatformR\tplatforms\"3\n" +
+	"\x15HostListModelsRequest\x12\x1a\n" +
+	"\bplatform\x18\x01 \x01(\tR\bplatform\"S\n" +
+	"\x16HostListModelsResponse\x129\n" +
+	"\x06models\x18\x01 \x03(\v2!.airgate.plugin.v1.ModelInfoProtoR\x06models\"1\n" +
+	"\x16HostGetUserInfoRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"\xaa\x01\n" +
+	"\x17HostGetUserInfoResponse\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12\x12\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role\x12\x18\n" +
+	"\abalance\x18\x05 \x01(\x01R\abalance\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\tR\x06status\"\a\n" +
 	"\x05Empty\"&\n" +
 	"\x0eStringResponse\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\tR\x05value\"&\n" +
@@ -3856,13 +4577,19 @@ const file_plugin_proto_rawDesc = "" +
 	"\x13HandleStreamRequest\x12\x1e.airgate.plugin.v1.HttpRequest\x1a$.airgate.plugin.v1.HttpResponseChunk0\x012\xc0\x01\n" +
 	"\x11MiddlewareService\x12]\n" +
 	"\x0eOnForwardBegin\x12$.airgate.plugin.v1.MiddlewareRequest\x1a%.airgate.plugin.v1.MiddlewareDecision\x12L\n" +
-	"\fOnForwardEnd\x12\".airgate.plugin.v1.MiddlewareEvent\x1a\x18.airgate.plugin.v1.Empty2\xa9\x03\n" +
+	"\fOnForwardEnd\x12\".airgate.plugin.v1.MiddlewareEvent\x1a\x18.airgate.plugin.v1.Empty2\x97\a\n" +
 	"\vHostService\x12j\n" +
-	"\rSelectAccount\x12+.airgate.plugin.v1.HostSelectAccountRequest\x1a,.airgate.plugin.v1.HostSelectAccountResponse\x12g\n" +
-	"\fProbeForward\x12*.airgate.plugin.v1.HostProbeForwardRequest\x1a+.airgate.plugin.v1.HostProbeForwardResponse\x12a\n" +
+	"\rSelectAccount\x12+.airgate.plugin.v1.HostSelectAccountRequest\x1a,.airgate.plugin.v1.HostSelectAccountResponse\x12b\n" +
+	"\x13ReportAccountResult\x121.airgate.plugin.v1.HostReportAccountResultRequest\x1a\x18.airgate.plugin.v1.Empty\x12g\n" +
+	"\fProbeForward\x12*.airgate.plugin.v1.HostProbeForwardRequest\x1a+.airgate.plugin.v1.HostProbeForwardResponse\x12X\n" +
+	"\aForward\x12%.airgate.plugin.v1.HostForwardRequest\x1a&.airgate.plugin.v1.HostForwardResponse\x12]\n" +
+	"\rForwardStream\x12%.airgate.plugin.v1.HostForwardRequest\x1a#.airgate.plugin.v1.HostForwardChunk0\x01\x12a\n" +
 	"\n" +
-	"ListGroups\x12(.airgate.plugin.v1.HostListGroupsRequest\x1a).airgate.plugin.v1.HostListGroupsResponse\x12b\n" +
-	"\x13ReportAccountResult\x121.airgate.plugin.v1.HostReportAccountResultRequest\x1a\x18.airgate.plugin.v1.EmptyB+Z)github.com/DouDOU-start/airgate-sdk/protob\x06proto3"
+	"ListGroups\x12(.airgate.plugin.v1.HostListGroupsRequest\x1a).airgate.plugin.v1.HostListGroupsResponse\x12j\n" +
+	"\rListPlatforms\x12+.airgate.plugin.v1.HostListPlatformsRequest\x1a,.airgate.plugin.v1.HostListPlatformsResponse\x12a\n" +
+	"\n" +
+	"ListModels\x12(.airgate.plugin.v1.HostListModelsRequest\x1a).airgate.plugin.v1.HostListModelsResponse\x12d\n" +
+	"\vGetUserInfo\x12).airgate.plugin.v1.HostGetUserInfoRequest\x1a*.airgate.plugin.v1.HostGetUserInfoResponseB+Z)github.com/DouDOU-start/airgate-sdk/protob\x06proto3"
 
 var (
 	file_plugin_proto_rawDescOnce sync.Once
@@ -3877,7 +4604,7 @@ func file_plugin_proto_rawDescGZIP() []byte {
 }
 
 var file_plugin_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 60)
+var file_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 74)
 var file_plugin_proto_goTypes = []any{
 	(OutcomeKind)(0),                       // 0: airgate.plugin.v1.OutcomeKind
 	(WebSocketFrame_FrameType)(0),          // 1: airgate.plugin.v1.WebSocketFrame.FrameType
@@ -3890,164 +4617,198 @@ var file_plugin_proto_goTypes = []any{
 	(*HostGroup)(nil),                      // 8: airgate.plugin.v1.HostGroup
 	(*HostListGroupsResponse)(nil),         // 9: airgate.plugin.v1.HostListGroupsResponse
 	(*HostReportAccountResultRequest)(nil), // 10: airgate.plugin.v1.HostReportAccountResultRequest
-	(*Empty)(nil),                          // 11: airgate.plugin.v1.Empty
-	(*StringResponse)(nil),                 // 12: airgate.plugin.v1.StringResponse
-	(*HeaderValues)(nil),                   // 13: airgate.plugin.v1.HeaderValues
-	(*PluginInfoResponse)(nil),             // 14: airgate.plugin.v1.PluginInfoResponse
-	(*ConfigFieldProto)(nil),               // 15: airgate.plugin.v1.ConfigFieldProto
-	(*AccountTypeProto)(nil),               // 16: airgate.plugin.v1.AccountTypeProto
-	(*CredentialFieldProto)(nil),           // 17: airgate.plugin.v1.CredentialFieldProto
-	(*FrontendPageProto)(nil),              // 18: airgate.plugin.v1.FrontendPageProto
-	(*FrontendWidgetProto)(nil),            // 19: airgate.plugin.v1.FrontendWidgetProto
-	(*InitRequest)(nil),                    // 20: airgate.plugin.v1.InitRequest
-	(*ModelInfoProto)(nil),                 // 21: airgate.plugin.v1.ModelInfoProto
-	(*ModelsResponse)(nil),                 // 22: airgate.plugin.v1.ModelsResponse
-	(*RouteDefinitionProto)(nil),           // 23: airgate.plugin.v1.RouteDefinitionProto
-	(*RoutesResponse)(nil),                 // 24: airgate.plugin.v1.RoutesResponse
-	(*AccountProto)(nil),                   // 25: airgate.plugin.v1.AccountProto
-	(*ForwardRequest)(nil),                 // 26: airgate.plugin.v1.ForwardRequest
-	(*UpstreamResponse)(nil),               // 27: airgate.plugin.v1.UpstreamResponse
-	(*Usage)(nil),                          // 28: airgate.plugin.v1.Usage
-	(*ForwardOutcome)(nil),                 // 29: airgate.plugin.v1.ForwardOutcome
-	(*ForwardChunk)(nil),                   // 30: airgate.plugin.v1.ForwardChunk
-	(*CredentialsRequest)(nil),             // 31: airgate.plugin.v1.CredentialsRequest
-	(*QuotaInfoResponse)(nil),              // 32: airgate.plugin.v1.QuotaInfoResponse
-	(*HttpRequest)(nil),                    // 33: airgate.plugin.v1.HttpRequest
-	(*HttpResponse)(nil),                   // 34: airgate.plugin.v1.HttpResponse
-	(*HttpResponseChunk)(nil),              // 35: airgate.plugin.v1.HttpResponseChunk
-	(*BackgroundTaskProto)(nil),            // 36: airgate.plugin.v1.BackgroundTaskProto
-	(*BackgroundTasksResponse)(nil),        // 37: airgate.plugin.v1.BackgroundTasksResponse
-	(*RunBackgroundTaskRequest)(nil),       // 38: airgate.plugin.v1.RunBackgroundTaskRequest
-	(*WebSocketFrame)(nil),                 // 39: airgate.plugin.v1.WebSocketFrame
-	(*WebSocketConnectInfo)(nil),           // 40: airgate.plugin.v1.WebSocketConnectInfo
-	(*WebAssetFile)(nil),                   // 41: airgate.plugin.v1.WebAssetFile
-	(*WebAssetsResponse)(nil),              // 42: airgate.plugin.v1.WebAssetsResponse
-	(*MiddlewareRequest)(nil),              // 43: airgate.plugin.v1.MiddlewareRequest
-	(*MiddlewareEvent)(nil),                // 44: airgate.plugin.v1.MiddlewareEvent
-	(*MiddlewareDecision)(nil),             // 45: airgate.plugin.v1.MiddlewareDecision
-	nil,                                    // 46: airgate.plugin.v1.InitRequest.ConfigEntry
-	nil,                                    // 47: airgate.plugin.v1.ForwardRequest.HeadersEntry
-	nil,                                    // 48: airgate.plugin.v1.UpstreamResponse.HeadersEntry
-	nil,                                    // 49: airgate.plugin.v1.ForwardOutcome.UpdatedCredentialsEntry
-	nil,                                    // 50: airgate.plugin.v1.ForwardChunk.HeadersEntry
-	nil,                                    // 51: airgate.plugin.v1.CredentialsRequest.CredentialsEntry
-	nil,                                    // 52: airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
-	nil,                                    // 53: airgate.plugin.v1.HttpRequest.HeadersEntry
-	nil,                                    // 54: airgate.plugin.v1.HttpResponse.HeadersEntry
-	nil,                                    // 55: airgate.plugin.v1.HttpResponseChunk.HeadersEntry
-	nil,                                    // 56: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
-	nil,                                    // 57: airgate.plugin.v1.MiddlewareRequest.MetadataEntry
-	nil,                                    // 58: airgate.plugin.v1.MiddlewareRequest.RequestHeadersEntry
-	nil,                                    // 59: airgate.plugin.v1.MiddlewareEvent.MetadataEntry
-	nil,                                    // 60: airgate.plugin.v1.MiddlewareEvent.ResponseHeadersEntry
-	nil,                                    // 61: airgate.plugin.v1.MiddlewareDecision.SetHeadersEntry
-	nil,                                    // 62: airgate.plugin.v1.MiddlewareDecision.MetadataEntry
+	(*HostForwardRequest)(nil),             // 11: airgate.plugin.v1.HostForwardRequest
+	(*HostForwardResponse)(nil),            // 12: airgate.plugin.v1.HostForwardResponse
+	(*HostForwardChunk)(nil),               // 13: airgate.plugin.v1.HostForwardChunk
+	(*HostForwardUsage)(nil),               // 14: airgate.plugin.v1.HostForwardUsage
+	(*HostListPlatformsRequest)(nil),       // 15: airgate.plugin.v1.HostListPlatformsRequest
+	(*HostPlatform)(nil),                   // 16: airgate.plugin.v1.HostPlatform
+	(*HostListPlatformsResponse)(nil),      // 17: airgate.plugin.v1.HostListPlatformsResponse
+	(*HostListModelsRequest)(nil),          // 18: airgate.plugin.v1.HostListModelsRequest
+	(*HostListModelsResponse)(nil),         // 19: airgate.plugin.v1.HostListModelsResponse
+	(*HostGetUserInfoRequest)(nil),         // 20: airgate.plugin.v1.HostGetUserInfoRequest
+	(*HostGetUserInfoResponse)(nil),        // 21: airgate.plugin.v1.HostGetUserInfoResponse
+	(*Empty)(nil),                          // 22: airgate.plugin.v1.Empty
+	(*StringResponse)(nil),                 // 23: airgate.plugin.v1.StringResponse
+	(*HeaderValues)(nil),                   // 24: airgate.plugin.v1.HeaderValues
+	(*PluginInfoResponse)(nil),             // 25: airgate.plugin.v1.PluginInfoResponse
+	(*ConfigFieldProto)(nil),               // 26: airgate.plugin.v1.ConfigFieldProto
+	(*AccountTypeProto)(nil),               // 27: airgate.plugin.v1.AccountTypeProto
+	(*CredentialFieldProto)(nil),           // 28: airgate.plugin.v1.CredentialFieldProto
+	(*FrontendPageProto)(nil),              // 29: airgate.plugin.v1.FrontendPageProto
+	(*FrontendWidgetProto)(nil),            // 30: airgate.plugin.v1.FrontendWidgetProto
+	(*InitRequest)(nil),                    // 31: airgate.plugin.v1.InitRequest
+	(*ModelInfoProto)(nil),                 // 32: airgate.plugin.v1.ModelInfoProto
+	(*ModelsResponse)(nil),                 // 33: airgate.plugin.v1.ModelsResponse
+	(*RouteDefinitionProto)(nil),           // 34: airgate.plugin.v1.RouteDefinitionProto
+	(*RoutesResponse)(nil),                 // 35: airgate.plugin.v1.RoutesResponse
+	(*AccountProto)(nil),                   // 36: airgate.plugin.v1.AccountProto
+	(*ForwardRequest)(nil),                 // 37: airgate.plugin.v1.ForwardRequest
+	(*UpstreamResponse)(nil),               // 38: airgate.plugin.v1.UpstreamResponse
+	(*Usage)(nil),                          // 39: airgate.plugin.v1.Usage
+	(*ForwardOutcome)(nil),                 // 40: airgate.plugin.v1.ForwardOutcome
+	(*ForwardChunk)(nil),                   // 41: airgate.plugin.v1.ForwardChunk
+	(*CredentialsRequest)(nil),             // 42: airgate.plugin.v1.CredentialsRequest
+	(*QuotaInfoResponse)(nil),              // 43: airgate.plugin.v1.QuotaInfoResponse
+	(*HttpRequest)(nil),                    // 44: airgate.plugin.v1.HttpRequest
+	(*HttpResponse)(nil),                   // 45: airgate.plugin.v1.HttpResponse
+	(*HttpResponseChunk)(nil),              // 46: airgate.plugin.v1.HttpResponseChunk
+	(*BackgroundTaskProto)(nil),            // 47: airgate.plugin.v1.BackgroundTaskProto
+	(*BackgroundTasksResponse)(nil),        // 48: airgate.plugin.v1.BackgroundTasksResponse
+	(*RunBackgroundTaskRequest)(nil),       // 49: airgate.plugin.v1.RunBackgroundTaskRequest
+	(*WebSocketFrame)(nil),                 // 50: airgate.plugin.v1.WebSocketFrame
+	(*WebSocketConnectInfo)(nil),           // 51: airgate.plugin.v1.WebSocketConnectInfo
+	(*WebAssetFile)(nil),                   // 52: airgate.plugin.v1.WebAssetFile
+	(*WebAssetsResponse)(nil),              // 53: airgate.plugin.v1.WebAssetsResponse
+	(*MiddlewareRequest)(nil),              // 54: airgate.plugin.v1.MiddlewareRequest
+	(*MiddlewareEvent)(nil),                // 55: airgate.plugin.v1.MiddlewareEvent
+	(*MiddlewareDecision)(nil),             // 56: airgate.plugin.v1.MiddlewareDecision
+	nil,                                    // 57: airgate.plugin.v1.HostForwardRequest.HeadersEntry
+	nil,                                    // 58: airgate.plugin.v1.HostForwardResponse.HeadersEntry
+	nil,                                    // 59: airgate.plugin.v1.HostForwardChunk.HeadersEntry
+	nil,                                    // 60: airgate.plugin.v1.InitRequest.ConfigEntry
+	nil,                                    // 61: airgate.plugin.v1.ForwardRequest.HeadersEntry
+	nil,                                    // 62: airgate.plugin.v1.UpstreamResponse.HeadersEntry
+	nil,                                    // 63: airgate.plugin.v1.ForwardOutcome.UpdatedCredentialsEntry
+	nil,                                    // 64: airgate.plugin.v1.ForwardChunk.HeadersEntry
+	nil,                                    // 65: airgate.plugin.v1.CredentialsRequest.CredentialsEntry
+	nil,                                    // 66: airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
+	nil,                                    // 67: airgate.plugin.v1.HttpRequest.HeadersEntry
+	nil,                                    // 68: airgate.plugin.v1.HttpResponse.HeadersEntry
+	nil,                                    // 69: airgate.plugin.v1.HttpResponseChunk.HeadersEntry
+	nil,                                    // 70: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
+	nil,                                    // 71: airgate.plugin.v1.MiddlewareRequest.MetadataEntry
+	nil,                                    // 72: airgate.plugin.v1.MiddlewareRequest.RequestHeadersEntry
+	nil,                                    // 73: airgate.plugin.v1.MiddlewareEvent.MetadataEntry
+	nil,                                    // 74: airgate.plugin.v1.MiddlewareEvent.ResponseHeadersEntry
+	nil,                                    // 75: airgate.plugin.v1.MiddlewareDecision.SetHeadersEntry
+	nil,                                    // 76: airgate.plugin.v1.MiddlewareDecision.MetadataEntry
 }
 var file_plugin_proto_depIdxs = []int32{
 	8,  // 0: airgate.plugin.v1.HostListGroupsResponse.groups:type_name -> airgate.plugin.v1.HostGroup
-	16, // 1: airgate.plugin.v1.PluginInfoResponse.account_types:type_name -> airgate.plugin.v1.AccountTypeProto
-	18, // 2: airgate.plugin.v1.PluginInfoResponse.frontend_pages:type_name -> airgate.plugin.v1.FrontendPageProto
-	19, // 3: airgate.plugin.v1.PluginInfoResponse.frontend_widgets:type_name -> airgate.plugin.v1.FrontendWidgetProto
-	15, // 4: airgate.plugin.v1.PluginInfoResponse.config_schema:type_name -> airgate.plugin.v1.ConfigFieldProto
-	17, // 5: airgate.plugin.v1.AccountTypeProto.fields:type_name -> airgate.plugin.v1.CredentialFieldProto
-	46, // 6: airgate.plugin.v1.InitRequest.config:type_name -> airgate.plugin.v1.InitRequest.ConfigEntry
-	21, // 7: airgate.plugin.v1.ModelsResponse.models:type_name -> airgate.plugin.v1.ModelInfoProto
-	23, // 8: airgate.plugin.v1.RoutesResponse.routes:type_name -> airgate.plugin.v1.RouteDefinitionProto
-	47, // 9: airgate.plugin.v1.ForwardRequest.headers:type_name -> airgate.plugin.v1.ForwardRequest.HeadersEntry
-	25, // 10: airgate.plugin.v1.ForwardRequest.account:type_name -> airgate.plugin.v1.AccountProto
-	48, // 11: airgate.plugin.v1.UpstreamResponse.headers:type_name -> airgate.plugin.v1.UpstreamResponse.HeadersEntry
-	0,  // 12: airgate.plugin.v1.ForwardOutcome.kind:type_name -> airgate.plugin.v1.OutcomeKind
-	27, // 13: airgate.plugin.v1.ForwardOutcome.upstream:type_name -> airgate.plugin.v1.UpstreamResponse
-	28, // 14: airgate.plugin.v1.ForwardOutcome.usage:type_name -> airgate.plugin.v1.Usage
-	49, // 15: airgate.plugin.v1.ForwardOutcome.updated_credentials:type_name -> airgate.plugin.v1.ForwardOutcome.UpdatedCredentialsEntry
-	29, // 16: airgate.plugin.v1.ForwardChunk.final_outcome:type_name -> airgate.plugin.v1.ForwardOutcome
-	50, // 17: airgate.plugin.v1.ForwardChunk.headers:type_name -> airgate.plugin.v1.ForwardChunk.HeadersEntry
-	51, // 18: airgate.plugin.v1.CredentialsRequest.credentials:type_name -> airgate.plugin.v1.CredentialsRequest.CredentialsEntry
-	52, // 19: airgate.plugin.v1.QuotaInfoResponse.extra:type_name -> airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
-	53, // 20: airgate.plugin.v1.HttpRequest.headers:type_name -> airgate.plugin.v1.HttpRequest.HeadersEntry
-	54, // 21: airgate.plugin.v1.HttpResponse.headers:type_name -> airgate.plugin.v1.HttpResponse.HeadersEntry
-	55, // 22: airgate.plugin.v1.HttpResponseChunk.headers:type_name -> airgate.plugin.v1.HttpResponseChunk.HeadersEntry
-	36, // 23: airgate.plugin.v1.BackgroundTasksResponse.tasks:type_name -> airgate.plugin.v1.BackgroundTaskProto
-	1,  // 24: airgate.plugin.v1.WebSocketFrame.type:type_name -> airgate.plugin.v1.WebSocketFrame.FrameType
-	40, // 25: airgate.plugin.v1.WebSocketFrame.connect_info:type_name -> airgate.plugin.v1.WebSocketConnectInfo
-	29, // 26: airgate.plugin.v1.WebSocketFrame.outcome:type_name -> airgate.plugin.v1.ForwardOutcome
-	56, // 27: airgate.plugin.v1.WebSocketConnectInfo.headers:type_name -> airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
-	25, // 28: airgate.plugin.v1.WebSocketConnectInfo.account:type_name -> airgate.plugin.v1.AccountProto
-	41, // 29: airgate.plugin.v1.WebAssetsResponse.files:type_name -> airgate.plugin.v1.WebAssetFile
-	57, // 30: airgate.plugin.v1.MiddlewareRequest.metadata:type_name -> airgate.plugin.v1.MiddlewareRequest.MetadataEntry
-	58, // 31: airgate.plugin.v1.MiddlewareRequest.request_headers:type_name -> airgate.plugin.v1.MiddlewareRequest.RequestHeadersEntry
-	59, // 32: airgate.plugin.v1.MiddlewareEvent.metadata:type_name -> airgate.plugin.v1.MiddlewareEvent.MetadataEntry
-	60, // 33: airgate.plugin.v1.MiddlewareEvent.response_headers:type_name -> airgate.plugin.v1.MiddlewareEvent.ResponseHeadersEntry
-	2,  // 34: airgate.plugin.v1.MiddlewareDecision.action:type_name -> airgate.plugin.v1.MiddlewareDecision.Action
-	61, // 35: airgate.plugin.v1.MiddlewareDecision.set_headers:type_name -> airgate.plugin.v1.MiddlewareDecision.SetHeadersEntry
-	62, // 36: airgate.plugin.v1.MiddlewareDecision.metadata:type_name -> airgate.plugin.v1.MiddlewareDecision.MetadataEntry
-	13, // 37: airgate.plugin.v1.ForwardRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	13, // 38: airgate.plugin.v1.UpstreamResponse.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	13, // 39: airgate.plugin.v1.ForwardChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	13, // 40: airgate.plugin.v1.HttpRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	13, // 41: airgate.plugin.v1.HttpResponse.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	13, // 42: airgate.plugin.v1.HttpResponseChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	13, // 43: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	13, // 44: airgate.plugin.v1.MiddlewareRequest.RequestHeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	13, // 45: airgate.plugin.v1.MiddlewareEvent.ResponseHeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	13, // 46: airgate.plugin.v1.MiddlewareDecision.SetHeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
-	11, // 47: airgate.plugin.v1.PluginService.GetInfo:input_type -> airgate.plugin.v1.Empty
-	20, // 48: airgate.plugin.v1.PluginService.Init:input_type -> airgate.plugin.v1.InitRequest
-	11, // 49: airgate.plugin.v1.PluginService.Start:input_type -> airgate.plugin.v1.Empty
-	11, // 50: airgate.plugin.v1.PluginService.Stop:input_type -> airgate.plugin.v1.Empty
-	11, // 51: airgate.plugin.v1.PluginService.GetWebAssets:input_type -> airgate.plugin.v1.Empty
-	11, // 52: airgate.plugin.v1.PluginService.HealthCheck:input_type -> airgate.plugin.v1.Empty
-	33, // 53: airgate.plugin.v1.PluginService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
-	11, // 54: airgate.plugin.v1.GatewayService.GetPlatform:input_type -> airgate.plugin.v1.Empty
-	11, // 55: airgate.plugin.v1.GatewayService.GetModels:input_type -> airgate.plugin.v1.Empty
-	11, // 56: airgate.plugin.v1.GatewayService.GetRoutes:input_type -> airgate.plugin.v1.Empty
-	26, // 57: airgate.plugin.v1.GatewayService.Forward:input_type -> airgate.plugin.v1.ForwardRequest
-	26, // 58: airgate.plugin.v1.GatewayService.ForwardStream:input_type -> airgate.plugin.v1.ForwardRequest
-	31, // 59: airgate.plugin.v1.GatewayService.ValidateAccount:input_type -> airgate.plugin.v1.CredentialsRequest
-	31, // 60: airgate.plugin.v1.GatewayService.QueryQuota:input_type -> airgate.plugin.v1.CredentialsRequest
-	39, // 61: airgate.plugin.v1.GatewayService.HandleWebSocket:input_type -> airgate.plugin.v1.WebSocketFrame
-	11, // 62: airgate.plugin.v1.ExtensionService.Migrate:input_type -> airgate.plugin.v1.Empty
-	11, // 63: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:input_type -> airgate.plugin.v1.Empty
-	38, // 64: airgate.plugin.v1.ExtensionService.RunBackgroundTask:input_type -> airgate.plugin.v1.RunBackgroundTaskRequest
-	33, // 65: airgate.plugin.v1.ExtensionService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
-	33, // 66: airgate.plugin.v1.ExtensionService.HandleStreamRequest:input_type -> airgate.plugin.v1.HttpRequest
-	43, // 67: airgate.plugin.v1.MiddlewareService.OnForwardBegin:input_type -> airgate.plugin.v1.MiddlewareRequest
-	44, // 68: airgate.plugin.v1.MiddlewareService.OnForwardEnd:input_type -> airgate.plugin.v1.MiddlewareEvent
-	3,  // 69: airgate.plugin.v1.HostService.SelectAccount:input_type -> airgate.plugin.v1.HostSelectAccountRequest
-	5,  // 70: airgate.plugin.v1.HostService.ProbeForward:input_type -> airgate.plugin.v1.HostProbeForwardRequest
-	7,  // 71: airgate.plugin.v1.HostService.ListGroups:input_type -> airgate.plugin.v1.HostListGroupsRequest
-	10, // 72: airgate.plugin.v1.HostService.ReportAccountResult:input_type -> airgate.plugin.v1.HostReportAccountResultRequest
-	14, // 73: airgate.plugin.v1.PluginService.GetInfo:output_type -> airgate.plugin.v1.PluginInfoResponse
-	11, // 74: airgate.plugin.v1.PluginService.Init:output_type -> airgate.plugin.v1.Empty
-	11, // 75: airgate.plugin.v1.PluginService.Start:output_type -> airgate.plugin.v1.Empty
-	11, // 76: airgate.plugin.v1.PluginService.Stop:output_type -> airgate.plugin.v1.Empty
-	42, // 77: airgate.plugin.v1.PluginService.GetWebAssets:output_type -> airgate.plugin.v1.WebAssetsResponse
-	11, // 78: airgate.plugin.v1.PluginService.HealthCheck:output_type -> airgate.plugin.v1.Empty
-	34, // 79: airgate.plugin.v1.PluginService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
-	12, // 80: airgate.plugin.v1.GatewayService.GetPlatform:output_type -> airgate.plugin.v1.StringResponse
-	22, // 81: airgate.plugin.v1.GatewayService.GetModels:output_type -> airgate.plugin.v1.ModelsResponse
-	24, // 82: airgate.plugin.v1.GatewayService.GetRoutes:output_type -> airgate.plugin.v1.RoutesResponse
-	29, // 83: airgate.plugin.v1.GatewayService.Forward:output_type -> airgate.plugin.v1.ForwardOutcome
-	30, // 84: airgate.plugin.v1.GatewayService.ForwardStream:output_type -> airgate.plugin.v1.ForwardChunk
-	11, // 85: airgate.plugin.v1.GatewayService.ValidateAccount:output_type -> airgate.plugin.v1.Empty
-	32, // 86: airgate.plugin.v1.GatewayService.QueryQuota:output_type -> airgate.plugin.v1.QuotaInfoResponse
-	39, // 87: airgate.plugin.v1.GatewayService.HandleWebSocket:output_type -> airgate.plugin.v1.WebSocketFrame
-	11, // 88: airgate.plugin.v1.ExtensionService.Migrate:output_type -> airgate.plugin.v1.Empty
-	37, // 89: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:output_type -> airgate.plugin.v1.BackgroundTasksResponse
-	11, // 90: airgate.plugin.v1.ExtensionService.RunBackgroundTask:output_type -> airgate.plugin.v1.Empty
-	34, // 91: airgate.plugin.v1.ExtensionService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
-	35, // 92: airgate.plugin.v1.ExtensionService.HandleStreamRequest:output_type -> airgate.plugin.v1.HttpResponseChunk
-	45, // 93: airgate.plugin.v1.MiddlewareService.OnForwardBegin:output_type -> airgate.plugin.v1.MiddlewareDecision
-	11, // 94: airgate.plugin.v1.MiddlewareService.OnForwardEnd:output_type -> airgate.plugin.v1.Empty
-	4,  // 95: airgate.plugin.v1.HostService.SelectAccount:output_type -> airgate.plugin.v1.HostSelectAccountResponse
-	6,  // 96: airgate.plugin.v1.HostService.ProbeForward:output_type -> airgate.plugin.v1.HostProbeForwardResponse
-	9,  // 97: airgate.plugin.v1.HostService.ListGroups:output_type -> airgate.plugin.v1.HostListGroupsResponse
-	11, // 98: airgate.plugin.v1.HostService.ReportAccountResult:output_type -> airgate.plugin.v1.Empty
-	73, // [73:99] is the sub-list for method output_type
-	47, // [47:73] is the sub-list for method input_type
-	47, // [47:47] is the sub-list for extension type_name
-	47, // [47:47] is the sub-list for extension extendee
-	0,  // [0:47] is the sub-list for field type_name
+	57, // 1: airgate.plugin.v1.HostForwardRequest.headers:type_name -> airgate.plugin.v1.HostForwardRequest.HeadersEntry
+	58, // 2: airgate.plugin.v1.HostForwardResponse.headers:type_name -> airgate.plugin.v1.HostForwardResponse.HeadersEntry
+	14, // 3: airgate.plugin.v1.HostForwardResponse.usage:type_name -> airgate.plugin.v1.HostForwardUsage
+	59, // 4: airgate.plugin.v1.HostForwardChunk.headers:type_name -> airgate.plugin.v1.HostForwardChunk.HeadersEntry
+	14, // 5: airgate.plugin.v1.HostForwardChunk.usage:type_name -> airgate.plugin.v1.HostForwardUsage
+	16, // 6: airgate.plugin.v1.HostListPlatformsResponse.platforms:type_name -> airgate.plugin.v1.HostPlatform
+	32, // 7: airgate.plugin.v1.HostListModelsResponse.models:type_name -> airgate.plugin.v1.ModelInfoProto
+	27, // 8: airgate.plugin.v1.PluginInfoResponse.account_types:type_name -> airgate.plugin.v1.AccountTypeProto
+	29, // 9: airgate.plugin.v1.PluginInfoResponse.frontend_pages:type_name -> airgate.plugin.v1.FrontendPageProto
+	30, // 10: airgate.plugin.v1.PluginInfoResponse.frontend_widgets:type_name -> airgate.plugin.v1.FrontendWidgetProto
+	26, // 11: airgate.plugin.v1.PluginInfoResponse.config_schema:type_name -> airgate.plugin.v1.ConfigFieldProto
+	28, // 12: airgate.plugin.v1.AccountTypeProto.fields:type_name -> airgate.plugin.v1.CredentialFieldProto
+	60, // 13: airgate.plugin.v1.InitRequest.config:type_name -> airgate.plugin.v1.InitRequest.ConfigEntry
+	32, // 14: airgate.plugin.v1.ModelsResponse.models:type_name -> airgate.plugin.v1.ModelInfoProto
+	34, // 15: airgate.plugin.v1.RoutesResponse.routes:type_name -> airgate.plugin.v1.RouteDefinitionProto
+	61, // 16: airgate.plugin.v1.ForwardRequest.headers:type_name -> airgate.plugin.v1.ForwardRequest.HeadersEntry
+	36, // 17: airgate.plugin.v1.ForwardRequest.account:type_name -> airgate.plugin.v1.AccountProto
+	62, // 18: airgate.plugin.v1.UpstreamResponse.headers:type_name -> airgate.plugin.v1.UpstreamResponse.HeadersEntry
+	0,  // 19: airgate.plugin.v1.ForwardOutcome.kind:type_name -> airgate.plugin.v1.OutcomeKind
+	38, // 20: airgate.plugin.v1.ForwardOutcome.upstream:type_name -> airgate.plugin.v1.UpstreamResponse
+	39, // 21: airgate.plugin.v1.ForwardOutcome.usage:type_name -> airgate.plugin.v1.Usage
+	63, // 22: airgate.plugin.v1.ForwardOutcome.updated_credentials:type_name -> airgate.plugin.v1.ForwardOutcome.UpdatedCredentialsEntry
+	40, // 23: airgate.plugin.v1.ForwardChunk.final_outcome:type_name -> airgate.plugin.v1.ForwardOutcome
+	64, // 24: airgate.plugin.v1.ForwardChunk.headers:type_name -> airgate.plugin.v1.ForwardChunk.HeadersEntry
+	65, // 25: airgate.plugin.v1.CredentialsRequest.credentials:type_name -> airgate.plugin.v1.CredentialsRequest.CredentialsEntry
+	66, // 26: airgate.plugin.v1.QuotaInfoResponse.extra:type_name -> airgate.plugin.v1.QuotaInfoResponse.ExtraEntry
+	67, // 27: airgate.plugin.v1.HttpRequest.headers:type_name -> airgate.plugin.v1.HttpRequest.HeadersEntry
+	68, // 28: airgate.plugin.v1.HttpResponse.headers:type_name -> airgate.plugin.v1.HttpResponse.HeadersEntry
+	69, // 29: airgate.plugin.v1.HttpResponseChunk.headers:type_name -> airgate.plugin.v1.HttpResponseChunk.HeadersEntry
+	47, // 30: airgate.plugin.v1.BackgroundTasksResponse.tasks:type_name -> airgate.plugin.v1.BackgroundTaskProto
+	1,  // 31: airgate.plugin.v1.WebSocketFrame.type:type_name -> airgate.plugin.v1.WebSocketFrame.FrameType
+	51, // 32: airgate.plugin.v1.WebSocketFrame.connect_info:type_name -> airgate.plugin.v1.WebSocketConnectInfo
+	40, // 33: airgate.plugin.v1.WebSocketFrame.outcome:type_name -> airgate.plugin.v1.ForwardOutcome
+	70, // 34: airgate.plugin.v1.WebSocketConnectInfo.headers:type_name -> airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
+	36, // 35: airgate.plugin.v1.WebSocketConnectInfo.account:type_name -> airgate.plugin.v1.AccountProto
+	52, // 36: airgate.plugin.v1.WebAssetsResponse.files:type_name -> airgate.plugin.v1.WebAssetFile
+	71, // 37: airgate.plugin.v1.MiddlewareRequest.metadata:type_name -> airgate.plugin.v1.MiddlewareRequest.MetadataEntry
+	72, // 38: airgate.plugin.v1.MiddlewareRequest.request_headers:type_name -> airgate.plugin.v1.MiddlewareRequest.RequestHeadersEntry
+	73, // 39: airgate.plugin.v1.MiddlewareEvent.metadata:type_name -> airgate.plugin.v1.MiddlewareEvent.MetadataEntry
+	74, // 40: airgate.plugin.v1.MiddlewareEvent.response_headers:type_name -> airgate.plugin.v1.MiddlewareEvent.ResponseHeadersEntry
+	2,  // 41: airgate.plugin.v1.MiddlewareDecision.action:type_name -> airgate.plugin.v1.MiddlewareDecision.Action
+	75, // 42: airgate.plugin.v1.MiddlewareDecision.set_headers:type_name -> airgate.plugin.v1.MiddlewareDecision.SetHeadersEntry
+	76, // 43: airgate.plugin.v1.MiddlewareDecision.metadata:type_name -> airgate.plugin.v1.MiddlewareDecision.MetadataEntry
+	24, // 44: airgate.plugin.v1.HostForwardRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 45: airgate.plugin.v1.HostForwardResponse.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 46: airgate.plugin.v1.HostForwardChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 47: airgate.plugin.v1.ForwardRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 48: airgate.plugin.v1.UpstreamResponse.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 49: airgate.plugin.v1.ForwardChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 50: airgate.plugin.v1.HttpRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 51: airgate.plugin.v1.HttpResponse.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 52: airgate.plugin.v1.HttpResponseChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 53: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 54: airgate.plugin.v1.MiddlewareRequest.RequestHeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 55: airgate.plugin.v1.MiddlewareEvent.ResponseHeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	24, // 56: airgate.plugin.v1.MiddlewareDecision.SetHeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	22, // 57: airgate.plugin.v1.PluginService.GetInfo:input_type -> airgate.plugin.v1.Empty
+	31, // 58: airgate.plugin.v1.PluginService.Init:input_type -> airgate.plugin.v1.InitRequest
+	22, // 59: airgate.plugin.v1.PluginService.Start:input_type -> airgate.plugin.v1.Empty
+	22, // 60: airgate.plugin.v1.PluginService.Stop:input_type -> airgate.plugin.v1.Empty
+	22, // 61: airgate.plugin.v1.PluginService.GetWebAssets:input_type -> airgate.plugin.v1.Empty
+	22, // 62: airgate.plugin.v1.PluginService.HealthCheck:input_type -> airgate.plugin.v1.Empty
+	44, // 63: airgate.plugin.v1.PluginService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
+	22, // 64: airgate.plugin.v1.GatewayService.GetPlatform:input_type -> airgate.plugin.v1.Empty
+	22, // 65: airgate.plugin.v1.GatewayService.GetModels:input_type -> airgate.plugin.v1.Empty
+	22, // 66: airgate.plugin.v1.GatewayService.GetRoutes:input_type -> airgate.plugin.v1.Empty
+	37, // 67: airgate.plugin.v1.GatewayService.Forward:input_type -> airgate.plugin.v1.ForwardRequest
+	37, // 68: airgate.plugin.v1.GatewayService.ForwardStream:input_type -> airgate.plugin.v1.ForwardRequest
+	42, // 69: airgate.plugin.v1.GatewayService.ValidateAccount:input_type -> airgate.plugin.v1.CredentialsRequest
+	42, // 70: airgate.plugin.v1.GatewayService.QueryQuota:input_type -> airgate.plugin.v1.CredentialsRequest
+	50, // 71: airgate.plugin.v1.GatewayService.HandleWebSocket:input_type -> airgate.plugin.v1.WebSocketFrame
+	22, // 72: airgate.plugin.v1.ExtensionService.Migrate:input_type -> airgate.plugin.v1.Empty
+	22, // 73: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:input_type -> airgate.plugin.v1.Empty
+	49, // 74: airgate.plugin.v1.ExtensionService.RunBackgroundTask:input_type -> airgate.plugin.v1.RunBackgroundTaskRequest
+	44, // 75: airgate.plugin.v1.ExtensionService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
+	44, // 76: airgate.plugin.v1.ExtensionService.HandleStreamRequest:input_type -> airgate.plugin.v1.HttpRequest
+	54, // 77: airgate.plugin.v1.MiddlewareService.OnForwardBegin:input_type -> airgate.plugin.v1.MiddlewareRequest
+	55, // 78: airgate.plugin.v1.MiddlewareService.OnForwardEnd:input_type -> airgate.plugin.v1.MiddlewareEvent
+	3,  // 79: airgate.plugin.v1.HostService.SelectAccount:input_type -> airgate.plugin.v1.HostSelectAccountRequest
+	10, // 80: airgate.plugin.v1.HostService.ReportAccountResult:input_type -> airgate.plugin.v1.HostReportAccountResultRequest
+	5,  // 81: airgate.plugin.v1.HostService.ProbeForward:input_type -> airgate.plugin.v1.HostProbeForwardRequest
+	11, // 82: airgate.plugin.v1.HostService.Forward:input_type -> airgate.plugin.v1.HostForwardRequest
+	11, // 83: airgate.plugin.v1.HostService.ForwardStream:input_type -> airgate.plugin.v1.HostForwardRequest
+	7,  // 84: airgate.plugin.v1.HostService.ListGroups:input_type -> airgate.plugin.v1.HostListGroupsRequest
+	15, // 85: airgate.plugin.v1.HostService.ListPlatforms:input_type -> airgate.plugin.v1.HostListPlatformsRequest
+	18, // 86: airgate.plugin.v1.HostService.ListModels:input_type -> airgate.plugin.v1.HostListModelsRequest
+	20, // 87: airgate.plugin.v1.HostService.GetUserInfo:input_type -> airgate.plugin.v1.HostGetUserInfoRequest
+	25, // 88: airgate.plugin.v1.PluginService.GetInfo:output_type -> airgate.plugin.v1.PluginInfoResponse
+	22, // 89: airgate.plugin.v1.PluginService.Init:output_type -> airgate.plugin.v1.Empty
+	22, // 90: airgate.plugin.v1.PluginService.Start:output_type -> airgate.plugin.v1.Empty
+	22, // 91: airgate.plugin.v1.PluginService.Stop:output_type -> airgate.plugin.v1.Empty
+	53, // 92: airgate.plugin.v1.PluginService.GetWebAssets:output_type -> airgate.plugin.v1.WebAssetsResponse
+	22, // 93: airgate.plugin.v1.PluginService.HealthCheck:output_type -> airgate.plugin.v1.Empty
+	45, // 94: airgate.plugin.v1.PluginService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
+	23, // 95: airgate.plugin.v1.GatewayService.GetPlatform:output_type -> airgate.plugin.v1.StringResponse
+	33, // 96: airgate.plugin.v1.GatewayService.GetModels:output_type -> airgate.plugin.v1.ModelsResponse
+	35, // 97: airgate.plugin.v1.GatewayService.GetRoutes:output_type -> airgate.plugin.v1.RoutesResponse
+	40, // 98: airgate.plugin.v1.GatewayService.Forward:output_type -> airgate.plugin.v1.ForwardOutcome
+	41, // 99: airgate.plugin.v1.GatewayService.ForwardStream:output_type -> airgate.plugin.v1.ForwardChunk
+	22, // 100: airgate.plugin.v1.GatewayService.ValidateAccount:output_type -> airgate.plugin.v1.Empty
+	43, // 101: airgate.plugin.v1.GatewayService.QueryQuota:output_type -> airgate.plugin.v1.QuotaInfoResponse
+	50, // 102: airgate.plugin.v1.GatewayService.HandleWebSocket:output_type -> airgate.plugin.v1.WebSocketFrame
+	22, // 103: airgate.plugin.v1.ExtensionService.Migrate:output_type -> airgate.plugin.v1.Empty
+	48, // 104: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:output_type -> airgate.plugin.v1.BackgroundTasksResponse
+	22, // 105: airgate.plugin.v1.ExtensionService.RunBackgroundTask:output_type -> airgate.plugin.v1.Empty
+	45, // 106: airgate.plugin.v1.ExtensionService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
+	46, // 107: airgate.plugin.v1.ExtensionService.HandleStreamRequest:output_type -> airgate.plugin.v1.HttpResponseChunk
+	56, // 108: airgate.plugin.v1.MiddlewareService.OnForwardBegin:output_type -> airgate.plugin.v1.MiddlewareDecision
+	22, // 109: airgate.plugin.v1.MiddlewareService.OnForwardEnd:output_type -> airgate.plugin.v1.Empty
+	4,  // 110: airgate.plugin.v1.HostService.SelectAccount:output_type -> airgate.plugin.v1.HostSelectAccountResponse
+	22, // 111: airgate.plugin.v1.HostService.ReportAccountResult:output_type -> airgate.plugin.v1.Empty
+	6,  // 112: airgate.plugin.v1.HostService.ProbeForward:output_type -> airgate.plugin.v1.HostProbeForwardResponse
+	12, // 113: airgate.plugin.v1.HostService.Forward:output_type -> airgate.plugin.v1.HostForwardResponse
+	13, // 114: airgate.plugin.v1.HostService.ForwardStream:output_type -> airgate.plugin.v1.HostForwardChunk
+	9,  // 115: airgate.plugin.v1.HostService.ListGroups:output_type -> airgate.plugin.v1.HostListGroupsResponse
+	17, // 116: airgate.plugin.v1.HostService.ListPlatforms:output_type -> airgate.plugin.v1.HostListPlatformsResponse
+	19, // 117: airgate.plugin.v1.HostService.ListModels:output_type -> airgate.plugin.v1.HostListModelsResponse
+	21, // 118: airgate.plugin.v1.HostService.GetUserInfo:output_type -> airgate.plugin.v1.HostGetUserInfoResponse
+	88, // [88:119] is the sub-list for method output_type
+	57, // [57:88] is the sub-list for method input_type
+	57, // [57:57] is the sub-list for extension type_name
+	57, // [57:57] is the sub-list for extension extendee
+	0,  // [0:57] is the sub-list for field type_name
 }
 
 func init() { file_plugin_proto_init() }
@@ -4061,7 +4822,7 @@ func file_plugin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plugin_proto_rawDesc), len(file_plugin_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   60,
+			NumMessages:   74,
 			NumExtensions: 0,
 			NumServices:   5,
 		},

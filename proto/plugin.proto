@@ -73,38 +73,65 @@ service MiddlewareService {
 // 替代旧的 admin HTTP API + admin_api_key 模式：插件不再需要 HTTP client、
 // 不再需要 Bearer 鉴权——broker 的子进程隧道天然互信。
 //
-// 设计原则（克制暴露面）：
-//   1. 只暴露插件**确实需要**的 RPC，未来需要再加；
-//   2. 副作用类 RPC（Forward / ProbeForward / ReportAccountResult）必须明确语义边界；
-//   3. ProbeForward 与 Forward 分开，便于权限控制 + 计费跳过 + 日志区分。
+// 设计原则：
+//   1. 覆盖插件常见需求的通用原语层——新增插件应只组合已有 RPC，无需扩 proto；
+//   2. 副作用类 RPC（Forward / ProbeForward / ReportAccountResult）明确语义边界；
+//   3. ProbeForward 与 Forward 分开，便于权限控制 + 计费跳过 + 日志区分；
+//   4. 每个 RPC 由 Capability 门控，Core interceptor 做准入校验。
 //
-// 当前提供的最小集（v1）：
+// 能力分类：
+//   ── 调度 ──
 //   - SelectAccount       — 调度选号（同用户路径）
-//   - ProbeForward        — 黑盒探测请求：走完整调度但跳过 usage_log / 余额扣款
-//   - ListGroups          — 读取当前所有分组（用于探测目标遍历）
 //   - ReportAccountResult — 反馈账号调用结果到状态机
-//
-// 未来可能新增：Forward（普通业务转发，需要严格的用户上下文设计）、
-// ListAccounts、GetPlatformModels 等。
+//   ── 探测 ──
+//   - ProbeForward        — 黑盒探测请求：走完整调度但跳过 usage_log / 余额扣款
+//   ── Forward 管线（完整计费） ──
+//   - Forward             — 非流式业务转发（调度 → 网关 → 计费 → 记录）
+//   - ForwardStream       — 流式业务转发（SSE / chunked）
+//   ── 数据查询 ──
+//   - ListGroups          — 所有分组
+//   - ListPlatforms       — 已加载的网关平台
+//   - ListModels          — 指定平台的模型列表
+//   - GetUserInfo         — 用户基本信息 + 余额
 
 service HostService {
+    // ── 调度 ──
+
     // 选号：根据 (group_id, model) 走和真实用户请求完全相同的调度路径。
-    // 探测插件用它"以分组为单位"找出当前活跃账号。
     rpc SelectAccount(HostSelectAccountRequest) returns (HostSelectAccountResponse);
 
+    // 把账号调用结果反馈给 scheduler 的失败计数器/状态机。
+    rpc ReportAccountResult(HostReportAccountResultRequest) returns (Empty);
+
+    // ── 探测 ──
+
     // 黑盒探测：内部组装一次最小的 chat completion 请求并直接执行。
-    // - 跳过 usage_log 写入
-    // - 跳过用户余额扣款
-    // - 仍然调 scheduler.ReportResult（探测信号让账号状态机继续受益）
-    // model 为空时由 Core 取该 platform 的第一个 model。
+    // 跳过 usage_log 写入、跳过用户余额扣款，仍然 ReportResult 反哺账号状态机。
     rpc ProbeForward(HostProbeForwardRequest) returns (HostProbeForwardResponse);
 
-    // 列出所有分组（带 platform / 状态等基础字段），供插件遍历探测目标。
+    // ── Forward 管线（完整计费） ──
+
+    // 非流式业务转发：走完整管线（调度 → 网关插件 → 计费 → usage_log）。
+    // 调用方需提供 user_id + group_id 以确定计费主体和调度路径。
+    rpc Forward(HostForwardRequest) returns (HostForwardResponse);
+
+    // 流式业务转发：与 Forward 相同管线，结果通过 server stream 逐块返回。
+    // 最后一块 done=true 携带 usage 信息（计费已在 Core 侧完成）。
+    rpc ForwardStream(HostForwardRequest) returns (stream HostForwardChunk);
+
+    // ── 数据查询 ──
+
+    // 列出所有分组。
     rpc ListGroups(HostListGroupsRequest) returns (HostListGroupsResponse);
 
-    // 把账号调用结果反馈给 scheduler 的失败计数器/状态机。
-    // 探测插件可在 ProbeForward 之外的链路（比如自己的二次重试）独立上报。
-    rpc ReportAccountResult(HostReportAccountResultRequest) returns (Empty);
+    // 列出已加载的网关平台（每个 gateway 插件对应一个 platform）。
+    rpc ListPlatforms(HostListPlatformsRequest) returns (HostListPlatformsResponse);
+
+    // 列出指定平台的模型列表。
+    rpc ListModels(HostListModelsRequest) returns (HostListModelsResponse);
+
+    // 获取用户基本信息（余额、角色、状态）。
+    rpc GetUserInfo(HostGetUserInfoRequest) returns (HostGetUserInfoResponse);
 }
 
 message HostSelectAccountRequest {
@@ -154,6 +181,81 @@ message HostReportAccountResultRequest {
     int64  account_id = 1;
     bool   success    = 2;
     string error_msg  = 3; // 失败时上报，便于调试
+}
+
+// ── Host Forward 消息 ──
+
+// HostForwardRequest 业务转发入参。
+// user_id + group_id 共同确定计费主体和调度路径。
+message HostForwardRequest {
+    int64  user_id  = 1; // 计费主体（扣余额的用户）
+    int64  group_id = 2; // 调度分组
+    string model    = 3; // 可空：空时 Core 取该 platform 的第一个 model
+    string method   = 4; // HTTP method（POST / GET / ...）
+    string path     = 5; // 请求路径（如 /v1/chat/completions）
+    map<string, HeaderValues> headers = 6;
+    bytes  body     = 7;
+    bool   stream   = 8; // 是否流式
+}
+
+// HostForwardResponse 非流式转发结果。
+message HostForwardResponse {
+    int32  status_code = 1;
+    map<string, HeaderValues> headers = 2;
+    bytes  body        = 3;
+    HostForwardUsage usage = 4;
+}
+
+// HostForwardChunk 流式转发的单块数据。
+// 第一块携带 status_code + headers；最后一块 done=true 携带 usage。
+message HostForwardChunk {
+    bytes  data        = 1;
+    bool   done        = 2;
+    int32  status_code = 3; // 仅首块
+    map<string, HeaderValues> headers = 4; // 仅首块
+    HostForwardUsage usage = 5; // 仅末块
+}
+
+// HostForwardUsage 转发的 token / 费用摘要（Core 侧计算后回传给调用方插件）。
+message HostForwardUsage {
+    int64  input_tokens  = 1;
+    int64  output_tokens = 2;
+    double cost          = 3; // 总费用（已计入倍率）
+    string model         = 4; // 实际使用的 model（可能被 Core 改写）
+}
+
+// ── Host 数据查询消息 ──
+
+message HostListPlatformsRequest {}
+
+message HostPlatform {
+    string name         = 1; // 平台标识（如 "openai"）
+    string display_name = 2; // 展示名称（如 "OpenAI 网关"）
+}
+
+message HostListPlatformsResponse {
+    repeated HostPlatform platforms = 1;
+}
+
+message HostListModelsRequest {
+    string platform = 1; // 必填：平台标识
+}
+
+message HostListModelsResponse {
+    repeated ModelInfoProto models = 1; // 复用已有 ModelInfoProto，避免平行数据结构漂移
+}
+
+message HostGetUserInfoRequest {
+    int64 user_id = 1;
+}
+
+message HostGetUserInfoResponse {
+    int64  user_id  = 1;
+    string username = 2;
+    string email    = 3;
+    string role     = 4;  // "admin" / "user"
+    double balance  = 5;
+    string status   = 6;  // "active" / "disabled"
 }
 
 // ==================== 通用消息 ====================

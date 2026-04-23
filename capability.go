@@ -16,6 +16,10 @@ const (
 	CapabilityHostSelectAccount       Capability = "host.select_account"
 	CapabilityHostProbeForward        Capability = "host.probe_forward"
 	CapabilityHostReportAccountResult Capability = "host.report_account_result"
+	CapabilityHostForward             Capability = "host.forward"
+	CapabilityHostListPlatforms       Capability = "host.list_platforms"
+	CapabilityHostListModels          Capability = "host.list_models"
+	CapabilityHostGetUserInfo         Capability = "host.get_user_info"
 
 	CapabilityMiddlewareReadBody Capability = "middleware.read_body"
 )
@@ -30,7 +34,17 @@ var capabilityAllowedTypes = map[Capability]map[PluginType]bool{
 	CapabilityHostSelectAccount:       {PluginTypeExtension: true},
 	CapabilityHostProbeForward:        {PluginTypeExtension: true},
 	CapabilityHostReportAccountResult: {PluginTypeExtension: true},
-	CapabilityMiddlewareReadBody:      {PluginTypeMiddleware: true},
+	CapabilityHostForward:             {PluginTypeExtension: true},
+	CapabilityHostListPlatforms: {
+		PluginTypeExtension:  true,
+		PluginTypeMiddleware: true,
+	},
+	CapabilityHostListModels: {
+		PluginTypeExtension:  true,
+		PluginTypeMiddleware: true,
+	},
+	CapabilityHostGetUserInfo:    {PluginTypeExtension: true},
+	CapabilityMiddlewareReadBody: {PluginTypeMiddleware: true},
 }
 
 // IsKnownCapability 判断 capability 是否在当前 SDK 版本的已知集合内。

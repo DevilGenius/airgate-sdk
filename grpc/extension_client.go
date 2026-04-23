@@ -64,3 +64,9 @@ func (c *ExtensionGRPCClient) InvalidateCache() {
 func (c *ExtensionGRPCClient) HandleHTTPRequest(ctx context.Context, req *pb.HttpRequest) (*pb.HttpResponse, error) {
 	return c.extension.HandleRequest(ctx, req)
 }
+
+// HandleHTTPStreamRequest 代理流式 HTTP 请求到插件，返回 chunk 流。
+// 调用方逐个 Recv() 读取 HttpResponseChunk，第一个 chunk 包含 status_code 和 headers。
+func (c *ExtensionGRPCClient) HandleHTTPStreamRequest(ctx context.Context, req *pb.HttpRequest) (pb.ExtensionService_HandleStreamRequestClient, error) {
+	return c.extension.HandleStreamRequest(ctx, req)
+}

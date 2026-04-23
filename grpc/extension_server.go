@@ -13,6 +13,54 @@ import (
 	pb "github.com/DouDOU-start/airgate-sdk/proto"
 )
 
+// streamResponseWriter 把每次 Write 调用转为 gRPC HttpResponseChunk 发送。
+// 第一次 Write 时附带 status_code 和 headers；后续只发 data。
+// 实现 http.Flusher 使标准 SSE handler 能检测流式支持。
+type streamResponseWriter struct {
+	stream     pb.ExtensionService_HandleStreamRequestServer
+	header     http.Header
+	statusCode int
+	headerSent bool
+}
+
+func (w *streamResponseWriter) Header() http.Header {
+	return w.header
+}
+
+func (w *streamResponseWriter) WriteHeader(statusCode int) {
+	if !w.headerSent {
+		w.statusCode = statusCode
+	}
+}
+
+func (w *streamResponseWriter) Write(data []byte) (int, error) {
+	chunk := &pb.HttpResponseChunk{
+		Data: make([]byte, len(data)),
+	}
+	copy(chunk.Data, data)
+
+	if !w.headerSent {
+		w.headerSent = true
+		if w.statusCode == 0 {
+			w.statusCode = http.StatusOK
+		}
+		chunk.StatusCode = int32(w.statusCode)
+		chunk.Headers = make(map[string]*pb.HeaderValues)
+		for k, v := range w.header {
+			chunk.Headers[strings.ToLower(k)] = &pb.HeaderValues{Values: v}
+		}
+	}
+
+	if err := w.stream.Send(chunk); err != nil {
+		return 0, err
+	}
+	return len(data), nil
+}
+
+func (w *streamResponseWriter) Flush() {
+	// Write 已经逐次发送，Flush 是 no-op
+}
+
 // ExtensionGRPCServer 将 ExtensionPlugin 包装为 gRPC 服务端
 type ExtensionGRPCServer struct {
 	pb.UnimplementedExtensionServiceServer
@@ -107,11 +155,39 @@ func (s *ExtensionGRPCServer) HandleRequest(ctx context.Context, req *pb.HttpReq
 }
 
 func (s *ExtensionGRPCServer) HandleStreamRequest(req *pb.HttpRequest, stream pb.ExtensionService_HandleStreamRequestServer) error {
-	return stream.Send(&pb.HttpResponseChunk{
-		Done:       true,
-		StatusCode: 501,
-		Data:       []byte(`{"error":"stream not implemented"}`),
-	})
+	if s.router == nil {
+		return stream.Send(&pb.HttpResponseChunk{
+			Done:       true,
+			StatusCode: 501,
+			Data:       []byte(`{"error":"extension router not initialized"}`),
+		})
+	}
+
+	handler := s.router.match(req.Method, req.Path)
+	if handler == nil {
+		return stream.Send(&pb.HttpResponseChunk{
+			Done:       true,
+			StatusCode: 404,
+			Data:       []byte(`{"error":"route not found"}`),
+		})
+	}
+
+	httpReq, err := pbRequestToHTTP(stream.Context(), req)
+	if err != nil {
+		return stream.Send(&pb.HttpResponseChunk{
+			Done:       true,
+			StatusCode: 500,
+			Data:       []byte(`{"error":"failed to convert request"}`),
+		})
+	}
+
+	w := &streamResponseWriter{
+		stream: stream,
+		header: make(http.Header),
+	}
+	handler.ServeHTTP(w, httpReq)
+
+	return stream.Send(&pb.HttpResponseChunk{Done: true})
 }
 
 // pbRequestToHTTP 将 protobuf HttpRequest 转为 net/http.Request
