@@ -17,6 +17,7 @@ type Account struct {
 // 定价档位（对齐 OpenAI 官方）：
 //   - 标准档：InputPrice / OutputPrice / CachedInputPrice
 //   - Priority 档：*Priority 字段；未配置时 CalculateCost 以标准价 × 2 兜底
+//   - Fast 档：*Fast 字段；未配置时 CalculateCost 以标准价 × 2.5 兜底
 //   - Flex / Batch 档：*Flex 字段；未配置时以标准价 × 0.5 兜底
 //   - 长上下文档（仅 gpt-5.4 家族）：完整 input_tokens 超过 LongContextThreshold
 //     且非 priority 时整次请求按倍率计费
@@ -34,6 +35,10 @@ type ModelInfo struct {
 	InputPricePriority       float64 `json:"input_price_priority,omitempty"`
 	OutputPricePriority      float64 `json:"output_price_priority,omitempty"`
 	CachedInputPricePriority float64 `json:"cached_input_price_priority,omitempty"`
+
+	InputPriceFast       float64 `json:"input_price_fast,omitempty"`
+	OutputPriceFast      float64 `json:"output_price_fast,omitempty"`
+	CachedInputPriceFast float64 `json:"cached_input_price_fast,omitempty"`
 
 	InputPriceFlex       float64 `json:"input_price_flex,omitempty"`
 	OutputPriceFlex      float64 `json:"output_price_flex,omitempty"`

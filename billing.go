@@ -38,8 +38,8 @@ func (r CostResult) TotalCost() float64 {
 //   - 完整 input_tokens = InputTokens + CachedInputTokens，长上下文阈值基于此
 //
 // 计费顺序（对齐 OpenAI 官方）：
-//  1. 按 service_tier 选单价：standard / priority(×2) / flex|batch(×0.5)
-//  2. 非 priority 档 + 命中长上下文阈值 → 再乘长上下文倍率（input/cached/output 独立系数）
+//  1. 按 service_tier 选单价：standard / priority(配置价，缺省 ×2) / fast(×2.5) / flex|batch(×0.5)
+//  2. 命中长上下文阈值 → 再乘长上下文倍率（input/cached/output 独立系数）
 //  3. 三项独立计价后相加，cached 不重复计入 input
 func CalculateCost(input CostInput, model ModelInfo) CostResult {
 	inputPrice := model.InputPrice / 1_000_000
@@ -79,8 +79,32 @@ func CalculateCost(input CostInput, model ModelInfo) CostResult {
 		} else {
 			cachedInputPrice *= 2.0
 		}
-		cacheCreation5mPrice *= 2.0
-		cacheCreation1hPrice *= 2.0
+		cacheCreationMultiplier := 2.0
+		if model.InputPrice > 0 && model.InputPricePriority > 0 {
+			cacheCreationMultiplier = model.InputPricePriority / model.InputPrice
+		}
+		cacheCreation5mPrice *= cacheCreationMultiplier
+		cacheCreation1hPrice *= cacheCreationMultiplier
+
+	case "fast":
+		// Fast 档：OpenAI Codex 官方独立 tier，价格约为标准 × 2.5。
+		if model.InputPriceFast > 0 {
+			inputPrice = model.InputPriceFast / 1_000_000
+		} else {
+			inputPrice *= 2.5
+		}
+		if model.OutputPriceFast > 0 {
+			outputPrice = model.OutputPriceFast / 1_000_000
+		} else {
+			outputPrice *= 2.5
+		}
+		if model.CachedInputPriceFast > 0 {
+			cachedInputPrice = model.CachedInputPriceFast / 1_000_000
+		} else {
+			cachedInputPrice *= 2.5
+		}
+		cacheCreation5mPrice *= 2.5
+		cacheCreation1hPrice *= 2.5
 
 	case "flex", "batch":
 		// Flex / Batch 档：价格约为标准 × 0.5。优先使用配置单价，未配置兜底 × 0.5。
@@ -103,8 +127,8 @@ func CalculateCost(input CostInput, model ModelInfo) CostResult {
 		cacheCreation1hPrice *= 0.5
 	}
 
-	// 长上下文阶梯（仅 gpt-5.4 家族启用，priority 档无此阶梯）
-	if tier != "priority" && model.LongContextThreshold > 0 {
+	// 长上下文阶梯（仅配置了 LongContextThreshold 的模型启用）
+	if model.LongContextThreshold > 0 {
 		fullInput := input.InputTokens + input.CachedInputTokens + input.CacheCreationTokens
 		if fullInput > model.LongContextThreshold {
 			if model.LongContextInputMultiplier > 1 {

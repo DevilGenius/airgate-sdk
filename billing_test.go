@@ -168,6 +168,57 @@ func TestCalculateCost_PriorityFallbackDoublesStandard(t *testing.T) {
 	}
 }
 
+func TestCalculateCost_Fast(t *testing.T) {
+	model := ModelInfo{
+		InputPrice:           3.0,
+		OutputPrice:          15.0,
+		CachedInputPrice:     0.3,
+		InputPriceFast:       7.5,
+		OutputPriceFast:      37.5,
+		CachedInputPriceFast: 0.75,
+	}
+	result := CalculateCost(CostInput{
+		InputTokens:       1000,
+		OutputTokens:      500,
+		CachedInputTokens: 2000,
+		ServiceTier:       "fast",
+	}, model)
+
+	if !almostEqual(result.InputCost, 0.0075) {
+		t.Errorf("InputCost = %v, want 0.0075", result.InputCost)
+	}
+	if !almostEqual(result.OutputCost, 0.01875) {
+		t.Errorf("OutputCost = %v, want 0.01875", result.OutputCost)
+	}
+	if !almostEqual(result.CachedInputCost, 0.0015) {
+		t.Errorf("CachedInputCost = %v, want 0.0015", result.CachedInputCost)
+	}
+}
+
+func TestCalculateCost_FastFallbackUsesTwoPointFiveX(t *testing.T) {
+	model := ModelInfo{
+		InputPrice:       3.0,
+		OutputPrice:      15.0,
+		CachedInputPrice: 0.3,
+	}
+	result := CalculateCost(CostInput{
+		InputTokens:       1000,
+		OutputTokens:      500,
+		CachedInputTokens: 2000,
+		ServiceTier:       "fast",
+	}, model)
+
+	if !almostEqual(result.InputCost, 0.0075) {
+		t.Errorf("InputCost = %v, want 0.0075 (2.5× fallback)", result.InputCost)
+	}
+	if !almostEqual(result.OutputCost, 0.01875) {
+		t.Errorf("OutputCost = %v, want 0.01875 (2.5× fallback)", result.OutputCost)
+	}
+	if !almostEqual(result.CachedInputCost, 0.0015) {
+		t.Errorf("CachedInputCost = %v, want 0.0015 (2.5× fallback)", result.CachedInputCost)
+	}
+}
+
 func TestCalculateCost_Flex(t *testing.T) {
 	// 显式配置的 flex 单价优先
 	model := ModelInfo{
@@ -280,8 +331,8 @@ func TestCalculateCost_LongContext_BelowThreshold(t *testing.T) {
 	}
 }
 
-func TestCalculateCost_LongContext_PriorityDoesNotStack(t *testing.T) {
-	// priority 档无长上下文阶梯，即使 input 超过阈值也只按 priority 单价
+func TestCalculateCost_LongContext_PriorityStacks(t *testing.T) {
+	// priority 档先选 priority 单价，再叠加长上下文倍率
 	model := ModelInfo{
 		InputPrice:                  2.5,
 		OutputPrice:                 15.0,
@@ -301,18 +352,17 @@ func TestCalculateCost_LongContext_PriorityDoesNotStack(t *testing.T) {
 		ServiceTier:       "priority",
 	}, model)
 
-	// priority 单价 × 原 token，不叠加长上下文
-	// input: 200000 × 5/1e6 = 1.0
-	if !almostEqual(result.InputCost, 1.0) {
-		t.Errorf("InputCost = %v, want 1.0 (priority, no longctx stack)", result.InputCost)
+	// input: 200000 × (5 × 2 / 1e6) = 2.0
+	if !almostEqual(result.InputCost, 2.0) {
+		t.Errorf("InputCost = %v, want 2.0 (priority + longctx)", result.InputCost)
 	}
-	// output: 10000 × 30/1e6 = 0.3（不是 × 1.5）
-	if !almostEqual(result.OutputCost, 0.3) {
-		t.Errorf("OutputCost = %v, want 0.3 (priority, no longctx stack)", result.OutputCost)
+	// output: 10000 × (30 × 1.5 / 1e6) = 0.45
+	if !almostEqual(result.OutputCost, 0.45) {
+		t.Errorf("OutputCost = %v, want 0.45 (priority + longctx)", result.OutputCost)
 	}
-	// cached: 80000 × 0.5/1e6 = 0.04
-	if !almostEqual(result.CachedInputCost, 0.04) {
-		t.Errorf("CachedInputCost = %v, want 0.04 (priority, no longctx stack)", result.CachedInputCost)
+	// cached: 80000 × (0.5 × 2 / 1e6) = 0.08
+	if !almostEqual(result.CachedInputCost, 0.08) {
+		t.Errorf("CachedInputCost = %v, want 0.08 (priority + longctx)", result.CachedInputCost)
 	}
 }
 
