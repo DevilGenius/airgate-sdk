@@ -1,7 +1,7 @@
 // 入口模块
 
 import { API, setPluginInfo, applyTheme, initTheme, toggleTheme } from './utils.js';
-import { loadScheduler, setPolicy, setPinned } from './scheduler.js';
+import { loadScheduler, setPolicy, togglePinnedSelect, closePinnedSelect, choosePinnedSelect } from './scheduler.js';
 import { loadAccounts, editWeight, testAccount, deleteAccount } from './accounts.js';
 import { renderTypeCards, selectType, showForm, hideForm, saveAccount, editAccount } from './form.js';
 
@@ -53,8 +53,17 @@ document.getElementById('sched-switch').addEventListener('click', (e) => {
 });
 
 // 调度器：目标账号选择
-document.getElementById('sched-pinned-select').addEventListener('change', (e) => {
-  setPinned(e.target.value);
+document.getElementById('sched-pinned-select').addEventListener('click', (e) => {
+  const option = e.target.closest('[data-pinned-value]');
+  if (option) {
+    choosePinnedSelect(option.dataset.pinnedValue);
+    return;
+  }
+  if (e.target.closest('.sched-pinned-trigger')) togglePinnedSelect();
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#sched-pinned-select')) closePinnedSelect();
 });
 
 // 添加账号按钮

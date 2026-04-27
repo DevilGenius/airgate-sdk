@@ -3,6 +3,8 @@
 import { API } from './utils.js';
 
 let schedulerData = null;
+let pinnedOptions = [];
+let pinnedOpen = false;
 
 export async function loadScheduler() {
   try {
@@ -77,17 +79,46 @@ export async function setPolicy(policy) {
 }
 
 async function renderPinnedSelect(pinnedId) {
-  const sel = document.getElementById('sched-pinned-select');
   try {
     const res = await fetch(API + '/api/accounts');
     const accounts = await res.json();
-    sel.innerHTML = '<option value="0">第一个账号（默认）</option>' +
-      (accounts || []).map(a =>
-        `<option value="${a.id}" ${a.id === pinnedId ? 'selected' : ''}>${a.name || '未命名'} (#${a.id})</option>`
-      ).join('');
+    pinnedOptions = [
+      { value: '0', label: '第一个账号（默认）' },
+      ...(accounts || []).map(a => ({ value: String(a.id), label: `${a.name || '未命名'} (#${a.id})` }))
+    ];
   } catch {
-    sel.innerHTML = '<option value="0">无法加载账号</option>';
+    pinnedOptions = [{ value: '0', label: '无法加载账号' }];
   }
+  drawPinnedSelect(String(pinnedId || 0));
+}
+
+function drawPinnedSelect(value) {
+  const el = document.getElementById('sched-pinned-select');
+  const selected = pinnedOptions.find(option => option.value === value) || pinnedOptions[0];
+  const menu = pinnedOpen ? `<div class="sched-pinned-menu" role="listbox">${pinnedOptions.map(option => {
+    const active = option.value === (selected?.value || '0');
+    return `<button type="button" class="sched-pinned-option${active ? ' active' : ''}" role="option" aria-selected="${active}" data-pinned-value="${option.value}">${option.label}</button>`;
+  }).join('')}</div>` : '';
+  el.innerHTML = `<button type="button" class="sched-pinned-trigger" aria-haspopup="listbox" aria-expanded="${pinnedOpen}">
+    <span class="sched-pinned-label">${selected?.label || ''}</span>
+    <span class="sched-pinned-caret" aria-hidden="true">v</span>
+  </button>${menu}`;
+}
+
+export function togglePinnedSelect() {
+  pinnedOpen = !pinnedOpen;
+  drawPinnedSelect(String(schedulerData?.pinned_id || 0));
+}
+
+export function closePinnedSelect() {
+  if (!pinnedOpen) return;
+  pinnedOpen = false;
+  drawPinnedSelect(String(schedulerData?.pinned_id || 0));
+}
+
+export function choosePinnedSelect(value) {
+  pinnedOpen = false;
+  setPinned(value);
 }
 
 export async function setPinned(val) {

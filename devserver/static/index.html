@@ -225,8 +225,17 @@
     font-weight: 600;
   }
   .sched-pinned-select {
+    position: relative;
     flex: 1;
-    padding: 0.32rem 1.4rem 0.32rem 0.5rem;
+    min-width: 0;
+  }
+  .sched-pinned-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    width: 100%;
+    padding: 0.32rem 0.5rem;
     border: 1px solid var(--ag-border);
     border-radius: var(--ag-radius-sm);
     background: var(--ag-bg-elevated);
@@ -235,14 +244,40 @@
     font-size: 0.7rem;
     outline: none;
     cursor: pointer;
-    transition: border-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a9890'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.45rem center;
+    transition: border-color 180ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .sched-pinned-select:focus { border-color: var(--ag-primary); box-shadow: 0 0 0 2px var(--ag-primary-subtle); }
+  .sched-pinned-trigger[aria-expanded="true"] { border-color: var(--ag-primary); box-shadow: 0 0 0 2px var(--ag-primary-subtle); }
+  .sched-pinned-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sched-pinned-caret { color: var(--ag-text-tertiary); font-size: 0.62rem; }
+  .sched-pinned-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    max-height: 14rem;
+    padding: 0.35rem;
+    border: 1px solid var(--ag-border);
+    border-radius: var(--ag-radius-sm);
+    background: var(--ag-bg-elevated);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    overflow-y: auto;
+  }
+  .sched-pinned-option {
+    padding: 0.42rem 0.5rem;
+    border: 0;
+    border-radius: 0.45rem;
+    background: transparent;
+    color: var(--ag-text-secondary);
+    font-family: var(--ag-font-mono);
+    font-size: 0.7rem;
+    text-align: left;
+    cursor: pointer;
+  }
+  .sched-pinned-option:hover { background: var(--ag-bg-hover); color: var(--ag-text); }
+  .sched-pinned-option.active { background: var(--ag-primary-subtle); color: var(--ag-primary); font-weight: 600; }
 
   .cooldown-list {
     font-family: var(--ag-font-mono);
@@ -657,7 +692,7 @@
         <div id="sched-pinned" style="display:none">
           <div class="sched-pinned">
             <span class="sched-pinned-tag">目标账号</span>
-            <select class="sched-pinned-select" id="sched-pinned-select"></select>
+            <div class="sched-pinned-select" id="sched-pinned-select"></div>
           </div>
         </div>
         <div id="sched-cooldowns"></div>
