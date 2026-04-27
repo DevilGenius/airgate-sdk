@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -22,10 +23,36 @@ func withTimeout() (context.Context, context.CancelFunc) {
 //
 // hostBrokerID 由 *GRPCPlugin.GRPCClient 钩子在启动 HostService stream 后填入，
 // 在 Init() 时透传给插件进程的 InitRequest。0 表示 host 不可用。
+//
+// 日志策略：core 通过 hashicorp/go-plugin 内部建的 grpc.ClientConn 拿到 RPC 句柄，
+// 我们没法直接装 client 端拦截器（go-plugin 不暴露注入点）。所以在每个方法里手写
+// 进入 / 失败 / 完成日志，配合 server 端拦截器一起把调用链覆盖到位。失败一定打 Error，
+// 成功路径只打 Debug 防止污染 info 流。
 type pluginBase struct {
 	plugin       pb.PluginServiceClient
 	cachedInfo   *sdk.PluginInfo
 	hostBrokerID uint32
+}
+
+// pluginIDForLog 取 cached 的插件 ID 给日志用；若还没缓存则返回空串。
+// 不主动触发 GetInfo 以免引入循环。
+func (b *pluginBase) pluginIDForLog() string {
+	if b.cachedInfo != nil {
+		return b.cachedInfo.ID
+	}
+	return ""
+}
+
+// rpcLogger 为本次 RPC 派生 logger，附带 plugin_id 和 grpc_method 字段。
+// 第二个返回值是开始时间，调用方可拿来算 duration_ms。
+func (b *pluginBase) rpcLogger(ctx context.Context, method string) (*slog.Logger, time.Time) {
+	l := sdk.LoggerFromContext(ctx).With(
+		"grpc_method", method,
+	)
+	if pid := b.pluginIDForLog(); pid != "" {
+		l = l.With(sdk.LogFieldPluginID, pid)
+	}
+	return l, time.Now()
 }
 
 // Info 获取插件信息（带缓存）
@@ -35,8 +62,14 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 	}
 	ctx, cancel := withTimeout()
 	defer cancel()
+
+	logger, start := b.rpcLogger(ctx, "GetInfo")
 	resp, err := b.plugin.GetInfo(ctx, &pb.Empty{})
 	if err != nil {
+		logger.Error("plugin_call_get_info_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return sdk.PluginInfo{}
 	}
 
@@ -108,6 +141,9 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 	info.Priority = resp.Priority
 
 	b.cachedInfo = &info
+	logger.Debug("plugin_call_get_info_completed",
+		sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+	)
 	return info
 }
 
@@ -124,32 +160,75 @@ func (b *pluginBase) Init(ctx sdk.PluginContext) error {
 
 	grpcCtx, cancel := withTimeout()
 	defer cancel()
+
+	logger, start := b.rpcLogger(grpcCtx, "Init")
+	logger.Debug("plugin_call_init_start")
 	_, err := b.plugin.Init(grpcCtx, &pb.InitRequest{
 		Config:       config,
 		LogLevel:     logLevel,
 		HostBrokerId: b.hostBrokerID,
 	})
-	return err
+	if err != nil {
+		logger.Error("plugin_call_init_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return err
+	}
+	logger.Debug("plugin_call_init_completed",
+		sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+	)
+	return nil
 }
 
 // Start 启动插件
 func (b *pluginBase) Start(ctx context.Context) error {
+	logger, start := b.rpcLogger(ctx, "Start")
+	logger.Debug("plugin_call_start_begin")
 	_, err := b.plugin.Start(ctx, &pb.Empty{})
-	return err
+	if err != nil {
+		logger.Error("plugin_call_start_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return err
+	}
+	logger.Debug("plugin_call_start_completed",
+		sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+	)
+	return nil
 }
 
 // Stop 停止插件
 func (b *pluginBase) Stop(ctx context.Context) error {
+	logger, start := b.rpcLogger(ctx, "Stop")
+	logger.Debug("plugin_call_stop_begin")
 	_, err := b.plugin.Stop(ctx, &pb.Empty{})
-	return err
+	if err != nil {
+		logger.Error("plugin_call_stop_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return err
+	}
+	logger.Debug("plugin_call_stop_completed",
+		sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+	)
+	return nil
 }
 
 // GetWebAssets 获取插件前端静态资源
 func (b *pluginBase) GetWebAssets() (map[string][]byte, error) {
 	ctx, cancel := withTimeout()
 	defer cancel()
+
+	logger, start := b.rpcLogger(ctx, "GetWebAssets")
 	resp, err := b.plugin.GetWebAssets(ctx, &pb.Empty{})
 	if err != nil {
+		logger.Error("plugin_call_get_web_assets_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	if !resp.HasAssets {
@@ -164,12 +243,28 @@ func (b *pluginBase) GetWebAssets() (map[string][]byte, error) {
 
 // HealthCheck 健康检查（客户端侧调用）
 func (b *pluginBase) HealthCheck(ctx context.Context) error {
+	logger, start := b.rpcLogger(ctx, "HealthCheck")
 	_, err := b.plugin.HealthCheck(ctx, &pb.Empty{})
-	return err
+	if err != nil {
+		logger.Error("plugin_call_health_check_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return err
+	}
+	logger.Debug("plugin_call_health_check_completed",
+		sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+	)
+	return nil
 }
 
 // HandleHTTPRequest 通用请求代理，Core 透传请求给插件
 func (b *pluginBase) HandleHTTPRequest(ctx context.Context, method, path, query string, headers http.Header, body []byte) (int, http.Header, []byte, error) {
+	logger, start := b.rpcLogger(ctx, "HandleRequest")
+	logger = logger.With(
+		sdk.LogFieldMethod, method,
+		sdk.LogFieldPath, path,
+	)
 	resp, err := b.plugin.HandleRequest(ctx, &pb.HttpRequest{
 		Method:  method,
 		Path:    path,
@@ -178,8 +273,16 @@ func (b *pluginBase) HandleHTTPRequest(ctx context.Context, method, path, query 
 		Body:    body,
 	})
 	if err != nil {
+		logger.Error("plugin_call_handle_request_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return http.StatusInternalServerError, nil, nil, err
 	}
+	logger.Debug("plugin_call_handle_request_completed",
+		sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+		sdk.LogFieldStatus, resp.StatusCode,
+	)
 	return int(resp.StatusCode), protoHeadersToHTTP(resp.Headers), resp.Body, nil
 }
 

@@ -124,7 +124,7 @@ func buildProtoRequest(req *sdk.ForwardRequest) *pb.ForwardRequest {
 func (c *GatewayGRPCClient) Forward(ctx context.Context, req *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
 	pbReq := buildProtoRequest(req)
 
-	if req.Stream && req.Writer != nil {
+	if req.Writer != nil {
 		return c.forwardStream(ctx, pbReq, req)
 	}
 

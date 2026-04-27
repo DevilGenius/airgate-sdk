@@ -64,7 +64,9 @@ func (c *stubForwardStreamClient) SendMsg(any) error { return nil }
 func (c *stubForwardStreamClient) RecvMsg(any) error { return nil }
 
 type stubGatewayServiceClient struct {
-	stream grpc.ServerStreamingClient[pb.ForwardChunk]
+	stream       grpc.ServerStreamingClient[pb.ForwardChunk]
+	forwardCalls int
+	streamCalls  int
 }
 
 func (c *stubGatewayServiceClient) GetPlatform(context.Context, *pb.Empty, ...grpc.CallOption) (*pb.StringResponse, error) {
@@ -77,9 +79,11 @@ func (c *stubGatewayServiceClient) GetRoutes(context.Context, *pb.Empty, ...grpc
 	return nil, nil
 }
 func (c *stubGatewayServiceClient) Forward(context.Context, *pb.ForwardRequest, ...grpc.CallOption) (*pb.ForwardOutcome, error) {
-	return nil, nil
+	c.forwardCalls++
+	return &pb.ForwardOutcome{Kind: pb.OutcomeKind_OUTCOME_SUCCESS}, nil
 }
 func (c *stubGatewayServiceClient) ForwardStream(context.Context, *pb.ForwardRequest, ...grpc.CallOption) (grpc.ServerStreamingClient[pb.ForwardChunk], error) {
+	c.streamCalls++
 	return c.stream, nil
 }
 func (c *stubGatewayServiceClient) ValidateAccount(context.Context, *pb.CredentialsRequest, ...grpc.CallOption) (*pb.Empty, error) {
@@ -188,6 +192,37 @@ func TestGatewayGRPCClientForwardStreamAppliesStatusAndHeaders(t *testing.T) {
 	}
 	if got := writer.body.String(); got != "data: hello\n\n" {
 		t.Fatalf("writer body = %q", got)
+	}
+}
+
+func TestGatewayGRPCClientForwardUsesStreamWhenWriterIsPresent(t *testing.T) {
+	gateway := &stubGatewayServiceClient{
+		stream: &stubForwardStreamClient{
+			chunks: []*pb.ForwardChunk{
+				{Data: []byte(" ")},
+				{Done: true, FinalOutcome: &pb.ForwardOutcome{Kind: pb.OutcomeKind_OUTCOME_SUCCESS, Upstream: &pb.UpstreamResponse{StatusCode: http.StatusOK}}},
+			},
+		},
+	}
+	client := &GatewayGRPCClient{gateway: gateway}
+	writer := &captureWriter{}
+
+	outcome, err := client.Forward(context.Background(), &sdk.ForwardRequest{
+		Account: &sdk.Account{},
+		Stream:  false,
+		Writer:  writer,
+	})
+	if err != nil {
+		t.Fatalf("Forward() error = %v", err)
+	}
+	if outcome.Kind != sdk.OutcomeSuccess {
+		t.Fatalf("outcome kind = %v, want %v", outcome.Kind, sdk.OutcomeSuccess)
+	}
+	if gateway.streamCalls != 1 || gateway.forwardCalls != 0 {
+		t.Fatalf("streamCalls=%d forwardCalls=%d, want stream=1 unary=0", gateway.streamCalls, gateway.forwardCalls)
+	}
+	if got := writer.body.String(); got != " " {
+		t.Fatalf("writer body = %q, want single keepalive byte", got)
 	}
 }
 

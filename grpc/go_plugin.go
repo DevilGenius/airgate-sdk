@@ -103,6 +103,9 @@ func (p *MiddlewareGRPCPlugin) GRPCClient(_ context.Context, broker *goplugin.GR
 // hostImpl 为 nil 时表示 Core 没启用 HostService，返回 0；插件 Init 收到 0
 // 后会在 ctx.Host() 时返回 nil。这是软失败：旧版 Core / 不需要 host 的部署
 // 都正常工作。
+//
+// 这里的 grpc.NewServer 会装上 LoggingUnaryServerInterceptor / LoggingStreamServerInterceptor，
+// 插件→core 的 host 调用因此可观测。
 func startHostStream(broker *goplugin.GRPCBroker, hostImpl pb.HostServiceServer) uint32 {
 	if hostImpl == nil || broker == nil {
 		return 0
@@ -112,6 +115,8 @@ func startHostStream(broker *goplugin.GRPCBroker, hostImpl pb.HostServiceServer)
 		opts = append(opts,
 			grpc.MaxRecvMsgSize(PluginGRPCMaxMessageBytes),
 			grpc.MaxSendMsgSize(PluginGRPCMaxMessageBytes),
+			grpc.ChainUnaryInterceptor(LoggingUnaryServerInterceptor()),
+			grpc.ChainStreamInterceptor(LoggingStreamServerInterceptor()),
 		)
 		s := grpc.NewServer(opts...)
 		pb.RegisterHostServiceServer(s, hostImpl)
@@ -151,6 +156,8 @@ func Serve(impl interface{}) {
 			opts = append(opts,
 				grpc.MaxRecvMsgSize(PluginGRPCMaxMessageBytes),
 				grpc.MaxSendMsgSize(PluginGRPCMaxMessageBytes),
+				grpc.ChainUnaryInterceptor(LoggingUnaryServerInterceptor()),
+				grpc.ChainStreamInterceptor(LoggingStreamServerInterceptor()),
 			)
 			return grpc.NewServer(opts...)
 		},

@@ -252,6 +252,11 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 	// 只有当 Kind=Unknown 时才通过 gRPC error 上抛（真正的"插件自己崩了"）；
 	// 否则把 err 合并进 outcome.Reason，保证 Core 端能拿到判决。
 	if err != nil && outcome.Kind == sdk.OutcomeUnknown {
+		// server 拦截器会打 grpc_server_handle_failed；这里补业务上下文，便于排查。
+		sdk.LoggerFromContext(ctx).Error("gateway_forward_failed",
+			sdk.LogFieldModel, req.Model,
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	if err != nil && outcome.Reason == "" {
@@ -286,9 +291,15 @@ func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.Gate
 	}
 
 	startTime := time.Now()
-	outcome, err := s.Impl.Forward(stream.Context(), fwdReq)
+	ctx := stream.Context()
+	outcome, err := s.Impl.Forward(ctx, fwdReq)
 	// 同 Forward：Kind=Unknown 才走 gRPC error；否则合并 err 进 Reason，保留判决。
 	if err != nil && outcome.Kind == sdk.OutcomeUnknown {
+		sdk.LoggerFromContext(ctx).Error("gateway_forward_stream_failed",
+			sdk.LogFieldModel, req.Model,
+			sdk.LogFieldDurationMs, time.Since(startTime).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return err
 	}
 	if err != nil && outcome.Reason == "" {
@@ -299,12 +310,23 @@ func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.Gate
 	}
 
 	if err := sw.flushMeta(); err != nil {
+		sdk.LoggerFromContext(ctx).Error("gateway_forward_stream_meta_flush_failed",
+			sdk.LogFieldModel, req.Model,
+			sdk.LogFieldError, err,
+		)
 		return err
 	}
-	return stream.Send(&pb.ForwardChunk{
+	if err := stream.Send(&pb.ForwardChunk{
 		Done:         true,
 		FinalOutcome: outcomeToProto(outcome),
-	})
+	}); err != nil {
+		sdk.LoggerFromContext(ctx).Error("gateway_forward_stream_send_final_failed",
+			sdk.LogFieldModel, req.Model,
+			sdk.LogFieldError, err,
+		)
+		return err
+	}
+	return nil
 }
 
 func (s *GatewayGRPCServer) ValidateAccount(ctx context.Context, req *pb.CredentialsRequest) (*pb.Empty, error) {

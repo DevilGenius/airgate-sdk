@@ -115,9 +115,18 @@ func (s *ExtensionGRPCServer) RunBackgroundTask(ctx context.Context, req *pb.Run
 		s.taskMu.RUnlock()
 	}
 	if !ok || handler == nil {
-		return nil, fmt.Errorf("background task %q not found", req.Name)
+		err := fmt.Errorf("background task %q not found", req.Name)
+		sdk.LoggerFromContext(ctx).Error("extension_background_task_not_found",
+			"task_name", req.Name,
+			sdk.LogFieldError, err,
+		)
+		return nil, err
 	}
 	if err := handler(ctx); err != nil {
+		sdk.LoggerFromContext(ctx).Error("extension_background_task_failed",
+			"task_name", req.Name,
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	return &pb.Empty{}, nil
@@ -125,6 +134,10 @@ func (s *ExtensionGRPCServer) RunBackgroundTask(ctx context.Context, req *pb.Run
 
 func (s *ExtensionGRPCServer) HandleRequest(ctx context.Context, req *pb.HttpRequest) (*pb.HttpResponse, error) {
 	if s.router == nil {
+		sdk.LoggerFromContext(ctx).Error("extension_router_not_initialized",
+			sdk.LogFieldMethod, req.Method,
+			sdk.LogFieldPath, req.Path,
+		)
 		return &pb.HttpResponse{
 			StatusCode: 501,
 			Body:       []byte(`{"error":"extension router not initialized"}`),
@@ -142,6 +155,12 @@ func (s *ExtensionGRPCServer) HandleRequest(ctx context.Context, req *pb.HttpReq
 	// 将 gRPC 请求转为 http.Request + httptest.ResponseRecorder
 	httpReq, err := pbRequestToHTTP(ctx, req)
 	if err != nil {
+		sdk.LoggerFromContext(ctx).Error("extension_call_failed",
+			sdk.LogFieldMethod, req.Method,
+			sdk.LogFieldPath, req.Path,
+			sdk.LogFieldReason, "convert_request",
+			sdk.LogFieldError, err,
+		)
 		return &pb.HttpResponse{
 			StatusCode: 500,
 			Body:       []byte(`{"error":"failed to convert request"}`),
@@ -155,7 +174,12 @@ func (s *ExtensionGRPCServer) HandleRequest(ctx context.Context, req *pb.HttpReq
 }
 
 func (s *ExtensionGRPCServer) HandleStreamRequest(req *pb.HttpRequest, stream pb.ExtensionService_HandleStreamRequestServer) error {
+	ctx := stream.Context()
 	if s.router == nil {
+		sdk.LoggerFromContext(ctx).Error("extension_router_not_initialized",
+			sdk.LogFieldMethod, req.Method,
+			sdk.LogFieldPath, req.Path,
+		)
 		return stream.Send(&pb.HttpResponseChunk{
 			Done:       true,
 			StatusCode: 501,
@@ -172,8 +196,14 @@ func (s *ExtensionGRPCServer) HandleStreamRequest(req *pb.HttpRequest, stream pb
 		})
 	}
 
-	httpReq, err := pbRequestToHTTP(stream.Context(), req)
+	httpReq, err := pbRequestToHTTP(ctx, req)
 	if err != nil {
+		sdk.LoggerFromContext(ctx).Error("extension_call_failed",
+			sdk.LogFieldMethod, req.Method,
+			sdk.LogFieldPath, req.Path,
+			sdk.LogFieldReason, "convert_request",
+			sdk.LogFieldError, err,
+		)
 		return stream.Send(&pb.HttpResponseChunk{
 			Done:       true,
 			StatusCode: 500,

@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 
 	goplugin "github.com/hashicorp/go-plugin"
 
@@ -94,11 +95,14 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 }
 
 func (s *PluginGRPCServer) Init(_ context.Context, req *pb.InitRequest) (*pb.Empty, error) {
+	info := s.Impl.Info()
+
 	// 用 Core 传来的 log_level 重新初始化日志级别
 	if req.LogLevel != "" {
-		info := s.Impl.Info()
 		sdk.InitLogger("plugin."+info.ID, req.LogLevel, sdk.LogFormat())
 	}
+
+	slog.Info("plugin_init_start", sdk.LogFieldPluginID, info.ID)
 
 	pctx := &grpcPluginContext{
 		config:       &mapConfig{data: req.Config},
@@ -106,20 +110,37 @@ func (s *PluginGRPCServer) Init(_ context.Context, req *pb.InitRequest) (*pb.Emp
 		hostBrokerID: req.HostBrokerId,
 	}
 	if err := s.Impl.Init(pctx); err != nil {
+		slog.Error("plugin_init_failed",
+			sdk.LogFieldPluginID, info.ID,
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
+	slog.Info("plugin_init_completed", sdk.LogFieldPluginID, info.ID)
 	return &pb.Empty{}, nil
 }
 
 func (s *PluginGRPCServer) Start(ctx context.Context, _ *pb.Empty) (*pb.Empty, error) {
+	info := s.Impl.Info()
+	slog.Info("plugin_start", sdk.LogFieldPluginID, info.ID)
 	if err := s.Impl.Start(ctx); err != nil {
+		slog.Error("plugin_start_failed",
+			sdk.LogFieldPluginID, info.ID,
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	return &pb.Empty{}, nil
 }
 
 func (s *PluginGRPCServer) Stop(ctx context.Context, _ *pb.Empty) (*pb.Empty, error) {
+	info := s.Impl.Info()
+	slog.Info("plugin_stop", sdk.LogFieldPluginID, info.ID)
 	if err := s.Impl.Stop(ctx); err != nil {
+		slog.Error("plugin_stop_failed",
+			sdk.LogFieldPluginID, info.ID,
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	return &pb.Empty{}, nil

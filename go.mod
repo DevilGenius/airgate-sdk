@@ -3,6 +3,7 @@ module github.com/DouDOU-start/airgate-sdk
 go 1.25.7
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/go-plugin v1.7.0
 	google.golang.org/grpc v1.79.2

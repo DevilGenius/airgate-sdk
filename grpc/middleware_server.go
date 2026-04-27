@@ -26,6 +26,14 @@ func (s *MiddlewareGRPCServer) OnForwardBegin(ctx context.Context, req *pb.Middl
 	in := middlewareRequestFromProto(req)
 	decision, err := s.Impl.OnForwardBegin(ctx, in)
 	if err != nil {
+		// 拦截器会打 grpc_server_handle_failed；这里补 middleware 业务上下文。
+		sdk.LoggerFromContext(ctx).Error("middleware_on_forward_begin_failed",
+			sdk.LogFieldRequestID, req.RequestId,
+			sdk.LogFieldUserID, req.UserId,
+			sdk.LogFieldGroupID, req.GroupId,
+			sdk.LogFieldModel, req.Model,
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	return middlewareDecisionToProto(decision), nil
@@ -34,6 +42,13 @@ func (s *MiddlewareGRPCServer) OnForwardBegin(ctx context.Context, req *pb.Middl
 func (s *MiddlewareGRPCServer) OnForwardEnd(ctx context.Context, evt *pb.MiddlewareEvent) (*pb.Empty, error) {
 	in := middlewareEventFromProto(evt)
 	if err := s.Impl.OnForwardEnd(ctx, in); err != nil {
+		sdk.LoggerFromContext(ctx).Error("middleware_on_forward_end_failed",
+			sdk.LogFieldRequestID, evt.RequestId,
+			sdk.LogFieldUserID, evt.UserId,
+			sdk.LogFieldGroupID, evt.GroupId,
+			sdk.LogFieldModel, evt.Model,
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	return &pb.Empty{}, nil

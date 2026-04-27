@@ -3,6 +3,8 @@ package grpc
 import (
 	"context"
 	"io"
+	"log/slog"
+	"time"
 
 	sdk "github.com/DouDOU-start/airgate-sdk"
 	pb "github.com/DouDOU-start/airgate-sdk/proto"
@@ -11,6 +13,10 @@ import (
 // hostClient 把 pb.HostServiceClient 包装成 sdk.Host 接口。
 // 插件代码看到的是 sdk.Host（plain Go），不直接接触 protobuf 类型，
 // 这样未来 proto 演进时插件源码不需要跟着改。
+//
+// 日志策略：core→plugin 的 conn 由 hashicorp/go-plugin 内部建立，我们没法装拦截器，
+// 所以这里手写 RPC 进入 / 失败 / 完成日志。Error 强制打点；正常路径只 Debug。
+// 跨进程链路靠 LoggingUnaryClientInterceptor 写入 outgoing metadata 的 request_id 串起来。
 type hostClient struct {
 	c pb.HostServiceClient
 }
@@ -21,9 +27,15 @@ func NewHostClient(c pb.HostServiceClient) sdk.Host {
 	return &hostClient{c: c}
 }
 
+// hostRPCLogger 派生 host 调用专用 logger，并返回起始时间。
+func hostRPCLogger(ctx context.Context, method string) (*slog.Logger, time.Time) {
+	return sdk.LoggerFromContext(ctx).With("host_rpc", method), time.Now()
+}
+
 // ── 调度 ──
 
 func (h *hostClient) SelectAccount(ctx context.Context, req sdk.HostSelectAccountRequest) (*sdk.HostSelectAccountResult, error) {
+	logger, start := hostRPCLogger(ctx, "SelectAccount")
 	resp, err := h.c.SelectAccount(ctx, &pb.HostSelectAccountRequest{
 		GroupId:           req.GroupID,
 		Model:             req.Model,
@@ -31,8 +43,17 @@ func (h *hostClient) SelectAccount(ctx context.Context, req sdk.HostSelectAccoun
 		ExcludeAccountIds: req.ExcludeAccountIDs,
 	})
 	if err != nil {
+		logger.Error("host_call_select_account_failed",
+			sdk.LogFieldGroupID, req.GroupID,
+			sdk.LogFieldModel, req.Model,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
+	logger.Debug("host_call_select_account_completed",
+		sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+	)
 	return &sdk.HostSelectAccountResult{
 		AccountID:   resp.AccountId,
 		AccountName: resp.AccountName,
@@ -41,22 +62,38 @@ func (h *hostClient) SelectAccount(ctx context.Context, req sdk.HostSelectAccoun
 }
 
 func (h *hostClient) ReportAccountResult(ctx context.Context, accountID int64, success bool, errMsg string) error {
+	logger, start := hostRPCLogger(ctx, "ReportAccountResult")
 	_, err := h.c.ReportAccountResult(ctx, &pb.HostReportAccountResultRequest{
 		AccountId: accountID,
 		Success:   success,
 		ErrorMsg:  errMsg,
 	})
-	return err
+	if err != nil {
+		logger.Error("host_call_report_account_result_failed",
+			sdk.LogFieldAccountID, accountID,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return err
+	}
+	return nil
 }
 
 // ── 探测 ──
 
 func (h *hostClient) ProbeForward(ctx context.Context, req sdk.HostProbeForwardRequest) (*sdk.HostProbeForwardResult, error) {
+	logger, start := hostRPCLogger(ctx, "ProbeForward")
 	resp, err := h.c.ProbeForward(ctx, &pb.HostProbeForwardRequest{
 		GroupId: req.GroupID,
 		Model:   req.Model,
 	})
 	if err != nil {
+		logger.Error("host_call_probe_forward_failed",
+			sdk.LogFieldGroupID, req.GroupID,
+			sdk.LogFieldModel, req.Model,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	return &sdk.HostProbeForwardResult{
@@ -74,6 +111,7 @@ func (h *hostClient) ProbeForward(ctx context.Context, req sdk.HostProbeForwardR
 // ── Forward 管线 ──
 
 func (h *hostClient) Forward(ctx context.Context, req sdk.HostForwardRequest) (*sdk.HostForwardResponse, error) {
+	logger, start := hostRPCLogger(ctx, "Forward")
 	resp, err := h.c.Forward(ctx, &pb.HostForwardRequest{
 		UserId:  req.UserID,
 		GroupId: req.GroupID,
@@ -85,6 +123,13 @@ func (h *hostClient) Forward(ctx context.Context, req sdk.HostForwardRequest) (*
 		Stream:  req.Stream,
 	})
 	if err != nil {
+		logger.Error("host_call_forward_failed",
+			sdk.LogFieldUserID, req.UserID,
+			sdk.LogFieldGroupID, req.GroupID,
+			sdk.LogFieldModel, req.Model,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	result := &sdk.HostForwardResponse{
@@ -104,6 +149,7 @@ func (h *hostClient) Forward(ctx context.Context, req sdk.HostForwardRequest) (*
 }
 
 func (h *hostClient) ForwardStream(ctx context.Context, req sdk.HostForwardRequest, callback func(chunk sdk.HostForwardChunk) error) error {
+	logger, start := hostRPCLogger(ctx, "ForwardStream")
 	stream, err := h.c.ForwardStream(ctx, &pb.HostForwardRequest{
 		UserId:  req.UserID,
 		GroupId: req.GroupID,
@@ -115,6 +161,13 @@ func (h *hostClient) ForwardStream(ctx context.Context, req sdk.HostForwardReque
 		Stream:  req.Stream,
 	})
 	if err != nil {
+		logger.Error("host_call_forward_stream_open_failed",
+			sdk.LogFieldUserID, req.UserID,
+			sdk.LogFieldGroupID, req.GroupID,
+			sdk.LogFieldModel, req.Model,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return err
 	}
 	for {
@@ -123,6 +176,13 @@ func (h *hostClient) ForwardStream(ctx context.Context, req sdk.HostForwardReque
 			return nil
 		}
 		if err != nil {
+			logger.Error("host_call_forward_stream_recv_failed",
+				sdk.LogFieldUserID, req.UserID,
+				sdk.LogFieldGroupID, req.GroupID,
+				sdk.LogFieldModel, req.Model,
+				sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+				sdk.LogFieldError, err,
+			)
 			return err
 		}
 		c := sdk.HostForwardChunk{
@@ -140,6 +200,13 @@ func (h *hostClient) ForwardStream(ctx context.Context, req sdk.HostForwardReque
 			}
 		}
 		if err := callback(c); err != nil {
+			logger.Error("host_call_forward_stream_callback_failed",
+				sdk.LogFieldUserID, req.UserID,
+				sdk.LogFieldGroupID, req.GroupID,
+				sdk.LogFieldModel, req.Model,
+				sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+				sdk.LogFieldError, err,
+			)
 			return err
 		}
 	}
@@ -148,8 +215,13 @@ func (h *hostClient) ForwardStream(ctx context.Context, req sdk.HostForwardReque
 // ── 数据查询 ──
 
 func (h *hostClient) ListGroups(ctx context.Context) ([]sdk.HostGroup, error) {
+	logger, start := hostRPCLogger(ctx, "ListGroups")
 	resp, err := h.c.ListGroups(ctx, &pb.HostListGroupsRequest{})
 	if err != nil {
+		logger.Error("host_call_list_groups_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	groups := make([]sdk.HostGroup, 0, len(resp.Groups))
@@ -166,8 +238,13 @@ func (h *hostClient) ListGroups(ctx context.Context) ([]sdk.HostGroup, error) {
 }
 
 func (h *hostClient) ListPlatforms(ctx context.Context) ([]sdk.HostPlatform, error) {
+	logger, start := hostRPCLogger(ctx, "ListPlatforms")
 	resp, err := h.c.ListPlatforms(ctx, &pb.HostListPlatformsRequest{})
 	if err != nil {
+		logger.Error("host_call_list_platforms_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	platforms := make([]sdk.HostPlatform, 0, len(resp.Platforms))
@@ -181,8 +258,14 @@ func (h *hostClient) ListPlatforms(ctx context.Context) ([]sdk.HostPlatform, err
 }
 
 func (h *hostClient) ListModels(ctx context.Context, platform string) ([]sdk.ModelInfo, error) {
+	logger, start := hostRPCLogger(ctx, "ListModels")
 	resp, err := h.c.ListModels(ctx, &pb.HostListModelsRequest{Platform: platform})
 	if err != nil {
+		logger.Error("host_call_list_models_failed",
+			sdk.LogFieldPlatform, platform,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	models := make([]sdk.ModelInfo, 0, len(resp.Models))
@@ -205,8 +288,14 @@ func (h *hostClient) ListModels(ctx context.Context, platform string) ([]sdk.Mod
 }
 
 func (h *hostClient) GetUserInfo(ctx context.Context, userID int64) (*sdk.HostUserInfo, error) {
+	logger, start := hostRPCLogger(ctx, "GetUserInfo")
 	resp, err := h.c.GetUserInfo(ctx, &pb.HostGetUserInfoRequest{UserId: userID})
 	if err != nil {
+		logger.Error("host_call_get_user_info_failed",
+			sdk.LogFieldUserID, userID,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
 		return nil, err
 	}
 	return &sdk.HostUserInfo{
