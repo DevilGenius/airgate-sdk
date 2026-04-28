@@ -439,6 +439,12 @@ message Usage {
     string model          = 30;
     string service_tier   = 31;
     int64  first_token_ms = 32;
+
+    // image_size 是图像生成请求实际出图的尺寸（"WxH"，例如 "1024x1024"、"3840x2160"）。
+    // 网关侧按 1K/2K/4K 三档计费，把分档来源（实际尺寸）记下来，admin 后台 usage_log
+    // 显示费用时旁边带上 size，用户能直观看出"为什么这次扣了 0.40"。
+    // 非图像请求留空。
+    string image_size     = 33;
 }
 
 // ForwardOutcome 插件对一次 Forward 的完整判决结果。

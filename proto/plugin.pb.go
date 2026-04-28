@@ -2603,8 +2603,13 @@ type Usage struct {
 	Model                  string                 `protobuf:"bytes,30,opt,name=model,proto3" json:"model,omitempty"`
 	ServiceTier            string                 `protobuf:"bytes,31,opt,name=service_tier,json=serviceTier,proto3" json:"service_tier,omitempty"`
 	FirstTokenMs           int64                  `protobuf:"varint,32,opt,name=first_token_ms,json=firstTokenMs,proto3" json:"first_token_ms,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	// image_size 是图像生成请求实际出图的尺寸（"WxH"，例如 "1024x1024"、"3840x2160"）。
+	// 网关侧按 1K/2K/4K 三档计费，把分档来源（实际尺寸）记下来，admin 后台 usage_log
+	// 显示费用时旁边带上 size，用户能直观看出"为什么这次扣了 0.40"。
+	// 非图像请求留空。
+	ImageSize     string `protobuf:"bytes,33,opt,name=image_size,json=imageSize,proto3" json:"image_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Usage) Reset() {
@@ -2768,6 +2773,13 @@ func (x *Usage) GetFirstTokenMs() int64 {
 		return x.FirstTokenMs
 	}
 	return 0
+}
+
+func (x *Usage) GetImageSize() string {
+	if x != nil {
+		return x.ImageSize
+	}
+	return ""
 }
 
 // ForwardOutcome 插件对一次 Forward 的完整判决结果。
@@ -4332,7 +4344,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x04body\x18\x03 \x01(\fR\x04body\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xb3\x06\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xd2\x06\n" +
 	"\x05Usage\x12!\n" +
 	"\finput_tokens\x18\x01 \x01(\x03R\vinputTokens\x12#\n" +
 	"\routput_tokens\x18\x02 \x01(\x03R\foutputTokens\x12.\n" +
@@ -4356,7 +4368,9 @@ const file_plugin_proto_rawDesc = "" +
 	"\x17cache_creation_1h_price\x18\x18 \x01(\x01R\x14cacheCreation1hPrice\x12\x14\n" +
 	"\x05model\x18\x1e \x01(\tR\x05model\x12!\n" +
 	"\fservice_tier\x18\x1f \x01(\tR\vserviceTier\x12$\n" +
-	"\x0efirst_token_ms\x18  \x01(\x03R\ffirstTokenMs\"\xc7\x03\n" +
+	"\x0efirst_token_ms\x18  \x01(\x03R\ffirstTokenMs\x12\x1d\n" +
+	"\n" +
+	"image_size\x18! \x01(\tR\timageSize\"\xc7\x03\n" +
 	"\x0eForwardOutcome\x122\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x1e.airgate.plugin.v1.OutcomeKindR\x04kind\x12?\n" +
 	"\bupstream\x18\x02 \x01(\v2#.airgate.plugin.v1.UpstreamResponseR\bupstream\x12.\n" +

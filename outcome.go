@@ -121,6 +121,11 @@ type Usage struct {
 	Model        string
 	ServiceTier  string
 	FirstTokenMs int64
+
+	// ImageSize 图像生成请求的实际出图尺寸（"WxH"，例如 "1024x1024"、"3840x2160"）。
+	// 网关侧按 1K/2K/4K 三档计费，把分档来源（实际尺寸）记下来，admin 后台 usage_log
+	// 显示费用时旁边带上 size，用户能直观看出"为什么这次扣了 0.40"。非图像请求留空。
+	ImageSize string
 }
 
 // ForwardOutcome 是插件对一次 Forward 的完整判决结果。

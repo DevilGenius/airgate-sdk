@@ -190,6 +190,7 @@ func usageToProto(u sdk.Usage) *pb.Usage {
 		Model:                  u.Model,
 		ServiceTier:            u.ServiceTier,
 		FirstTokenMs:           u.FirstTokenMs,
+		ImageSize:              u.ImageSize,
 	}
 }
 
@@ -214,6 +215,7 @@ func usageFromProto(p *pb.Usage) sdk.Usage {
 		Model:                 p.Model,
 		ServiceTier:           p.ServiceTier,
 		FirstTokenMs:          p.FirstTokenMs,
+		ImageSize:             p.ImageSize,
 	}
 }
 
