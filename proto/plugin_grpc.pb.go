@@ -1170,6 +1170,8 @@ const (
 	HostService_ListPlatforms_FullMethodName       = "/airgate.plugin.v1.HostService/ListPlatforms"
 	HostService_ListModels_FullMethodName          = "/airgate.plugin.v1.HostService/ListModels"
 	HostService_GetUserInfo_FullMethodName         = "/airgate.plugin.v1.HostService/GetUserInfo"
+	HostService_StoreAsset_FullMethodName          = "/airgate.plugin.v1.HostService/StoreAsset"
+	HostService_GetAssetURL_FullMethodName         = "/airgate.plugin.v1.HostService/GetAssetURL"
 )
 
 // HostServiceClient is the client API for HostService service.
@@ -1197,6 +1199,9 @@ type HostServiceClient interface {
 	ListModels(ctx context.Context, in *HostListModelsRequest, opts ...grpc.CallOption) (*HostListModelsResponse, error)
 	// 获取用户基本信息（余额、角色、状态）。
 	GetUserInfo(ctx context.Context, in *HostGetUserInfoRequest, opts ...grpc.CallOption) (*HostGetUserInfoResponse, error)
+	// 资产存储：由 Core 根据全局 storage 设置选择 MinIO/S3 或本地磁盘。
+	StoreAsset(ctx context.Context, in *HostStoreAssetRequest, opts ...grpc.CallOption) (*HostStoreAssetResponse, error)
+	GetAssetURL(ctx context.Context, in *HostGetAssetURLRequest, opts ...grpc.CallOption) (*HostGetAssetURLResponse, error)
 }
 
 type hostServiceClient struct {
@@ -1306,6 +1311,26 @@ func (c *hostServiceClient) GetUserInfo(ctx context.Context, in *HostGetUserInfo
 	return out, nil
 }
 
+func (c *hostServiceClient) StoreAsset(ctx context.Context, in *HostStoreAssetRequest, opts ...grpc.CallOption) (*HostStoreAssetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HostStoreAssetResponse)
+	err := c.cc.Invoke(ctx, HostService_StoreAsset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hostServiceClient) GetAssetURL(ctx context.Context, in *HostGetAssetURLRequest, opts ...grpc.CallOption) (*HostGetAssetURLResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HostGetAssetURLResponse)
+	err := c.cc.Invoke(ctx, HostService_GetAssetURL_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HostServiceServer is the server API for HostService service.
 // All implementations must embed UnimplementedHostServiceServer
 // for forward compatibility.
@@ -1331,6 +1356,9 @@ type HostServiceServer interface {
 	ListModels(context.Context, *HostListModelsRequest) (*HostListModelsResponse, error)
 	// 获取用户基本信息（余额、角色、状态）。
 	GetUserInfo(context.Context, *HostGetUserInfoRequest) (*HostGetUserInfoResponse, error)
+	// 资产存储：由 Core 根据全局 storage 设置选择 MinIO/S3 或本地磁盘。
+	StoreAsset(context.Context, *HostStoreAssetRequest) (*HostStoreAssetResponse, error)
+	GetAssetURL(context.Context, *HostGetAssetURLRequest) (*HostGetAssetURLResponse, error)
 	mustEmbedUnimplementedHostServiceServer()
 }
 
@@ -1367,6 +1395,12 @@ func (UnimplementedHostServiceServer) ListModels(context.Context, *HostListModel
 }
 func (UnimplementedHostServiceServer) GetUserInfo(context.Context, *HostGetUserInfoRequest) (*HostGetUserInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUserInfo not implemented")
+}
+func (UnimplementedHostServiceServer) StoreAsset(context.Context, *HostStoreAssetRequest) (*HostStoreAssetResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StoreAsset not implemented")
+}
+func (UnimplementedHostServiceServer) GetAssetURL(context.Context, *HostGetAssetURLRequest) (*HostGetAssetURLResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAssetURL not implemented")
 }
 func (UnimplementedHostServiceServer) mustEmbedUnimplementedHostServiceServer() {}
 func (UnimplementedHostServiceServer) testEmbeddedByValue()                     {}
@@ -1544,6 +1578,42 @@ func _HostService_GetUserInfo_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HostService_StoreAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostStoreAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).StoreAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_StoreAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).StoreAsset(ctx, req.(*HostStoreAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HostService_GetAssetURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostGetAssetURLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).GetAssetURL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_GetAssetURL_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).GetAssetURL(ctx, req.(*HostGetAssetURLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HostService_ServiceDesc is the grpc.ServiceDesc for HostService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1582,6 +1652,14 @@ var HostService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserInfo",
 			Handler:    _HostService_GetUserInfo_Handler,
+		},
+		{
+			MethodName: "StoreAsset",
+			Handler:    _HostService_StoreAsset_Handler,
+		},
+		{
+			MethodName: "GetAssetURL",
+			Handler:    _HostService_GetAssetURL_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

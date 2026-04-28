@@ -307,3 +307,42 @@ func (h *hostClient) GetUserInfo(ctx context.Context, userID int64) (*sdk.HostUs
 		Status:   resp.Status,
 	}, nil
 }
+
+func (h *hostClient) StoreAsset(ctx context.Context, req sdk.HostStoreAssetRequest) (*sdk.HostStoredAsset, error) {
+	logger, start := hostRPCLogger(ctx, "StoreAsset")
+	resp, err := h.c.StoreAsset(ctx, &pb.HostStoreAssetRequest{
+		UserId:        req.UserID,
+		Scope:         req.Scope,
+		ContentType:   req.ContentType,
+		Data:          req.Data,
+		FileExtension: req.FileExtension,
+	})
+	if err != nil {
+		logger.Error("host_call_store_asset_failed",
+			sdk.LogFieldUserID, req.UserID,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return nil, err
+	}
+	return &sdk.HostStoredAsset{
+		AssetID:     resp.AssetId,
+		ObjectKey:   resp.ObjectKey,
+		PublicURL:   resp.PublicUrl,
+		SizeBytes:   resp.SizeBytes,
+		ContentType: resp.ContentType,
+	}, nil
+}
+
+func (h *hostClient) GetAssetURL(ctx context.Context, objectKey string) (string, error) {
+	logger, start := hostRPCLogger(ctx, "GetAssetURL")
+	resp, err := h.c.GetAssetURL(ctx, &pb.HostGetAssetURLRequest{ObjectKey: objectKey})
+	if err != nil {
+		logger.Error("host_call_get_asset_url_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return "", err
+	}
+	return resp.PublicUrl, nil
+}

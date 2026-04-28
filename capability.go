@@ -20,6 +20,7 @@ const (
 	CapabilityHostListPlatforms       Capability = "host.list_platforms"
 	CapabilityHostListModels          Capability = "host.list_models"
 	CapabilityHostGetUserInfo         Capability = "host.get_user_info"
+	CapabilityHostAssetStorage        Capability = "host.asset_storage"
 
 	CapabilityMiddlewareReadBody Capability = "middleware.read_body"
 )
@@ -44,6 +45,7 @@ var capabilityAllowedTypes = map[Capability]map[PluginType]bool{
 		PluginTypeMiddleware: true,
 	},
 	CapabilityHostGetUserInfo:    {PluginTypeExtension: true},
+	CapabilityHostAssetStorage:   {PluginTypeExtension: true},
 	CapabilityMiddlewareReadBody: {PluginTypeMiddleware: true},
 }
 

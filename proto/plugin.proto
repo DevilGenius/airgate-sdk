@@ -132,6 +132,10 @@ service HostService {
 
     // 获取用户基本信息（余额、角色、状态）。
     rpc GetUserInfo(HostGetUserInfoRequest) returns (HostGetUserInfoResponse);
+
+    // 资产存储：由 Core 根据全局 storage 设置选择 MinIO/S3 或本地磁盘。
+    rpc StoreAsset(HostStoreAssetRequest) returns (HostStoreAssetResponse);
+    rpc GetAssetURL(HostGetAssetURLRequest) returns (HostGetAssetURLResponse);
 }
 
 message HostSelectAccountRequest {
@@ -256,6 +260,30 @@ message HostGetUserInfoResponse {
     string role     = 4;  // "admin" / "user"
     double balance  = 5;
     string status   = 6;  // "active" / "disabled"
+}
+
+message HostStoreAssetRequest {
+    int64  user_id         = 1;
+    string scope           = 2;
+    string content_type    = 3;
+    bytes  data            = 4;
+    string file_extension  = 5;
+}
+
+message HostStoreAssetResponse {
+    string asset_id     = 1;
+    string object_key   = 2;
+    string public_url   = 3;
+    int64  size_bytes   = 4;
+    string content_type = 5;
+}
+
+message HostGetAssetURLRequest {
+    string object_key = 1;
+}
+
+message HostGetAssetURLResponse {
+    string public_url = 1;
 }
 
 // ==================== 通用消息 ====================

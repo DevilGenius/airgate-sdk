@@ -54,6 +54,12 @@ type Host interface {
 
 	// GetUserInfo 获取用户基本信息。
 	GetUserInfo(ctx context.Context, userID int64) (*HostUserInfo, error)
+
+	// StoreAsset 由 Core 根据全局 storage 设置保存资产并返回可访问 URL。
+	StoreAsset(ctx context.Context, req HostStoreAssetRequest) (*HostStoredAsset, error)
+
+	// GetAssetURL 根据 object key 返回当前配置下的可访问 URL。
+	GetAssetURL(ctx context.Context, objectKey string) (string, error)
 }
 
 // HostAware 可选接口：PluginContext 实现它就能暴露 Host。老 dev server / 测试 mock 可忽略。
@@ -163,4 +169,22 @@ type HostUserInfo struct {
 	Role     string
 	Balance  float64
 	Status   string
+}
+
+// HostStoreAssetRequest 资产存储入参。
+type HostStoreAssetRequest struct {
+	UserID        int64
+	Scope         string
+	ContentType   string
+	Data          []byte
+	FileExtension string
+}
+
+// HostStoredAsset 资产存储结果。
+type HostStoredAsset struct {
+	AssetID     string
+	ObjectKey   string
+	PublicURL   string
+	SizeBytes   int64
+	ContentType string
 }
