@@ -1172,6 +1172,7 @@ const (
 	HostService_GetUserInfo_FullMethodName         = "/airgate.plugin.v1.HostService/GetUserInfo"
 	HostService_StoreAsset_FullMethodName          = "/airgate.plugin.v1.HostService/StoreAsset"
 	HostService_GetAssetURL_FullMethodName         = "/airgate.plugin.v1.HostService/GetAssetURL"
+	HostService_GetAssetBytes_FullMethodName       = "/airgate.plugin.v1.HostService/GetAssetBytes"
 )
 
 // HostServiceClient is the client API for HostService service.
@@ -1202,6 +1203,7 @@ type HostServiceClient interface {
 	// 资产存储：由 Core 根据全局 storage 设置选择 MinIO/S3 或本地磁盘。
 	StoreAsset(ctx context.Context, in *HostStoreAssetRequest, opts ...grpc.CallOption) (*HostStoreAssetResponse, error)
 	GetAssetURL(ctx context.Context, in *HostGetAssetURLRequest, opts ...grpc.CallOption) (*HostGetAssetURLResponse, error)
+	GetAssetBytes(ctx context.Context, in *HostGetAssetBytesRequest, opts ...grpc.CallOption) (*HostGetAssetBytesResponse, error)
 }
 
 type hostServiceClient struct {
@@ -1331,6 +1333,16 @@ func (c *hostServiceClient) GetAssetURL(ctx context.Context, in *HostGetAssetURL
 	return out, nil
 }
 
+func (c *hostServiceClient) GetAssetBytes(ctx context.Context, in *HostGetAssetBytesRequest, opts ...grpc.CallOption) (*HostGetAssetBytesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HostGetAssetBytesResponse)
+	err := c.cc.Invoke(ctx, HostService_GetAssetBytes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HostServiceServer is the server API for HostService service.
 // All implementations must embed UnimplementedHostServiceServer
 // for forward compatibility.
@@ -1359,6 +1371,7 @@ type HostServiceServer interface {
 	// 资产存储：由 Core 根据全局 storage 设置选择 MinIO/S3 或本地磁盘。
 	StoreAsset(context.Context, *HostStoreAssetRequest) (*HostStoreAssetResponse, error)
 	GetAssetURL(context.Context, *HostGetAssetURLRequest) (*HostGetAssetURLResponse, error)
+	GetAssetBytes(context.Context, *HostGetAssetBytesRequest) (*HostGetAssetBytesResponse, error)
 	mustEmbedUnimplementedHostServiceServer()
 }
 
@@ -1401,6 +1414,9 @@ func (UnimplementedHostServiceServer) StoreAsset(context.Context, *HostStoreAsse
 }
 func (UnimplementedHostServiceServer) GetAssetURL(context.Context, *HostGetAssetURLRequest) (*HostGetAssetURLResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAssetURL not implemented")
+}
+func (UnimplementedHostServiceServer) GetAssetBytes(context.Context, *HostGetAssetBytesRequest) (*HostGetAssetBytesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAssetBytes not implemented")
 }
 func (UnimplementedHostServiceServer) mustEmbedUnimplementedHostServiceServer() {}
 func (UnimplementedHostServiceServer) testEmbeddedByValue()                     {}
@@ -1614,6 +1630,24 @@ func _HostService_GetAssetURL_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HostService_GetAssetBytes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostGetAssetBytesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServiceServer).GetAssetBytes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HostService_GetAssetBytes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServiceServer).GetAssetBytes(ctx, req.(*HostGetAssetBytesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HostService_ServiceDesc is the grpc.ServiceDesc for HostService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1660,6 +1694,10 @@ var HostService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAssetURL",
 			Handler:    _HostService_GetAssetURL_Handler,
+		},
+		{
+			MethodName: "GetAssetBytes",
+			Handler:    _HostService_GetAssetBytes_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -60,6 +60,9 @@ type Host interface {
 
 	// GetAssetURL 根据 object key 返回当前配置下的可访问 URL。
 	GetAssetURL(ctx context.Context, objectKey string) (string, error)
+
+	// GetAssetBytes 根据 object key 返回资产原始内容。
+	GetAssetBytes(ctx context.Context, objectKey string) (*HostAssetBytes, error)
 }
 
 // HostAware 可选接口：PluginContext 实现它就能暴露 Host。老 dev server / 测试 mock 可忽略。
@@ -186,5 +189,11 @@ type HostStoredAsset struct {
 	ObjectKey   string
 	PublicURL   string
 	SizeBytes   int64
+	ContentType string
+}
+
+// HostAssetBytes 资产读取结果。
+type HostAssetBytes struct {
+	Data        []byte
 	ContentType string
 }

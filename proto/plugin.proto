@@ -136,6 +136,7 @@ service HostService {
     // 资产存储：由 Core 根据全局 storage 设置选择 MinIO/S3 或本地磁盘。
     rpc StoreAsset(HostStoreAssetRequest) returns (HostStoreAssetResponse);
     rpc GetAssetURL(HostGetAssetURLRequest) returns (HostGetAssetURLResponse);
+    rpc GetAssetBytes(HostGetAssetBytesRequest) returns (HostGetAssetBytesResponse);
 }
 
 message HostSelectAccountRequest {
@@ -284,6 +285,15 @@ message HostGetAssetURLRequest {
 
 message HostGetAssetURLResponse {
     string public_url = 1;
+}
+
+message HostGetAssetBytesRequest {
+    string object_key = 1;
+}
+
+message HostGetAssetBytesResponse {
+    bytes  data         = 1;
+    string content_type = 2;
 }
 
 // ==================== 通用消息 ====================

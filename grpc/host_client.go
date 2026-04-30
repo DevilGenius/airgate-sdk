@@ -346,3 +346,16 @@ func (h *hostClient) GetAssetURL(ctx context.Context, objectKey string) (string,
 	}
 	return resp.PublicUrl, nil
 }
+
+func (h *hostClient) GetAssetBytes(ctx context.Context, objectKey string) (*sdk.HostAssetBytes, error) {
+	logger, start := hostRPCLogger(ctx, "GetAssetBytes")
+	resp, err := h.c.GetAssetBytes(ctx, &pb.HostGetAssetBytesRequest{ObjectKey: objectKey})
+	if err != nil {
+		logger.Error("host_call_get_asset_bytes_failed",
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return nil, err
+	}
+	return &sdk.HostAssetBytes{Data: resp.Data, ContentType: resp.ContentType}, nil
+}
