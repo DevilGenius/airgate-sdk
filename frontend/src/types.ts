@@ -2,19 +2,42 @@
 export interface ThemeTokens {
   // 主色调
   primary: string;
+  primaryForeground: string;
   primaryHover: string;
   primarySubtle: string;
   primaryGlow: string;
 
   // 语义色
   success: string;
+  successForeground: string;
   successSubtle: string;
   warning: string;
+  warningForeground: string;
   warningSubtle: string;
   danger: string;
+  dangerForeground: string;
   dangerSubtle: string;
   info: string;
   infoSubtle: string;
+
+  // HeroUI 语义表面
+  defaultBg: string;
+  defaultForeground: string;
+  fieldBackground: string;
+  fieldForeground: string;
+  fieldPlaceholder: string;
+  muted: string;
+  overlay: string;
+  overlayForeground: string;
+  scrollbar: string;
+  segment: string;
+  segmentForeground: string;
+  surface: string;
+  surfaceForeground: string;
+  surfaceSecondary: string;
+  surfaceSecondaryForeground: string;
+  surfaceTertiary: string;
+  surfaceTertiaryForeground: string;
 
   // 背景层次
   bgDeep: string;
@@ -52,6 +75,7 @@ export interface FoundationTokens {
   radiusMd: string;
   radiusLg: string;
   radiusXl: string;
+  fieldRadius: string;
   fontSans: string;
   fontMono: string;
   transition: string;

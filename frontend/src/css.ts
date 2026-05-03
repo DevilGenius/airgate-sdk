@@ -210,6 +210,7 @@ export function createTailwindThemeBridge(options: TailwindBridgeOptions = {}) {
       md: `var(${foundationVars.radiusMd})`,
       lg: `var(${foundationVars.radiusLg})`,
       xl: `var(${foundationVars.radiusXl})`,
+      field: `var(${foundationVars.fieldRadius})`,
     },
     fontFamily: {
       sans: `var(${staticVars.fontSans})`,

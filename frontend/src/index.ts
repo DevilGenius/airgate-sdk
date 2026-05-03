@@ -46,3 +46,17 @@ export {
 // 插件 Helper
 export type { TokenName } from './helpers.js';
 export { cssVar, themeStyle } from './helpers.js';
+
+export type {
+  AccountFormProps,
+  PluginBatchAccountInput,
+  PluginBatchImportResult,
+  PluginFrontendModule,
+  PluginMenuItemDefinition,
+  PluginOAuthBatchExchangeResult,
+  PluginOAuthBridge,
+  PluginOAuthExchangeResult,
+  PluginOAuthStartResult,
+  PluginPlatformIconProps,
+  PluginRouteDefinition,
+} from './plugin.js';
