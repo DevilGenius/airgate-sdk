@@ -15,7 +15,7 @@ const defaultStaticCssVarMap = createStaticCssVarMap();
  * @example
  * cssVar('primary')    // → 'var(--ag-primary, #3b82f6)'
  * cssVar('bgSurface')  // → 'var(--ag-bg-surface, #1c2237)'
- * cssVar('fieldRadius') // → 'var(--ag-field-radius, 0.25rem)'
+ * cssVar('fieldRadius') // → 'var(--ag-field-radius, 0.5rem)'
  */
 export function cssVar(token: TokenName, options: CssVarOptions = {}): string {
   const themeCssVarMap = options.prefix ? createThemeCssVarMap(options) : defaultThemeCssVarMap;

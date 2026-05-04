@@ -209,7 +209,7 @@ export const pluginFoundationCssText = `
   display: block;
   width: 100%;
   border: 1px solid color-mix(in oklab, var(--ag-border) 88%, transparent);
-  border-radius: var(--ag-field-radius, 0.25rem);
+  border-radius: var(--ag-field-radius, 0.5rem);
   background: var(--ag-field-background);
   padding: 0.5rem 0.75rem;
   color: var(--ag-field-foreground);
