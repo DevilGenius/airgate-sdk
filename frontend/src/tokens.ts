@@ -8,103 +8,141 @@ import type {
   ThemeTokens,
 } from './types.js';
 
-/** 暗色主题 — Deep Ocean */
+/** 暗色主题 — HeroUI Theme Builder preset */
 export const darkTheme: ThemeTokens = {
-  primary: '#3ecfb4',
-  primaryHover: '#62dcc4',
-  primarySubtle: 'rgba(62, 207, 180, 0.08)',
-  primaryGlow: 'rgba(62, 207, 180, 0.14)',
+  primary: 'oklch(0.9848 0 0)',
+  primaryForeground: 'oklch(15% 0.0000 0.00)',
+  primaryHover: 'color-mix(in oklab, oklch(0.9848 0 0) 88%, oklch(15% 0.0000 0.00) 12%)',
+  primarySubtle: 'color-mix(in oklab, oklch(0.9848 0 0) 14%, transparent)',
+  primaryGlow: 'color-mix(in oklab, oklch(0.9848 0 0) 22%, transparent)',
 
-  success: '#34d399',
-  successSubtle: 'rgba(52, 211, 153, 0.12)',
-  warning: '#fbbf24',
-  warningSubtle: 'rgba(251, 191, 36, 0.12)',
-  danger: '#fb7185',
-  dangerSubtle: 'rgba(251, 113, 133, 0.12)',
-  info: '#7dd3fc',
-  infoSubtle: 'rgba(125, 211, 252, 0.12)',
+  success: 'oklch(73.29% 0.1935 120.35)',
+  successForeground: 'oklch(21.03% 0.0059 120.35)',
+  successSubtle: 'color-mix(in oklab, oklch(73.29% 0.1935 120.35) 15%, transparent)',
+  warning: 'oklch(0.8803 0.1348 86.06)',
+  warningForeground: 'oklch(15% 0.0404 86.06)',
+  warningSubtle: 'color-mix(in oklab, oklch(0.8803 0.1348 86.06) 15%, transparent)',
+  danger: 'oklch(0.7044 0.1872 23.19)',
+  dangerForeground: 'oklch(15% 0.0500 23.19)',
+  dangerSubtle: 'color-mix(in oklab, oklch(0.7044 0.1872 23.19) 15%, transparent)',
+  info: 'oklch(0.9848 0 0)',
+  infoSubtle: 'color-mix(in oklab, oklch(0.9848 0 0) 14%, transparent)',
 
-  // 背景：深蓝黑，带微蓝底调增加深度感
-  bgDeep: '#06080e',
-  bg: '#0c0f17',
-  bgElevated: '#131722',
-  bgSurface: '#1a1e2a',
-  bgHover: '#232836',
-  bgActive: '#2c3240',
+  defaultBg: 'oklch(27.40% 0.0000 0.00)',
+  defaultForeground: 'oklch(99.11% 0 0)',
+  fieldBackground: 'oklch(21.03% 0.0000 0.00)',
+  fieldForeground: 'oklch(99.11% 0.0000 0.00)',
+  fieldPlaceholder: 'oklch(70.50% 0.0000 0.00)',
+  muted: 'oklch(70.50% 0.0000 0.00)',
+  overlay: 'oklch(21.03% 0.0000 0.00)',
+  overlayForeground: 'oklch(99.11% 0.0000 0.00)',
+  scrollbar: 'oklch(70.50% 0.0000 0.00)',
+  segment: 'oklch(39.64% 0.0000 0.00)',
+  segmentForeground: 'oklch(99.11% 0.0000 0.00)',
+  surface: 'oklch(21.03% 0.0000 0.00)',
+  surfaceForeground: 'oklch(99.11% 0.0000 0.00)',
+  surfaceSecondary: 'oklch(25.70% 0.0000 0.00)',
+  surfaceSecondaryForeground: 'oklch(99.11% 0.0000 0.00)',
+  surfaceTertiary: 'oklch(27.21% 0.0000 0.00)',
+  surfaceTertiaryForeground: 'oklch(99.11% 0.0000 0.00)',
 
-  // 边框：蓝调透明
-  border: 'rgba(148, 175, 225, 0.08)',
-  borderSubtle: 'rgba(148, 175, 225, 0.05)',
-  borderFocus: 'rgba(62, 207, 180, 0.40)',
+  bgDeep: 'oklch(12.00% 0.0000 0.00)',
+  bg: 'oklch(12.00% 0.0000 0.00)',
+  bgElevated: 'oklch(21.03% 0.0000 0.00)',
+  bgSurface: 'oklch(21.03% 0.0000 0.00)',
+  bgHover: 'oklch(25.70% 0.0000 0.00)',
+  bgActive: 'oklch(27.21% 0.0000 0.00)',
 
-  // 文字：微蓝白，长时间阅读更舒适
-  text: '#e2e6f0',
-  textSecondary: '#8d93a8',
-  textTertiary: '#565d73',
-  textInverse: '#06080e',
+  border: 'oklch(28.00% 0.0000 0.00)',
+  borderSubtle: 'oklch(25.00% 0.0000 0.00)',
+  borderFocus: 'oklch(0.9848 0 0)',
 
-  glass: 'rgba(148, 175, 225, 0.03)',
-  glassBorder: 'rgba(148, 175, 225, 0.06)',
+  text: 'oklch(99.11% 0.0000 0.00)',
+  textSecondary: 'oklch(70.50% 0.0000 0.00)',
+  textTertiary: 'oklch(70.50% 0.0000 0.00)',
+  textInverse: 'oklch(15% 0.0000 0.00)',
 
-  shadowSm: '0 2px 8px rgba(0, 0, 0, 0.36)',
-  shadowMd: '0 8px 24px rgba(0, 0, 0, 0.48)',
-  shadowLg: '0 20px 48px rgba(0, 0, 0, 0.60)',
-  shadowGlow: '0 0 0 1px rgba(62, 207, 180, 0.08), 0 8px 32px rgba(62, 207, 180, 0.10)',
+  glass: 'color-mix(in oklab, oklch(21.03% 0.0000 0.00) 92%, transparent)',
+  glassBorder: 'oklch(28.00% 0.0000 0.00)',
+
+  shadowSm: '0 0 0 0 transparent inset',
+  shadowMd: '0 0 0 0 transparent inset',
+  shadowLg: '0 0 1px 0 #ffffff4d inset',
+  shadowGlow: '0 0 0 1px color-mix(in oklab, oklch(0.9848 0 0) 18%, transparent)',
 };
 
-/** 亮色主题 — Deep Ocean Light */
+/** 亮色主题 — HeroUI Theme Builder preset */
 export const lightTheme: ThemeTokens = {
-  primary: '#0d9488',
-  primaryHover: '#0b7e74',
-  primarySubtle: 'rgba(13, 148, 136, 0.05)',
-  primaryGlow: 'rgba(13, 148, 136, 0.10)',
+  primary: 'oklch(0 0 0)',
+  primaryForeground: 'oklch(99.11% 0 0)',
+  primaryHover: 'color-mix(in oklab, oklch(0 0 0) 88%, oklch(99.11% 0 0) 12%)',
+  primarySubtle: 'color-mix(in oklab, oklch(0 0 0) 10%, transparent)',
+  primaryGlow: 'color-mix(in oklab, oklch(0 0 0) 16%, transparent)',
 
-  success: '#16a34a',
-  successSubtle: 'rgba(22, 163, 74, 0.06)',
-  warning: '#d97706',
-  warningSubtle: 'rgba(217, 119, 6, 0.06)',
-  danger: '#e11d48',
-  dangerSubtle: 'rgba(225, 29, 72, 0.06)',
-  info: '#2563eb',
-  infoSubtle: 'rgba(37, 99, 235, 0.06)',
+  success: 'oklch(73.29% 0.1935 120.35)',
+  successForeground: 'oklch(21.03% 0.0059 120.35)',
+  successSubtle: 'color-mix(in oklab, oklch(73.29% 0.1935 120.35) 15%, transparent)',
+  warning: 'oklch(0.8446 0.1525 80.6)',
+  warningForeground: 'oklch(15% 0.0457 80.60)',
+  warningSubtle: 'color-mix(in oklab, oklch(0.8446 0.1525 80.6) 15%, transparent)',
+  danger: 'oklch(0.573 0.2249 21.97)',
+  dangerForeground: 'oklch(98% 0.0200 21.97)',
+  dangerSubtle: 'color-mix(in oklab, oklch(0.573 0.2249 21.97) 15%, transparent)',
+  info: 'oklch(0 0 0)',
+  infoSubtle: 'color-mix(in oklab, oklch(0 0 0) 10%, transparent)',
 
-  // 背景：冷蓝灰，与暗色主题色温统一
-  bgDeep: '#f1f3f8',
-  bg: '#f6f7fb',
-  bgElevated: '#ffffff',
-  bgSurface: '#ffffff',
-  bgHover: '#eaedf5',
-  bgActive: '#e0e4ee',
+  defaultBg: 'oklch(94.00% 0.0000 0.00)',
+  defaultForeground: 'oklch(21.03% 0.0059 0.00)',
+  fieldBackground: 'oklch(100.00% 0.0000 0.00)',
+  fieldForeground: 'oklch(21.03% 0.0000 0.00)',
+  fieldPlaceholder: 'oklch(55.17% 0.0000 0.00)',
+  muted: 'oklch(55.17% 0.0000 0.00)',
+  overlay: 'oklch(100.00% 0.0000 0.00)',
+  overlayForeground: 'oklch(21.03% 0.0000 0.00)',
+  scrollbar: 'oklch(87.10% 0.0000 0.00)',
+  segment: 'oklch(100.00% 0.0000 0.00)',
+  segmentForeground: 'oklch(21.03% 0.0000 0.00)',
+  surface: 'oklch(100.00% 0.0000 0.00)',
+  surfaceForeground: 'oklch(21.03% 0.0000 0.00)',
+  surfaceSecondary: 'oklch(95.24% 0.0000 0.00)',
+  surfaceSecondaryForeground: 'oklch(21.03% 0.0000 0.00)',
+  surfaceTertiary: 'oklch(93.73% 0.0000 0.00)',
+  surfaceTertiaryForeground: 'oklch(21.03% 0.0000 0.00)',
 
-  // 边框：冷蓝调
-  border: '#d6dae6',
-  borderSubtle: '#e6e9f2',
-  borderFocus: 'rgba(13, 148, 136, 0.45)',
+  bgDeep: 'oklch(97.02% 0.0000 0.00)',
+  bg: 'oklch(97.02% 0.0000 0.00)',
+  bgElevated: 'oklch(100.00% 0.0000 0.00)',
+  bgSurface: 'oklch(100.00% 0.0000 0.00)',
+  bgHover: 'oklch(95.24% 0.0000 0.00)',
+  bgActive: 'oklch(93.73% 0.0000 0.00)',
 
-  // 文字：深蓝黑，非纯黑，阅读更柔和
-  text: '#131830',
-  textSecondary: '#424866',
-  textTertiary: '#6e7490',
-  textInverse: '#ffffff',
+  border: 'oklch(90.00% 0.0000 0.00)',
+  borderSubtle: 'oklch(92.00% 0.0000 0.00)',
+  borderFocus: 'oklch(0 0 0)',
 
-  glass: 'rgba(255, 255, 255, 0.92)',
-  glassBorder: 'rgba(10, 20, 60, 0.06)',
+  text: 'oklch(21.03% 0.0000 0.00)',
+  textSecondary: 'oklch(55.17% 0.0000 0.00)',
+  textTertiary: 'oklch(55.17% 0.0000 0.00)',
+  textInverse: 'oklch(99.11% 0 0)',
 
-  // 阴影：带蓝调，更有层次
-  shadowSm: '0 1px 3px rgba(10, 20, 60, 0.06), 0 1px 2px rgba(10, 20, 60, 0.04)',
-  shadowMd: '0 4px 12px rgba(10, 20, 60, 0.07), 0 2px 4px rgba(10, 20, 60, 0.04)',
-  shadowLg: '0 16px 40px rgba(10, 20, 60, 0.09), 0 4px 8px rgba(10, 20, 60, 0.04)',
-  shadowGlow: '0 0 0 1px rgba(13, 148, 136, 0.10), 0 8px 24px rgba(13, 148, 136, 0.07)',
+  glass: 'color-mix(in oklab, oklch(100.00% 0.0000 0.00) 92%, transparent)',
+  glassBorder: 'oklch(90.00% 0.0000 0.00)',
+
+  shadowSm: '0 2px 4px 0 #0000000a, 0 1px 2px 0 #0000000f, 0 0 1px 0 #0000000f',
+  shadowMd: '0 2px 4px 0 #0000000a, 0 1px 2px 0 #0000000f, 0 0 1px 0 #0000000f',
+  shadowLg: '0 2px 8px 0 #0000000f, 0 -6px 12px 0 #00000008, 0 14px 28px 0 #00000014',
+  shadowGlow: '0 0 0 1px color-mix(in oklab, oklch(0 0 0) 12%, transparent)',
 };
 
-/** 通用基础 token */
+/** 通用基础 token：HeroUI Radius 为 Small，Radius Form 为 Medium。 */
 export const foundationTokens: FoundationTokens = {
-  radiusSm: '12px',
-  radiusMd: '18px',
-  radiusLg: '22px',
-  radiusXl: '28px',
-  fontSans: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-  fontMono: "'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace",
+  radiusSm: '0.25rem',
+  radiusMd: '0.25rem',
+  radiusLg: '0.25rem',
+  radiusXl: '0.25rem',
+  fieldRadius: '0.5rem',
+  fontSans: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  fontMono: "'Geist Mono', 'SF Mono', 'Cascadia Code', monospace",
   transition: '200ms cubic-bezier(0.4, 0, 0.2, 1)',
   transitionSlow: '400ms cubic-bezier(0.4, 0, 0.2, 1)',
 };
@@ -140,7 +178,7 @@ export const decorativePalette = [
   '#84cc16', // lime
   '#f97316', // orange
   '#6366f1', // indigo
-  '#0d9488', // teal (primary)
+  '#0d9488', // teal
   '#a855f7', // purple
 ] as const;
 
@@ -157,16 +195,10 @@ export const themes: Record<ThemeName, ThemeTokens> = {
  */
 export const lightElevationContexts: Record<ElevationContext, Partial<ThemeTokens>> = {
   modal: {
-    bgElevated: '#eef0f7',
-    bgSurface: '#e6e9f2',
-    bgHover: '#e0e4ee',
-    glassBorder: '#d2d6e3',
-    border: '#c8cdd9',
-    shadowSm: 'none',
-    shadowMd: 'none',
+    // HeroUI preset already provides overlay/surface tokens for modal elevation.
+    // Keep this empty unless a plugin foundation rule needs a scoped correction.
   },
   dropdown: {
-    // dropdown 背景由宿主的 .ag-glass-dropdown 容器类处理
-    // 预留空位，未来可扩展
+    // HeroUI dropdown/tooltip surfaces are now handled by the host bridge.
   },
 };

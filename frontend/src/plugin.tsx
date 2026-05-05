@@ -2,6 +2,8 @@ import {
   useLayoutEffect,
   useRef,
   type ButtonHTMLAttributes,
+  type ComponentType,
+  type CSSProperties,
   type InputHTMLAttributes,
   type ReactNode,
   type TextareaHTMLAttributes,
@@ -42,6 +44,82 @@ export interface PluginTailwindConfigOptions {
 
 export type PluginStatusKind = 'info' | 'success' | 'error';
 
+export interface PluginOAuthStartResult {
+  authorizeURL: string;
+  state: string;
+}
+
+export interface PluginOAuthExchangeResult {
+  accountType: string;
+  accountName: string;
+  credentials: Record<string, string>;
+}
+
+export interface PluginOAuthBatchExchangeResult {
+  accountType: string;
+  accountName: string;
+  credentials: Record<string, string>;
+  status: 'ok' | 'failed';
+  error?: string;
+}
+
+export interface PluginOAuthBridge {
+  start: () => Promise<PluginOAuthStartResult>;
+  exchange: (callbackURL: string) => Promise<PluginOAuthExchangeResult>;
+  batchExchange?: (sessionKeys: string[]) => Promise<PluginOAuthBatchExchangeResult[]>;
+  importRefresh?: (refreshToken: string, clientId?: string) => Promise<PluginOAuthExchangeResult>;
+  batchImportRefresh?: (
+    refreshTokens: string[],
+    clientId?: string,
+  ) => Promise<PluginOAuthBatchExchangeResult[]>;
+}
+
+export interface PluginBatchAccountInput {
+  name: string;
+  type: string;
+  credentials: Record<string, string>;
+}
+
+export interface PluginBatchImportResult {
+  imported: number;
+  failed: number;
+}
+
+export interface AccountFormProps {
+  credentials: Record<string, string>;
+  onChange: (credentials: Record<string, string>) => void;
+  mode: 'create' | 'edit';
+  accountType?: string;
+  onAccountTypeChange?: (type: string) => void;
+  onSuggestedName?: (name: string) => void;
+  onBatchModeChange?: (isBatch: boolean) => void;
+  onBatchImport?: (accounts: PluginBatchAccountInput[]) => Promise<PluginBatchImportResult>;
+  oauth?: PluginOAuthBridge;
+}
+
+export interface PluginRouteDefinition {
+  path: string;
+  component: ComponentType;
+}
+
+export interface PluginMenuItemDefinition {
+  path: string;
+  title: string;
+  icon: string;
+}
+
+export interface PluginPlatformIconProps {
+  className?: string;
+  style?: CSSProperties;
+}
+
+export interface PluginFrontendModule {
+  routes?: PluginRouteDefinition[];
+  menuItems?: PluginMenuItemDefinition[];
+  accountForm?: ComponentType<AccountFormProps>;
+  platformIcon?: ComponentType<PluginPlatformIconProps>;
+}
+
 export const pluginFoundationCssText = `
 /* ── AirGate — Plugin Foundation ── */
 
@@ -53,7 +131,7 @@ export const pluginFoundationCssText = `
   font-family: var(--ag-font-sans);
   font-size: 0.875rem;
   color: var(--ag-text);
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -89,7 +167,7 @@ export const pluginFoundationCssText = `
 .agw-panel-title {
   font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   color: var(--ag-text);
 }
 
@@ -97,7 +175,7 @@ export const pluginFoundationCssText = `
   font-size: 0.625rem;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   color: var(--ag-text-tertiary);
   font-family: var(--ag-font-mono);
 }
@@ -112,7 +190,7 @@ export const pluginFoundationCssText = `
   font-size: 0.6875rem;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   color: var(--ag-text-secondary);
 }
 
@@ -130,28 +208,30 @@ export const pluginFoundationCssText = `
 .agw-input {
   display: block;
   width: 100%;
-  border: 1px solid var(--ag-glass-border);
-  border-radius: var(--ag-radius-md);
-  background: var(--ag-bg-surface);
+  border: 1px solid color-mix(in oklab, var(--ag-border) 88%, transparent);
+  border-radius: var(--ag-field-radius, 0.5rem);
+  background: var(--ag-field-background);
   padding: 0.5rem 0.75rem;
-  color: var(--ag-text);
+  color: var(--ag-field-foreground);
   font-size: 0.875rem;
   outline: none;
-  transition: border-color 200ms, box-shadow 200ms, background-color 200ms;
+  box-shadow: var(--ag-shadow-sm);
+  transition: border-color var(--ag-transition), box-shadow var(--ag-transition), background-color var(--ag-transition);
 }
 
 .agw-input::placeholder {
-  color: var(--ag-text-tertiary);
+  color: var(--ag-field-placeholder);
 }
 
 .agw-input:hover {
-  border-color: var(--ag-border);
+  background: color-mix(in oklab, var(--ag-field-background) 86%, var(--ag-surface) 14%);
+  border-color: color-mix(in oklab, var(--ag-border) 92%, var(--ag-text) 8%);
 }
 
 .agw-input:focus,
 .agw-input:focus-visible {
   border-color: var(--ag-border-focus);
-  box-shadow: 0 0 0 3px var(--ag-primary-subtle);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ag-primary) 22%, transparent);
 }
 
 .agw-input-mono {
@@ -164,20 +244,20 @@ export const pluginFoundationCssText = `
 }
 
 .agw-card {
-  border: 1px solid var(--ag-glass-border);
-  border-radius: var(--ag-radius-lg);
-  background: var(--ag-bg-elevated);
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius-sm);
+  background: var(--ag-surface);
   padding: 1rem;
-  transition: border-color 200ms, background-color 200ms, box-shadow 200ms;
+  transition: border-color var(--ag-transition), background-color var(--ag-transition), box-shadow var(--ag-transition);
 }
 
 .agw-status-inline {
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.75rem;
-  border: 1px solid var(--ag-glass-border);
-  border-radius: 999px;
-  background: var(--ag-bg-surface);
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius-sm);
+  background: var(--ag-surface-secondary);
   font-size: 0.75rem;
   font-weight: 500;
 }
@@ -197,15 +277,15 @@ export const pluginFoundationCssText = `
 .agw-panel {
   gap: 0;
   padding: 1.25rem;
-  background: var(--ag-bg-elevated);
-  border: 1px solid var(--ag-glass-border);
-  border-radius: var(--ag-radius-lg);
+  background: var(--ag-surface);
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius-sm);
 }
 
 .agw-card-active {
   border-color: var(--ag-border-focus);
-  background: var(--ag-bg-surface);
-  box-shadow: 0 0 0 1px var(--ag-primary-subtle);
+  background: var(--ag-primary-subtle);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--ag-primary) 22%, transparent);
 }
 
 .agw-selectable-card {
@@ -224,6 +304,7 @@ export const pluginFoundationCssText = `
 .agw-focus-ring:focus-visible {
   outline: 1.5px solid var(--ag-primary);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ag-primary) 18%, transparent);
 }
 
 .agw-button-primary,
@@ -233,7 +314,7 @@ export const pluginFoundationCssText = `
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: var(--ag-radius-md);
+  border-radius: var(--ag-radius-sm);
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -244,19 +325,18 @@ export const pluginFoundationCssText = `
 .agw-button-primary {
   border: 1px solid transparent;
   background: var(--ag-primary);
-  color: var(--ag-text-inverse);
-  box-shadow: var(--ag-shadow-md);
+  color: var(--ag-primary-foreground);
+  box-shadow: none;
 }
 
 .agw-button-primary:hover {
   background: var(--ag-primary-hover);
-  box-shadow: var(--ag-shadow-lg);
 }
 
 .agw-button-secondary {
-  border: 1px solid var(--ag-glass-border);
-  background: var(--ag-bg-surface);
-  color: var(--ag-text);
+  border: 1px solid var(--ag-border);
+  background: var(--ag-default-bg);
+  color: var(--ag-default-foreground);
 }
 
 .agw-button-secondary:hover {
@@ -284,16 +364,16 @@ export const pluginFoundationCssText = `
 .agw-badge {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: var(--ag-radius-sm);
   padding: 0.25rem 0.625rem;
   font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 .agw-badge-neutral {
-  background: var(--ag-glass);
-  color: var(--ag-text-secondary);
+  background: var(--ag-default-bg);
+  color: var(--ag-default-foreground);
 }
 
 .agw-badge-success {
@@ -317,121 +397,48 @@ export const pluginFoundationCssText = `
 .agw-input:disabled,
 .agw-selectable-card:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
-/* ── 亮色主题：磨砂玻璃质感 ── */
-
-[data-theme="light"] .agw-input {
-  background: rgba(255, 255, 255, 0.35);
-  border-color: rgba(180, 195, 220, 0.30);
-  box-shadow: 0 1px 2px rgba(100, 116, 160, 0.05) inset;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-[data-theme="light"] .agw-input:focus,
-[data-theme="light"] .agw-input:focus-visible {
-  background: rgba(255, 255, 255, 0.55);
-}
+/* ── Light theme and modal elevation follow HeroUI bridge tokens. ── */
 
 [data-theme="light"] .agw-card,
 [data-theme="light"] .agw-panel {
-  background: rgba(255, 255, 255, 0.30);
-  border-color: rgba(180, 195, 220, 0.25);
-  box-shadow:
-    0 2px 24px rgba(100, 116, 160, 0.07),
-    0 0.5px 0 rgba(255, 255, 255, 0.55) inset;
-  backdrop-filter: blur(28px) saturate(1.5);
-  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  box-shadow: var(--ag-shadow-sm);
 }
 
-[data-theme="light"] .agw-card:hover,
-[data-theme="light"] .agw-selectable-card:hover {
-  background: rgba(255, 255, 255, 0.42);
-  border-color: rgba(180, 195, 220, 0.35);
+.ag-elevation-modal .agw-input {
+  background: var(--ag-field-background);
+  border-color: color-mix(in oklab, var(--ag-border) 88%, transparent);
+  box-shadow: var(--ag-shadow-sm);
 }
 
-[data-theme="light"] .agw-status-inline {
-  background: rgba(255, 255, 255, 0.35);
-  border-color: rgba(180, 195, 220, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-[data-theme="light"] .agw-button-secondary {
-  background: rgba(255, 255, 255, 0.38);
-  border-color: rgba(180, 195, 220, 0.30);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-[data-theme="light"] .agw-button-secondary:hover {
-  background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(180, 195, 220, 0.40);
-}
-
-/* ── Elevation: modal — 弹窗内撤销 glass morphism ──
- * 弹窗背景不透明，glass 效果（backdrop-filter, 半透明 background, 投影）既无意义又浪费 GPU。
- * 上面的基础规则使用硬编码 rgba/blur 值，无法通过 .ag-elevation-modal 的变量重定义级联覆盖，
- * 因此这里需要显式：
- *   1. backdrop-filter: none — 撤销模糊
- *   2. box-shadow: none — 去掉多余投影
- *   3. background / border-color 改为 var(--ag-*) 引用 — 让 elevation context 变量生效
- */
-
-[data-theme="light"] .ag-elevation-modal .agw-input {
-  background: var(--ag-bg-surface);
+.ag-elevation-modal .agw-card,
+.ag-elevation-modal .agw-panel {
+  background: var(--ag-surface);
   border-color: var(--ag-border);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-[data-theme="light"] .ag-elevation-modal .agw-input:focus,
-[data-theme="light"] .ag-elevation-modal .agw-input:focus-visible {
-  background: rgba(0, 0, 0, 0.02);
-  border-color: var(--ag-border-focus);
-  box-shadow: 0 0 0 3px var(--ag-primary-subtle);
-}
-
-[data-theme="light"] .ag-elevation-modal .agw-card,
-[data-theme="light"] .ag-elevation-modal .agw-panel {
-  background: var(--ag-bg-elevated);
-  border-color: var(--ag-glass-border);
   box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
-[data-theme="light"] .ag-elevation-modal .agw-card:hover,
-[data-theme="light"] .ag-elevation-modal .agw-selectable-card:hover {
-  background: var(--ag-bg-hover);
+.ag-elevation-modal .agw-card:hover,
+.ag-elevation-modal .agw-selectable-card:hover {
+  background: var(--ag-surface-secondary);
   border-color: var(--ag-border);
 }
 
-[data-theme="light"] .ag-elevation-modal .agw-card-active {
+.ag-elevation-modal .agw-card-active {
   background: var(--ag-primary-subtle);
   border-color: var(--ag-border-focus);
 }
 
-[data-theme="light"] .ag-elevation-modal .agw-button-secondary {
-  background: rgba(255, 255, 255, 0.50);
-  border-color: var(--ag-glass-border);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-[data-theme="light"] .ag-elevation-modal .agw-button-secondary:hover {
-  background: rgba(255, 255, 255, 0.70);
+.ag-elevation-modal .agw-button-secondary {
+  background: var(--ag-default-bg);
   border-color: var(--ag-border);
 }
 
-[data-theme="light"] .ag-elevation-modal .agw-status-inline {
-  background: rgba(255, 255, 255, 0.40);
-  border-color: var(--ag-glass-border);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+.ag-elevation-modal .agw-button-secondary:hover {
+  background: var(--ag-bg-hover);
+  border-color: var(--ag-border);
 }
 `;
 
