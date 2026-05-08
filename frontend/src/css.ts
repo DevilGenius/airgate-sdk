@@ -160,13 +160,23 @@ export function setTheme(theme: ThemeName, options: ThemeSetOptions = {}): void 
   const themeAttribute = options.themeAttribute || 'data-theme';
   const target = options.target || document.documentElement;
   target.setAttribute(themeAttribute, theme);
-  localStorage.setItem(options.storageKey || 'ag-theme', theme);
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(options.storageKey || 'ag-theme', theme);
+    }
+  } catch {
+    // Theme switching should keep working when storage is unavailable.
+  }
 }
 
 /** 读取已保存的主题偏好，默认 dark */
 export function getStoredTheme(options: ThemeStorageOptions = {}): ThemeName {
   if (typeof localStorage === 'undefined') return 'dark';
-  return (localStorage.getItem(options.storageKey || 'ag-theme') as ThemeName) || 'dark';
+  try {
+    return (localStorage.getItem(options.storageKey || 'ag-theme') as ThemeName) || 'dark';
+  } catch {
+    return 'dark';
+  }
 }
 
 /** 生成 Tailwind 可消费的 theme bridge */
