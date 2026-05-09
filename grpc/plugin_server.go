@@ -35,6 +35,9 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 		Dependencies: info.Dependencies,
 	}
 
+	if len(info.ConfigSchema) > 0 {
+		resp.ConfigSchema = make([]*pb.ConfigFieldProto, 0, len(info.ConfigSchema))
+	}
 	for _, cf := range info.ConfigSchema {
 		resp.ConfigSchema = append(resp.ConfigSchema, &pb.ConfigFieldProto{
 			Key:          cf.Key,
@@ -47,11 +50,17 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 		})
 	}
 
+	if len(info.AccountTypes) > 0 {
+		resp.AccountTypes = make([]*pb.AccountTypeProto, 0, len(info.AccountTypes))
+	}
 	for _, at := range info.AccountTypes {
 		atProto := &pb.AccountTypeProto{
 			Key:         at.Key,
 			Label:       at.Label,
 			Description: at.Description,
+		}
+		if len(at.Fields) > 0 {
+			atProto.Fields = make([]*pb.CredentialFieldProto, 0, len(at.Fields))
 		}
 		for _, f := range at.Fields {
 			atProto.Fields = append(atProto.Fields, &pb.CredentialFieldProto{
@@ -65,6 +74,9 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 		}
 		resp.AccountTypes = append(resp.AccountTypes, atProto)
 	}
+	if len(info.FrontendPages) > 0 {
+		resp.FrontendPages = make([]*pb.FrontendPageProto, 0, len(info.FrontendPages))
+	}
 	for _, p := range info.FrontendPages {
 		resp.FrontendPages = append(resp.FrontendPages, &pb.FrontendPageProto{
 			Path:        p.Path,
@@ -73,6 +85,9 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 			Description: p.Description,
 			Audience:    p.Audience,
 		})
+	}
+	if len(info.FrontendWidgets) > 0 {
+		resp.FrontendWidgets = make([]*pb.FrontendWidgetProto, 0, len(info.FrontendWidgets))
 	}
 	for _, w := range info.FrontendWidgets {
 		resp.FrontendWidgets = append(resp.FrontendWidgets, &pb.FrontendWidgetProto{
@@ -166,7 +181,7 @@ func (s *PluginGRPCServer) GetWebAssets(_ context.Context, _ *pb.Empty) (*pb.Web
 	if len(assets) == 0 {
 		return &pb.WebAssetsResponse{HasAssets: false}, nil
 	}
-	resp := &pb.WebAssetsResponse{HasAssets: true}
+	resp := &pb.WebAssetsResponse{HasAssets: true, Files: make([]*pb.WebAssetFile, 0, len(assets))}
 	for path, content := range assets {
 		resp.Files = append(resp.Files, &pb.WebAssetFile{
 			Path:    path,

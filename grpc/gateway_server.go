@@ -23,6 +23,9 @@ func (s *GatewayGRPCServer) GetPlatform(_ context.Context, _ *pb.Empty) (*pb.Str
 func (s *GatewayGRPCServer) GetModels(_ context.Context, _ *pb.Empty) (*pb.ModelsResponse, error) {
 	models := s.Impl.Models()
 	resp := &pb.ModelsResponse{}
+	if len(models) > 0 {
+		resp.Models = make([]*pb.ModelInfoProto, 0, len(models))
+	}
 	for _, m := range models {
 		resp.Models = append(resp.Models, &pb.ModelInfoProto{
 			Id:                       m.ID,
@@ -45,6 +48,9 @@ func (s *GatewayGRPCServer) GetModels(_ context.Context, _ *pb.Empty) (*pb.Model
 func (s *GatewayGRPCServer) GetRoutes(_ context.Context, _ *pb.Empty) (*pb.RoutesResponse, error) {
 	routes := s.Impl.Routes()
 	resp := &pb.RoutesResponse{}
+	if len(routes) > 0 {
+		resp.Routes = make([]*pb.RouteDefinitionProto, 0, len(routes))
+	}
 	for _, r := range routes {
 		resp.Routes = append(resp.Routes, &pb.RouteDefinitionProto{
 			Method:      r.Method,

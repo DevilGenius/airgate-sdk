@@ -84,6 +84,9 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 		Dependencies: resp.Dependencies,
 	}
 
+	if len(resp.ConfigSchema) > 0 {
+		info.ConfigSchema = make([]sdk.ConfigField, 0, len(resp.ConfigSchema))
+	}
 	for _, cf := range resp.ConfigSchema {
 		info.ConfigSchema = append(info.ConfigSchema, sdk.ConfigField{
 			Key:         cf.Key,
@@ -96,11 +99,17 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 		})
 	}
 
+	if len(resp.AccountTypes) > 0 {
+		info.AccountTypes = make([]sdk.AccountType, 0, len(resp.AccountTypes))
+	}
 	for _, at := range resp.AccountTypes {
 		accountType := sdk.AccountType{
 			Key:         at.Key,
 			Label:       at.Label,
 			Description: at.Description,
+		}
+		if len(at.Fields) > 0 {
+			accountType.Fields = make([]sdk.CredentialField, 0, len(at.Fields))
 		}
 		for _, f := range at.Fields {
 			accountType.Fields = append(accountType.Fields, sdk.CredentialField{
@@ -114,6 +123,9 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 		}
 		info.AccountTypes = append(info.AccountTypes, accountType)
 	}
+	if len(resp.FrontendPages) > 0 {
+		info.FrontendPages = make([]sdk.FrontendPage, 0, len(resp.FrontendPages))
+	}
 	for _, p := range resp.FrontendPages {
 		info.FrontendPages = append(info.FrontendPages, sdk.FrontendPage{
 			Path:        p.Path,
@@ -122,6 +134,9 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 			Description: p.Description,
 			Audience:    p.Audience,
 		})
+	}
+	if len(resp.FrontendWidgets) > 0 {
+		info.FrontendWidgets = make([]sdk.FrontendWidget, 0, len(resp.FrontendWidgets))
 	}
 	for _, w := range resp.FrontendWidgets {
 		info.FrontendWidgets = append(info.FrontendWidgets, sdk.FrontendWidget{

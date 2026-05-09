@@ -188,7 +188,7 @@ func Run(cfg Config) error {
 // routePrefixes 从路由声明中提取不重复的路径前缀（如 /v1/）
 func routePrefixes(routes []sdk.RouteDefinition) []string {
 	seen := make(map[string]bool)
-	var prefixes []string
+	prefixes := make([]string, 0, len(routes))
 	for _, r := range routes {
 		// 取第二个 / 之前的部分作为前缀
 		parts := strings.SplitN(strings.TrimPrefix(r.Path, "/"), "/", 2)

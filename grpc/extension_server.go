@@ -86,6 +86,9 @@ func (s *ExtensionGRPCServer) Migrate(_ context.Context, _ *pb.Empty) (*pb.Empty
 func (s *ExtensionGRPCServer) GetBackgroundTasks(_ context.Context, _ *pb.Empty) (*pb.BackgroundTasksResponse, error) {
 	tasks := s.Impl.BackgroundTasks()
 	resp := &pb.BackgroundTasksResponse{}
+	if len(tasks) > 0 {
+		resp.Tasks = make([]*pb.BackgroundTaskProto, 0, len(tasks))
+	}
 	taskMap := make(map[string]func(context.Context) error, len(tasks))
 	for _, t := range tasks {
 		resp.Tasks = append(resp.Tasks, &pb.BackgroundTaskProto{
