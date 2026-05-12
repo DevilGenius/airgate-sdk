@@ -134,9 +134,26 @@ func (g *Gateway) Routes() []sdk.RouteDefinition {
 }
 
 func (g *Gateway) Forward(ctx context.Context, req *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
-    // 这里请求真实上游，并把响应写入 req.Writer。
+    // 这里请求真实上游；示例用固定响应代替。
+    body := []byte(`{"id":"demo","choices":[]}`)
+    headers := http.Header{"Content-Type": []string{"application/json"}}
+    if req.Writer != nil {
+        for key, values := range headers {
+            for _, value := range values {
+                req.Writer.Header().Add(key, value)
+            }
+        }
+        req.Writer.WriteHeader(http.StatusOK)
+        _, _ = req.Writer.Write(body)
+    }
+
     return sdk.ForwardOutcome{
         Kind: sdk.OutcomeSuccess,
+        Upstream: sdk.UpstreamResponse{
+            StatusCode: http.StatusOK,
+            Headers:    headers,
+            Body:       body,
+        },
         Usage: &sdk.Usage{
             Model:    "demo-model",
             AccountCost: 0.000035,
@@ -264,6 +281,9 @@ defer stream.CloseSend()
 
 for {
     frame, err := stream.Recv()
+    if err == io.EOF {
+        break
+    }
     if err != nil {
         return err
     }

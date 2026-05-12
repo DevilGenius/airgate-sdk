@@ -14,10 +14,16 @@ import (
 )
 
 type stubCoreInvokeClient struct {
-	stream *stubHostStreamClient
+	stream     *stubHostStreamClient
+	invokeReq  *pb.HostInvokeRequest
+	invokeResp *pb.HostInvokeResponse
 }
 
-func (c *stubCoreInvokeClient) Invoke(context.Context, *pb.HostInvokeRequest, ...grpc.CallOption) (*pb.HostInvokeResponse, error) {
+func (c *stubCoreInvokeClient) Invoke(_ context.Context, req *pb.HostInvokeRequest, _ ...grpc.CallOption) (*pb.HostInvokeResponse, error) {
+	c.invokeReq = req
+	if c.invokeResp != nil {
+		return c.invokeResp, nil
+	}
 	return &pb.HostInvokeResponse{Status: "ok"}, nil
 }
 
@@ -62,18 +68,36 @@ func (s *stubHostStreamClient) Context() context.Context {
 func (s *stubHostStreamClient) SendMsg(any) error { return nil }
 func (s *stubHostStreamClient) RecvMsg(any) error { return nil }
 
+func mustJSONPayload(t *testing.T, payload map[string]interface{}) []byte {
+	t.Helper()
+	data, err := mapToJSONPayload(payload)
+	if err != nil {
+		t.Fatalf("mapToJSONPayload() error = %v", err)
+	}
+	return data
+}
+
+func mustJSONPayloadMap(t *testing.T, data []byte) map[string]interface{} {
+	t.Helper()
+	payload, err := jsonPayloadToMap(data)
+	if err != nil {
+		t.Fatalf("jsonPayloadToMap() error = %v", err)
+	}
+	return payload
+}
+
 func TestHostClientInvokeStreamRoundTrip(t *testing.T) {
 	grpcStream := &stubHostStreamClient{
 		recvFrames: []*pb.HostStreamFrame{
 			{
 				Event:    "chunk",
-				Payload:  mapToJSONPayload(map[string]interface{}{"delta": "hello"}),
+				Payload:  mustJSONPayload(t, map[string]interface{}{"delta": "hello"}),
 				Metadata: map[string]string{"seq": "1"},
 			},
 			{
 				Event:   "result",
 				Status:  "ok",
-				Payload: mapToJSONPayload(map[string]interface{}{"done": true}),
+				Payload: mustJSONPayload(t, map[string]interface{}{"done": true}),
 				Done:    true,
 			},
 		},
@@ -96,7 +120,7 @@ func TestHostClientInvokeStreamRoundTrip(t *testing.T) {
 	if start.Method != "chat.stream" || start.IdempotencyKey != "idem_1" {
 		t.Fatalf("首帧 method/idempotency = %q/%q", start.Method, start.IdempotencyKey)
 	}
-	if got := jsonPayloadToMap(start.Payload); !reflect.DeepEqual(got, map[string]interface{}{"prompt": "hi"}) {
+	if got := mustJSONPayloadMap(t, start.Payload); !reflect.DeepEqual(got, map[string]interface{}{"prompt": "hi"}) {
 		t.Fatalf("首帧 payload = %v", got)
 	}
 	if !reflect.DeepEqual(start.Metadata, map[string]string{"trace": "abc"}) {
@@ -117,7 +141,7 @@ func TestHostClientInvokeStreamRoundTrip(t *testing.T) {
 	if ack.Method != "" || ack.Event != "client_ack" {
 		t.Fatalf("后续帧 method/event = %q/%q", ack.Method, ack.Event)
 	}
-	if got := jsonPayloadToMap(ack.Payload); !reflect.DeepEqual(got, map[string]interface{}{"received": float64(1)}) {
+	if got := mustJSONPayloadMap(t, ack.Payload); !reflect.DeepEqual(got, map[string]interface{}{"received": float64(1)}) {
 		t.Fatalf("后续帧 payload = %v", got)
 	}
 
@@ -142,5 +166,78 @@ func TestHostClientInvokeStreamRoundTrip(t *testing.T) {
 	}
 	if !grpcStream.closed {
 		t.Fatal("底层 stream 未关闭发送方向")
+	}
+}
+
+func TestHostClientInvokeRejectsInvalidPayload(t *testing.T) {
+	client := &stubCoreInvokeClient{}
+	host := NewHostClient(client)
+
+	_, err := host.Invoke(context.Background(), sdk.HostInvokeRequest{
+		Method:  "tasks.update",
+		Payload: map[string]interface{}{"bad": func() {}},
+	})
+	if err == nil {
+		t.Fatal("Invoke() 应拒绝不可 JSON 编码的 payload")
+	}
+	if client.invokeReq != nil {
+		t.Fatal("payload 编码失败后不应发起 gRPC 调用")
+	}
+}
+
+func TestHostClientInvokeRejectsMalformedResponsePayload(t *testing.T) {
+	host := NewHostClient(&stubCoreInvokeClient{
+		invokeResp: &pb.HostInvokeResponse{
+			Status:  "ok",
+			Payload: []byte("{bad"),
+		},
+	})
+
+	_, err := host.Invoke(context.Background(), sdk.HostInvokeRequest{Method: "tasks.get"})
+	if err == nil {
+		t.Fatal("Invoke() 应拒绝 Core 返回的非法 JSON payload")
+	}
+}
+
+func TestHostClientInvokeStreamRejectsInvalidInitialPayload(t *testing.T) {
+	grpcStream := &stubHostStreamClient{}
+	host := NewHostClient(&stubCoreInvokeClient{stream: grpcStream})
+
+	_, err := host.InvokeStream(context.Background(), sdk.HostStreamRequest{
+		Method:  "chat.stream",
+		Payload: map[string]interface{}{"bad": func() {}},
+	})
+	if err == nil {
+		t.Fatal("InvokeStream() 应拒绝不可 JSON 编码的首帧 payload")
+	}
+	if len(grpcStream.sentFrames) != 0 {
+		t.Fatalf("payload 编码失败后发送帧数量 = %d，期望 0", len(grpcStream.sentFrames))
+	}
+}
+
+func TestHostStreamSendRejectsInvalidPayload(t *testing.T) {
+	grpcStream := &stubHostStreamClient{}
+	stream := &hostStream{stream: grpcStream}
+
+	err := stream.Send(sdk.HostStreamFrame{
+		Event:   "client_chunk",
+		Payload: map[string]interface{}{"bad": func() {}},
+	})
+	if err == nil {
+		t.Fatal("Send() 应拒绝不可 JSON 编码的 payload")
+	}
+	if len(grpcStream.sentFrames) != 0 {
+		t.Fatalf("payload 编码失败后发送帧数量 = %d，期望 0", len(grpcStream.sentFrames))
+	}
+}
+
+func TestHostStreamRecvRejectsMalformedPayload(t *testing.T) {
+	stream := &hostStream{stream: &stubHostStreamClient{
+		recvFrames: []*pb.HostStreamFrame{{Event: "chunk", Payload: []byte("{bad")}},
+	}}
+
+	_, err := stream.Recv()
+	if err == nil {
+		t.Fatal("Recv() 应拒绝 Core 返回的非法 JSON payload")
 	}
 }

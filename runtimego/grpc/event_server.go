@@ -15,10 +15,14 @@ type EventGRPCServer struct {
 	Impl sdk.Plugin
 }
 
-func eventToProto(e sdk.PluginEvent) *pb.PluginEvent {
+func eventToProto(e sdk.PluginEvent) (*pb.PluginEvent, error) {
 	occurredAt := int64(0)
 	if !e.OccurredAt.IsZero() {
 		occurredAt = e.OccurredAt.UnixMilli()
+	}
+	payload, err := mapToJSONPayload(e.Payload)
+	if err != nil {
+		return nil, err
 	}
 	return &pb.PluginEvent{
 		Id:         e.ID,
@@ -27,15 +31,19 @@ func eventToProto(e sdk.PluginEvent) *pb.PluginEvent {
 		Subject:    e.Subject,
 		UserId:     e.UserID,
 		GroupId:    e.GroupID,
-		Payload:    mapToJSONPayload(e.Payload),
+		Payload:    payload,
 		Metadata:   e.Metadata,
 		OccurredAt: occurredAt,
-	}
+	}, nil
 }
 
-func eventFromProto(p *pb.PluginEvent) sdk.PluginEvent {
+func eventFromProto(p *pb.PluginEvent) (sdk.PluginEvent, error) {
 	if p == nil {
-		return sdk.PluginEvent{}
+		return sdk.PluginEvent{}, nil
+	}
+	payload, err := jsonPayloadToMap(p.Payload)
+	if err != nil {
+		return sdk.PluginEvent{}, err
 	}
 	event := sdk.PluginEvent{
 		ID:       p.Id,
@@ -44,13 +52,13 @@ func eventFromProto(p *pb.PluginEvent) sdk.PluginEvent {
 		Subject:  p.Subject,
 		UserID:   p.UserId,
 		GroupID:  p.GroupId,
-		Payload:  jsonPayloadToMap(p.Payload),
+		Payload:  payload,
 		Metadata: p.Metadata,
 	}
 	if p.OccurredAt > 0 {
 		event.OccurredAt = time.UnixMilli(p.OccurredAt)
 	}
-	return event
+	return event, nil
 }
 
 func subscriptionToProto(s sdk.EventSubscription) *pb.EventSubscriptionProto {
@@ -95,7 +103,11 @@ func (s *EventGRPCServer) HandleEvent(ctx context.Context, req *pb.PluginEvent) 
 	if !ok {
 		return &pb.EventHandleResponse{Success: false, ErrorMessage: "plugin does not implement EventHandler"}, nil
 	}
-	if err := handler.HandleEvent(ctx, eventFromProto(req)); err != nil {
+	event, err := eventFromProto(req)
+	if err != nil {
+		return &pb.EventHandleResponse{Success: false, ErrorMessage: err.Error()}, nil
+	}
+	if err := handler.HandleEvent(ctx, event); err != nil {
 		return &pb.EventHandleResponse{Success: false, ErrorMessage: err.Error()}, nil
 	}
 	return &pb.EventHandleResponse{Success: true}, nil
@@ -125,7 +137,11 @@ func (b *pluginBase) HandleEvent(ctx context.Context, event sdk.PluginEvent) err
 	if b.event == nil {
 		return errors.New("event service is not initialized")
 	}
-	resp, err := b.event.HandleEvent(ctx, eventToProto(event))
+	protoEvent, err := eventToProto(event)
+	if err != nil {
+		return err
+	}
+	resp, err := b.event.HandleEvent(ctx, protoEvent)
 	if err != nil {
 		return err
 	}

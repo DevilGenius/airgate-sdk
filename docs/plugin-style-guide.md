@@ -126,13 +126,11 @@ export const THEME_ATTRIBUTE = 'data-theme';
 export const STYLE_ID = 'ag-YOUR_PLUGIN-theme-vars';
 export const FOUNDATION_STYLE_ID = 'ag-YOUR_PLUGIN-plugin-foundation';
 export const TAILWIND_STYLE_ID = 'ag-YOUR_PLUGIN-tailwind';
-export const STORAGE_KEY = 'ag-YOUR_PLUGIN-theme';
 
 export function ensurePluginStyles(): void {
   ensurePluginStyleFoundation({
     scopeSelector: THEME_SCOPE_SELECTOR,
     themeAttribute: THEME_ATTRIBUTE,
-    storageKey: STORAGE_KEY,
     themeStyleId: STYLE_ID,
     foundationStyleId: FOUNDATION_STYLE_ID,
     extraCssText: tailwindCssText,     // 注入编译好的 Tailwind CSS

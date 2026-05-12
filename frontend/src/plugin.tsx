@@ -19,7 +19,6 @@ export const DEFAULT_PLUGIN_FOUNDATION_STYLE_ID = 'ag-plugin-foundation';
 export interface PluginStyleFoundationOptions {
   scopeSelector: string;
   themeAttribute?: string;
-  storageKey?: string;
   themeStyleId?: string;
   foundationStyleId?: string;
   extraCssText?: string;
@@ -458,14 +457,15 @@ export const pluginFoundationCssText = `
 }
 `;
 
-export function injectStyle(id: string, cssText: string, targetDocument: Document = document): void {
-  if (typeof document === 'undefined') return;
+export function injectStyle(id: string, cssText: string, targetDocument?: Document): void {
+  const doc = targetDocument || (typeof document !== 'undefined' ? document : undefined);
+  if (!doc) return;
 
-  let element = targetDocument.getElementById(id) as HTMLStyleElement | null;
+  let element = doc.getElementById(id) as HTMLStyleElement | null;
   if (!element) {
-    element = targetDocument.createElement('style');
+    element = doc.createElement('style');
     element.id = id;
-    targetDocument.head.appendChild(element);
+    doc.head.appendChild(element);
   }
 
   if (element.textContent !== cssText) {

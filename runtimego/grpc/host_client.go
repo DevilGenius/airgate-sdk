@@ -31,14 +31,32 @@ func hostRPCLogger(ctx context.Context, method string) (*slog.Logger, time.Time)
 // Invoke 调用 Core 方法注册表中开放的方法。
 func (h *hostClient) Invoke(ctx context.Context, req sdk.HostInvokeRequest) (*sdk.HostInvokeResponse, error) {
 	logger, start := hostRPCLogger(ctx, "Invoke")
+	payload, err := mapToJSONPayload(req.Payload)
+	if err != nil {
+		logger.Error("host_call_invoke_payload_encode_failed",
+			"method", req.Method,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return nil, err
+	}
 	resp, err := h.c.Invoke(ctx, &pb.HostInvokeRequest{
 		Method:         req.Method,
-		Payload:        mapToJSONPayload(req.Payload),
+		Payload:        payload,
 		IdempotencyKey: req.IdempotencyKey,
 		Metadata:       req.Metadata,
 	})
 	if err != nil {
 		logger.Error("host_call_invoke_failed",
+			"method", req.Method,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return nil, err
+	}
+	responsePayload, err := jsonPayloadToMap(resp.Payload)
+	if err != nil {
+		logger.Error("host_call_invoke_payload_decode_failed",
 			"method", req.Method,
 			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
 			sdk.LogFieldError, err,
@@ -51,7 +69,7 @@ func (h *hostClient) Invoke(ctx context.Context, req sdk.HostInvokeRequest) (*sd
 	)
 	return &sdk.HostInvokeResponse{
 		Status:   resp.Status,
-		Payload:  jsonPayloadToMap(resp.Payload),
+		Payload:  responsePayload,
 		Metadata: resp.Metadata,
 	}, nil
 }
@@ -59,6 +77,15 @@ func (h *hostClient) Invoke(ctx context.Context, req sdk.HostInvokeRequest) (*sd
 // InvokeStream 调用 Core 方法注册表中开放的流式方法。
 func (h *hostClient) InvokeStream(ctx context.Context, req sdk.HostStreamRequest) (sdk.HostStream, error) {
 	logger, start := hostRPCLogger(ctx, "InvokeStream")
+	payload, err := mapToJSONPayload(req.Payload)
+	if err != nil {
+		logger.Error("host_call_invoke_stream_payload_encode_failed",
+			"method", req.Method,
+			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
+			sdk.LogFieldError, err,
+		)
+		return nil, err
+	}
 	stream, err := h.c.InvokeStream(ctx)
 	if err != nil {
 		logger.Error("host_call_invoke_stream_open_failed",
@@ -70,7 +97,7 @@ func (h *hostClient) InvokeStream(ctx context.Context, req sdk.HostStreamRequest
 	}
 	if err := stream.Send(&pb.HostStreamFrame{
 		Method:         req.Method,
-		Payload:        mapToJSONPayload(req.Payload),
+		Payload:        payload,
 		IdempotencyKey: req.IdempotencyKey,
 		Metadata:       req.Metadata,
 	}); err != nil {
@@ -94,10 +121,14 @@ type hostStream struct {
 }
 
 func (s *hostStream) Send(frame sdk.HostStreamFrame) error {
+	payload, err := mapToJSONPayload(frame.Payload)
+	if err != nil {
+		return err
+	}
 	return s.stream.Send(&pb.HostStreamFrame{
 		Event:    frame.Event,
 		Status:   frame.Status,
-		Payload:  mapToJSONPayload(frame.Payload),
+		Payload:  payload,
 		Metadata: frame.Metadata,
 		Done:     frame.Done,
 	})
@@ -108,10 +139,14 @@ func (s *hostStream) Recv() (*sdk.HostStreamFrame, error) {
 	if err != nil {
 		return nil, err
 	}
+	payload, err := jsonPayloadToMap(frame.Payload)
+	if err != nil {
+		return nil, err
+	}
 	return &sdk.HostStreamFrame{
 		Event:    frame.Event,
 		Status:   frame.Status,
-		Payload:  jsonPayloadToMap(frame.Payload),
+		Payload:  payload,
 		Metadata: frame.Metadata,
 		Done:     frame.Done,
 	}, nil

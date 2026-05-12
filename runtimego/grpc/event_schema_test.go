@@ -24,7 +24,14 @@ func TestPluginEventRoundTrip(t *testing.T) {
 		OccurredAt: time.UnixMilli(1700000000123),
 	}
 
-	restored := eventFromProto(eventToProto(original))
+	protoEvent, err := eventToProto(original)
+	if err != nil {
+		t.Fatalf("eventToProto() error = %v", err)
+	}
+	restored, err := eventFromProto(protoEvent)
+	if err != nil {
+		t.Fatalf("eventFromProto() error = %v", err)
+	}
 	if !reflect.DeepEqual(original, restored) {
 		t.Fatalf("PluginEvent round-trip mismatch:\n  original: %+v\n  restored: %+v", original, restored)
 	}
