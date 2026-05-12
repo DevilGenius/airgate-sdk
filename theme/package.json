@@ -1,8 +1,19 @@
 {
-  "name": "@airgate/theme",
-  "version": "2.0.0",
+  "name": "@doudou-start/airgate-theme",
+  "version": "1.0.0",
+  "description": "AirGate 插件前端主题、样式隔离和公共组件包",
   "type": "module",
   "packageManager": "npm@11.6.2",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DouDOU-start/airgate-sdk.git",
+    "directory": "theme"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -32,6 +43,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "prepack": "npm run build",
     "dev": "tsc --watch"
   },
   "peerDependencies": {

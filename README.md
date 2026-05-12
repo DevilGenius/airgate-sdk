@@ -37,12 +37,22 @@ import (
 )
 ```
 
-前端插件使用：
+前端插件正式使用 npm 公共包：
 
 ```json
 {
   "dependencies": {
-    "@airgate/theme": "file:../../airgate-sdk/frontend"
+    "@doudou-start/airgate-theme": "^1.0.0"
+  }
+}
+```
+
+本地联调 SDK 源码时可以临时改为：
+
+```json
+{
+  "dependencies": {
+    "@doudou-start/airgate-theme": "file:../../airgate-sdk/theme"
   }
 }
 ```
@@ -55,7 +65,7 @@ import (
 | `protocol/proto/` | `airgate.plugin.v2` protobuf 协议和生成代码 | Core / runtime |
 | `runtimego/grpc/` | hashicorp/go-plugin、gRPC bridge、proto 转换、Core 反向调用通道 | 插件入口 / Core 加载器 |
 | `devkit/devserver/` | 本地开发服务器，无需启动完整 Core 即可调试插件 | 插件作者 |
-| `frontend/` | `@airgate/theme`：主题 token、样式隔离、Tailwind helper、公共组件 | 插件前端 |
+| `theme/` | `@doudou-start/airgate-theme`：主题 token、样式隔离、Tailwind helper、公共组件 | 插件前端 |
 | `docs/` | 设计边界和前端样式规范 | 维护者 |
 
 普通插件业务代码不直接依赖 `protocol/proto`。
@@ -137,7 +147,7 @@ func (g *Gateway) Forward(ctx context.Context, req *sdk.ForwardRequest) (sdk.For
     // 这里请求真实上游；示例用固定响应代替。
     body := []byte(`{"id":"demo","choices":[]}`)
     headers := http.Header{"Content-Type": []string{"application/json"}}
-    if req.Writer != nil {
+    if req.Stream && req.Writer != nil {
         for key, values := range headers {
             for _, value := range values {
                 req.Writer.Header().Add(key, value)
@@ -321,14 +331,14 @@ func (p *Plugin) Init(ctx sdk.PluginContext) error {
 
 ## 前端插件 SDK
 
-`frontend/` 发布为 `@airgate/theme`，用于插件前端复用 AirGate 的主题和公共组件。
+`theme/` 发布为 npm 公共包 `@doudou-start/airgate-theme`，用于插件前端复用 AirGate 的主题和公共组件。
 
 | 入口 | 用途 |
 |---|---|
-| `@airgate/theme` | token、CSS 工具、Tailwind bridge、插件前端类型和公共组件统一出口 |
-| `@airgate/theme/plugin` | 插件样式隔离、主题同步、Tailwind helper、公共 UI 组件 |
-| `@airgate/theme/css` | CSS 变量生成和运行时主题注入 |
-| `@airgate/theme/tailwind` | Tailwind 主题桥接 |
+| `@doudou-start/airgate-theme` | token、CSS 工具、Tailwind bridge、插件前端类型和公共组件统一出口 |
+| `@doudou-start/airgate-theme/plugin` | 插件样式隔离、主题同步、Tailwind helper、公共 UI 组件 |
+| `@doudou-start/airgate-theme/css` | CSS 变量生成和运行时主题注入 |
+| `@doudou-start/airgate-theme/tailwind` | Tailwind 主题桥接 |
 
 推荐插件前端使用：
 
@@ -340,13 +350,14 @@ import {
     createPluginTailwindConfig,
     ensurePluginStyleFoundation,
     useScopedPluginTheme,
-} from "@airgate/theme/plugin";
+} from "@doudou-start/airgate-theme/plugin";
 ```
 
 完整样式规则见 [插件前端样式规范](docs/plugin-style-guide.md)。
 
 网关插件账号相关 UI 建议使用这些稳定插槽。Core 仍提供通用账号列表和详情框架，
-插件只补平台差异片段；需要完整独立页面时使用 `FrontendPages`。
+插件只补平台差异片段；需要完整独立页面时使用 `FrontendPages`。devserver
+可直接预览 `account-create` / `account-edit`，其他插槽由 Core 对应页面加载。
 
 | Slot | 用途 |
 |---|---|
@@ -363,7 +374,7 @@ import {
 make ci                            # 运行 Go、proto、前端和主题漂移检查
 make proto                         # 重新生成 protocol/proto
 make theme                         # 重新生成 DevServer 主题 CSS
-cd frontend && npm run build       # 构建 @airgate/theme
+cd theme && npm run build          # 构建 @doudou-start/airgate-theme
 ```
 
 ## License

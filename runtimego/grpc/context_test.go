@@ -167,3 +167,14 @@ func TestGetAll(t *testing.T) {
 		}
 	}
 }
+
+func TestPluginContextHostErrorInitializesHostState(t *testing.T) {
+	ctx := &grpcPluginContext{coreInvokeBrokerID: 1}
+
+	if err := ctx.HostError(); err == nil {
+		t.Fatal("HostError() 应返回 Host 初始化失败原因")
+	}
+	if host := ctx.Host(); host != nil {
+		t.Fatalf("Host() = %T，期望 nil", host)
+	}
+}

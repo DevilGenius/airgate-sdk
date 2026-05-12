@@ -74,6 +74,13 @@ func (p *ProxyHandler) handleHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		tried[account.ID] = true
 
+		var bufferedWriter *devBufferWriter
+		responseWriter := w
+		if !stream {
+			bufferedWriter = &devBufferWriter{}
+			responseWriter = bufferedWriter
+		}
+
 		fwdReq := &sdk.ForwardRequest{
 			Account: &sdk.Account{
 				ID:          account.ID,
@@ -83,7 +90,7 @@ func (p *ProxyHandler) handleHTTP(w http.ResponseWriter, r *http.Request) {
 			Body:    body,
 			Headers: headers.Clone(),
 			Stream:  stream,
-			Writer:  w,
+			Writer:  responseWriter,
 		}
 
 		outcome, fwdErr := p.plugin.Forward(r.Context(), fwdReq)
@@ -102,6 +109,10 @@ func (p *ProxyHandler) handleHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Forward 失败: %v", fwdErr)
 			if outcome.Upstream.StatusCode == 0 {
 				http.Error(w, `{"error":"`+fwdErr.Error()+`"}`, http.StatusBadGateway)
+				return
+			}
+			if !stream {
+				writeForwardOutcome(w, outcome, bufferedWriter)
 			}
 			return
 		}
@@ -117,6 +128,9 @@ func (p *ProxyHandler) handleHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Forward 完成: kind=%s status=%d model=%s account_cost=%.6f%s usage=%s duration=%s account=%d(%s)",
 			outcome.Kind, outcome.Upstream.StatusCode, model, accountCost, currency, usageSummary, outcome.Duration,
 			account.ID, account.Name)
+		if !stream {
+			writeForwardOutcome(w, outcome, bufferedWriter)
+		}
 		return
 	}
 
@@ -172,6 +186,61 @@ func (p *ProxyHandler) selectAccount() *DevAccount {
 		return p.scheduler.Select()
 	}
 	return p.store.First()
+}
+
+type devBufferWriter struct {
+	headers http.Header
+	code    int
+	body    []byte
+}
+
+func (w *devBufferWriter) Header() http.Header {
+	if w.headers == nil {
+		w.headers = make(http.Header)
+	}
+	return w.headers
+}
+
+func (w *devBufferWriter) Write(data []byte) (int, error) {
+	w.body = append(w.body, data...)
+	return len(data), nil
+}
+
+func (w *devBufferWriter) WriteHeader(statusCode int) {
+	w.code = statusCode
+}
+
+func writeForwardOutcome(w http.ResponseWriter, outcome sdk.ForwardOutcome, buffered *devBufferWriter) {
+	statusCode := outcome.Upstream.StatusCode
+	headers := outcome.Upstream.Headers
+	body := outcome.Upstream.Body
+
+	if buffered != nil {
+		if statusCode == 0 && buffered.code > 0 {
+			statusCode = buffered.code
+		}
+		if len(headers) == 0 {
+			headers = buffered.Header()
+		}
+		if len(body) == 0 && len(buffered.body) > 0 {
+			body = buffered.body
+		}
+	}
+	if statusCode == 0 {
+		statusCode = http.StatusOK
+	}
+	for key, values := range headers {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+	w.WriteHeader(statusCode)
+	if len(body) == 0 {
+		return
+	}
+	if _, err := w.Write(body); err != nil {
+		log.Printf("写入 Forward 响应失败: %v", err)
+	}
 }
 
 // devWebSocketConn 包装 gorilla/websocket.Conn 为 sdk.WebSocketConn

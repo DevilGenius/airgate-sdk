@@ -11,14 +11,14 @@ PROTOC_GEN_GRPC_VER := v1.6.0
 TOOLS_DIR   := $(CURDIR)/.tools
 PROTOC_BIN  := $(TOOLS_DIR)/bin/protoc
 
-.PHONY: help ci pre-commit lint fmt test vet build frontend-build theme theme-check proto proto-check proto-tools clean setup-hooks
+.PHONY: help ci pre-commit lint fmt test vet build theme-package-build theme-package-check theme theme-check proto proto-check proto-tools clean setup-hooks
 
 help: ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 # ===================== 质量检查 =====================
 
-ci: lint test vet build proto-check frontend-build theme-check ## 本地运行与 CI 完全一致的检查
+ci: lint test vet build proto-check theme-package-check theme-check ## 本地运行与 CI 完全一致的检查
 
 pre-commit: lint vet build ## pre-commit hook 调用（跳过耗时的 race 测试）
 
@@ -49,13 +49,17 @@ vet: ## 静态分析
 build: ## 编译检查
 	$(GO) build ./...
 
-# ===================== 前端主题 =====================
+# ===================== 主题包 =====================
 
-frontend-build: ## 构建前端主题包
-	cd frontend && npm run build
+theme-package-build: ## 构建 AirGate 主题包
+	cd theme && npm run build
 
-theme: frontend-build ## 构建前端主题包并生成 DevServer 用 theme.css
-	node --input-type=module -e "import{generateThemeCSS}from'./frontend/dist/css.js';process.stdout.write(generateThemeCSS() + '\n')" > devkit/devserver/static/theme.css
+theme-package-check: theme-package-build ## 校验 AirGate 主题包构建产物无漂移
+	@git diff --exit-code -- theme/dist
+	@echo "AirGate 主题包构建产物无漂移"
+
+theme: theme-package-build ## 构建 AirGate 主题包并生成 DevServer 用 theme.css
+	node --input-type=module -e "import{generateThemeCSS}from'./theme/dist/css.js';process.stdout.write(generateThemeCSS() + '\n')" > devkit/devserver/static/theme.css
 	@echo "theme.css 已生成"
 
 # ===================== 代码生成 =====================

@@ -27,7 +27,7 @@ your-plugin/
 
 ## 2. 依赖配置
 
-插件前端 SDK 的正式包名是 `@airgate/theme`。插件业务代码优先使用 `@airgate/theme/plugin`，该入口提供主题初始化、样式作用域、Tailwind bridge、插件前端类型和公共 UI 组件。
+插件前端 SDK 的正式包名是 `@doudou-start/airgate-theme`。插件业务代码优先使用 `@doudou-start/airgate-theme/plugin`，该入口提供主题初始化、样式作用域、Tailwind bridge、插件前端类型和公共 UI 组件。
 
 ### package.json
 
@@ -39,7 +39,7 @@ your-plugin/
     "dev": "vite build --watch"
   },
   "dependencies": {
-    "@airgate/theme": "file:../../airgate-sdk/frontend",
+    "@doudou-start/airgate-theme": "^1.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -55,7 +55,7 @@ your-plugin/
 }
 ```
 
-> **注意**：`react` 和 `react-dom` 仅用于类型，运行时由 Core 通过 `window.__airgate_shared` 提供。
+> **注意**：`react` 和 `react-dom` 不打包进插件产物；运行时由 Core 或 devserver 通过 import map 或等价模块别名提供。
 
 ### vite.config.ts
 
@@ -74,7 +74,7 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       // React 由 Core 提供，不要打包
-      external: ['react', 'react-dom', 'react/jsx-runtime'],
+      external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
     },
   },
 });
@@ -84,7 +84,7 @@ export default defineConfig({
 
 ```ts
 import type { Config } from 'tailwindcss';
-import { createPluginTailwindConfig } from '@airgate/theme/plugin';
+import { createPluginTailwindConfig } from '@doudou-start/airgate-theme/plugin';
 
 const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
@@ -118,7 +118,7 @@ module.exports = {
 ### theme/runtime.ts
 
 ```ts
-import { ensurePluginStyleFoundation } from '@airgate/theme/plugin';
+import { ensurePluginStyleFoundation } from '@doudou-start/airgate-theme/plugin';
 import tailwindCssText from '../styles/tailwind.css?inline';
 
 export const THEME_SCOPE_SELECTOR = '[data-ag-YOUR_PLUGIN-root]';
@@ -162,7 +162,7 @@ export default {
 2. 使用 `useScopedPluginTheme` 跟随 Core 的明暗切换
 
 ```tsx
-import { useScopedPluginTheme } from '@airgate/theme/plugin';
+import { useScopedPluginTheme } from '@doudou-start/airgate-theme/plugin';
 
 const THEME_ATTRIBUTE = 'data-theme';
 const STORAGE_KEY = 'ag-YOUR_PLUGIN-theme';
@@ -187,7 +187,7 @@ export function YourComponent(props) {
 
 ## 5. 设计 Token 参考
 
-所有插件样式通过 CSS 变量 `--ag-*` 引用，Tailwind 工具类已映射好（带 `agw-` 前缀）。具体 token 值由 `frontend/src/tokens.ts` 生成，文档只说明语义，避免样式值漂移。
+所有插件样式通过 CSS 变量 `--ag-*` 引用，Tailwind 工具类已映射好（带 `agw-` 前缀）。具体 token 值由 `theme/src/tokens.ts` 生成，文档只说明语义，避免样式值漂移。
 
 ### 颜色
 
@@ -246,7 +246,7 @@ export function YourComponent(props) {
 
 ## 6. SDK 提供的 UI 组件
 
-SDK 提供了一套预制组件（`@airgate/theme/plugin`），样式与 Core 保持一致，属于插件前端稳定公共契约。插件业务 UI **优先使用这些组件**：
+SDK 提供了一套预制组件（`@doudou-start/airgate-theme/plugin`），样式与 Core 保持一致，属于插件前端稳定公共契约。插件业务 UI **优先使用这些组件**：
 
 ```tsx
 import {
@@ -262,7 +262,7 @@ import {
   FormActions,     // 表单操作区（flex wrap）
   Badge,           // 标签徽章（neutral / success / violet / info）
   StatusText,      // 内联状态文字（info / success / error）
-} from '@airgate/theme/plugin';
+} from '@doudou-start/airgate-theme/plugin';
 ```
 
 ### 使用示例
@@ -377,7 +377,7 @@ npm run build
 
 修改 SDK token 后的刷新流程：
 ```bash
-cd airgate-sdk/frontend && npm run build     # 1. 编译 SDK
+cd airgate-sdk/theme && npm run build        # 1. 编译 SDK
 cd your-plugin/web && npm run build          # 2. 重建插件（打包新 token）
 # 3. 刷新浏览器
 ```

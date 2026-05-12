@@ -35,6 +35,23 @@ type grpcPluginContext struct {
 	hostErr  error
 }
 
+func (c *grpcPluginContext) initHost() {
+	if c.broker == nil {
+		c.hostErr = errors.New("host broker not available")
+		return
+	}
+	if c.coreInvokeBrokerID == 0 {
+		c.hostErr = errors.New("core invoke not enabled")
+		return
+	}
+	conn, err := c.broker.Dial(c.coreInvokeBrokerID)
+	if err != nil {
+		c.hostErr = err
+		return
+	}
+	c.host = NewHostClient(pb.NewCoreInvokeServiceClient(conn))
+}
+
 func (c *grpcPluginContext) Logger() *slog.Logger {
 	if c.logger == nil {
 		return slog.Default()
@@ -65,22 +82,7 @@ func (c *grpcPluginContext) PluginDSN() string {
 //   - broker == nil（不在 plugin 进程内 / 测试 mock）
 //   - broker.Dial 失败（超时 / Core 进程退出）
 func (c *grpcPluginContext) Host() sdk.Host {
-	c.hostOnce.Do(func() {
-		if c.broker == nil {
-			c.hostErr = errors.New("host broker not available")
-			return
-		}
-		if c.coreInvokeBrokerID == 0 {
-			c.hostErr = errors.New("core invoke not enabled")
-			return
-		}
-		conn, err := c.broker.Dial(c.coreInvokeBrokerID)
-		if err != nil {
-			c.hostErr = err
-			return
-		}
-		c.host = NewHostClient(pb.NewCoreInvokeServiceClient(conn))
-	})
+	c.hostOnce.Do(c.initHost)
 	return c.host
 }
 
@@ -89,7 +91,7 @@ func (c *grpcPluginContext) Host() sdk.Host {
 //
 //	if hc, ok := ctx.(interface{ HostError() error }); ok { ... }
 func (c *grpcPluginContext) HostError() error {
-	c.hostOnce.Do(func() {}) // 确保 Once 已经 fire 过
+	c.hostOnce.Do(c.initHost)
 	return c.hostErr
 }
 

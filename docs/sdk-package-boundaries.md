@@ -10,7 +10,7 @@
 | `protocol/proto` | protobuf schema 与生成代码 | protobuf runtime | 插件业务 helper、Core 实现细节 |
 | `runtimego/grpc` | go-plugin/gRPC 适配、stream bridge、proto 转换、Core 反向调用 broker | `sdkgo`、`protocol/proto` | 插件业务逻辑、devserver UI |
 | `devkit/devserver` | 本地开发服务器和 fake core 能力 | `sdkgo` | 生产运行时依赖、Core 数据库访问 |
-| `frontend` | 前端插件 API、主题 token、样式注入、Tailwind bridge、公共 UI 组件 | TypeScript 生态、React peer dependency | Go runtime、Core 后端逻辑、具体插件业务页面 |
+| `theme` | 前端插件 API、主题 token、样式注入、Tailwind bridge、公共 UI 组件 | TypeScript 生态、React peer dependency | Go runtime、Core 后端逻辑、具体插件业务页面 |
 
 ## 新需求判断
 
@@ -21,7 +21,7 @@
 - 新增需要 SDK 表达的跨插件通用 capability。
 - 修正已有公开契约的错误或缺口。
 
-只有以下变化可以修改 `frontend` 稳定接口：
+只有以下变化可以修改 `theme` 稳定接口：
 
 - 新增跨插件通用的主题 token、CSS 变量或 Tailwind bridge 能力。
 - 新增多个插件都会复用的基础 UI 组件。
@@ -39,7 +39,7 @@
 
 这些变化应优先放到 manifest、插件私有 metadata、Core 方法注册表、插件私有数据库或明确 schema 的插件 API 中。
 
-前端页面需求应优先进入具体插件前端代码。只有当样式、组件或类型能被多个插件稳定复用时，才进入 `frontend`。
+前端页面需求应优先进入具体插件前端代码。只有当样式、组件或类型能被多个插件稳定复用时，才进入 `theme`。
 
 ## 弱契约扩展点
 
@@ -107,5 +107,5 @@ SDK 只提供传输契约和自检 helper，不承载 Core 方法枚举。这样
 - 插件运行入口使用 `github.com/DouDOU-start/airgate-sdk/runtimego/grpc`。
 - 本地开发工具使用 `github.com/DouDOU-start/airgate-sdk/devkit/devserver`。
 - 普通插件业务代码不直接导入 `protocol/proto`。
-- 插件前端使用 `@airgate/theme/plugin` 引用样式隔离、主题同步、Tailwind helper 和公共 UI 组件。
-- 宿主前端或工具代码可使用 `@airgate/theme`、`@airgate/theme/css`、`@airgate/theme/tailwind` 引用 token 与主题桥接能力。
+- 插件前端使用 `@doudou-start/airgate-theme/plugin` 引用样式隔离、主题同步、Tailwind helper 和公共 UI 组件。
+- 宿主前端或工具代码可使用 `@doudou-start/airgate-theme`、`@doudou-start/airgate-theme/css`、`@doudou-start/airgate-theme/tailwind` 引用 token 与主题桥接能力。

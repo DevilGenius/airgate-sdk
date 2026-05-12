@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -143,7 +144,12 @@ func Run(cfg Config) error {
 	// 从 plugin.Routes() 提取路径前缀注册代理
 	proxy := &ProxyHandler{plugin: cfg.Plugin, store: store, scheduler: scheduler}
 	prefixes := routePrefixes(cfg.Plugin.Routes())
+	hasRootProxy := false
 	for _, prefix := range prefixes {
+		if prefix == "/" {
+			hasRootProxy = true
+			continue
+		}
 		mux.Handle(prefix, proxy)
 	}
 
@@ -175,7 +181,16 @@ func Run(cfg Config) error {
 	if err != nil {
 		return err
 	}
-	mux.Handle("/", http.FileServer(http.FS(staticFS)))
+	staticHandler := http.FileServer(http.FS(staticFS))
+	if hasRootProxy {
+		mux.Handle("/", &rootRouteHandler{
+			proxy:  proxy,
+			static: staticHandler,
+			routes: cfg.Plugin.Routes(),
+		})
+	} else {
+		mux.Handle("/", staticHandler)
+	}
 
 	info := cfg.Plugin.Info()
 	log.Printf("devserver 启动: http://localhost%s", *addr)
@@ -185,18 +200,67 @@ func Run(cfg Config) error {
 	return http.ListenAndServe(*addr, mux)
 }
 
-// routePrefixes 从路由声明中提取不重复的路径前缀（如 /v1/）
+// routePrefixes 从路由声明中提取不重复的路径前缀（如 /v1/）。
 func routePrefixes(routes []sdk.RouteDefinition) []string {
 	seen := make(map[string]bool)
 	prefixes := make([]string, 0, len(routes))
 	for _, r := range routes {
-		// 取第二个 / 之前的部分作为前缀
-		parts := strings.SplitN(strings.TrimPrefix(r.Path, "/"), "/", 2)
-		prefix := "/" + parts[0] + "/"
+		prefix, ok := routePrefix(r.Path)
+		if !ok {
+			continue
+		}
 		if !seen[prefix] {
 			seen[prefix] = true
 			prefixes = append(prefixes, prefix)
 		}
 	}
 	return prefixes
+}
+
+func routePrefix(routePath string) (string, bool) {
+	routePath = strings.TrimSpace(routePath)
+	if routePath == "" {
+		return "", false
+	}
+	if !strings.HasPrefix(routePath, "/") {
+		routePath = "/" + routePath
+	}
+	cleaned := path.Clean(routePath)
+	if cleaned == "/" {
+		return "/", true
+	}
+	parts := strings.SplitN(strings.TrimPrefix(cleaned, "/"), "/", 2)
+	return "/" + parts[0] + "/", true
+}
+
+type rootRouteHandler struct {
+	proxy  http.Handler
+	static http.Handler
+	routes []sdk.RouteDefinition
+}
+
+func (h *rootRouteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	for _, route := range h.routes {
+		prefix, ok := routePrefix(route.Path)
+		if !ok || prefix != "/" {
+			continue
+		}
+		if path.Clean(r.URL.Path) != "/" {
+			continue
+		}
+		if !routeMethodMatches(route.Method, r.Method) {
+			continue
+		}
+		h.proxy.ServeHTTP(w, r)
+		return
+	}
+	h.static.ServeHTTP(w, r)
+}
+
+func routeMethodMatches(routeMethod, requestMethod string) bool {
+	routeMethod = strings.TrimSpace(routeMethod)
+	if routeMethod == "" {
+		return true
+	}
+	return strings.EqualFold(routeMethod, requestMethod)
 }
