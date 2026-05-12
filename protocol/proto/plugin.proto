@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package airgate.plugin.v2;
+package airgate.plugin.v1;
 
 option go_package = "github.com/DouDOU-start/airgate-sdk/protocol/proto";
 

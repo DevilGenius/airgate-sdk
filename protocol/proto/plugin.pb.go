@@ -1787,7 +1787,7 @@ func (x *Usage) GetMetadata() map[string]string {
 // ForwardOutcome 插件对一次 Forward 的完整判决结果。
 type ForwardOutcome struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	Kind               OutcomeKind            `protobuf:"varint,1,opt,name=kind,proto3,enum=airgate.plugin.v2.OutcomeKind" json:"kind,omitempty"`
+	Kind               OutcomeKind            `protobuf:"varint,1,opt,name=kind,proto3,enum=airgate.plugin.v1.OutcomeKind" json:"kind,omitempty"`
 	Upstream           *UpstreamResponse      `protobuf:"bytes,2,opt,name=upstream,proto3" json:"upstream,omitempty"`
 	Usage              *Usage                 `protobuf:"bytes,3,opt,name=usage,proto3" json:"usage,omitempty"`
 	DurationMs         int64                  `protobuf:"varint,4,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
@@ -2351,7 +2351,7 @@ func (x *RunBackgroundTaskRequest) GetName() string {
 
 type WebSocketFrame struct {
 	state protoimpl.MessageState   `protogen:"open.v1"`
-	Type  WebSocketFrame_FrameType `protobuf:"varint,1,opt,name=type,proto3,enum=airgate.plugin.v2.WebSocketFrame_FrameType" json:"type,omitempty"`
+	Type  WebSocketFrame_FrameType `protobuf:"varint,1,opt,name=type,proto3,enum=airgate.plugin.v1.WebSocketFrame_FrameType" json:"type,omitempty"`
 	Data  []byte                   `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	// 仅 CONNECT 帧使用
 	ConnectInfo *WebSocketConnectInfo `protobuf:"bytes,3,opt,name=connect_info,json=connectInfo,proto3" json:"connect_info,omitempty"`
@@ -3406,7 +3406,7 @@ func (x *MiddlewareEvent) GetResponseHeaders() map[string]*HeaderValues {
 // MiddlewareDecision OnForwardBegin 的输出：放行 / 拒绝 / 改请求。
 type MiddlewareDecision struct {
 	state  protoimpl.MessageState    `protogen:"open.v1"`
-	Action MiddlewareDecision_Action `protobuf:"varint,1,opt,name=action,proto3,enum=airgate.plugin.v2.MiddlewareDecision_Action" json:"action,omitempty"`
+	Action MiddlewareDecision_Action `protobuf:"varint,1,opt,name=action,proto3,enum=airgate.plugin.v1.MiddlewareDecision_Action" json:"action,omitempty"`
 	// action=DENY 时的错误码 / 文案（对用户可见）
 	DenyStatusCode int32  `protobuf:"varint,10,opt,name=deny_status_code,json=denyStatusCode,proto3" json:"deny_status_code,omitempty"` // 默认 403 if Action=DENY and 未指定
 	DenyMessage    string `protobuf:"bytes,11,opt,name=deny_message,json=denyMessage,proto3" json:"deny_message,omitempty"`
@@ -4143,7 +4143,7 @@ var File_plugin_proto protoreflect.FileDescriptor
 
 const file_plugin_proto_rawDesc = "" +
 	"\n" +
-	"\fplugin.proto\x12\x11airgate.plugin.v2\"\a\n" +
+	"\fplugin.proto\x12\x11airgate.plugin.v1\"\a\n" +
 	"\x05Empty\"&\n" +
 	"\x0eStringResponse\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\tR\x05value\"&\n" +
@@ -4156,18 +4156,18 @@ const file_plugin_proto_rawDesc = "" +
 	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\x16\n" +
 	"\x06author\x18\x05 \x01(\tR\x06author\x12\x12\n" +
 	"\x04type\x18\x06 \x01(\tR\x04type\x12H\n" +
-	"\raccount_types\x18\a \x03(\v2#.airgate.plugin.v2.AccountTypeProtoR\faccountTypes\x12K\n" +
-	"\x0efrontend_pages\x18\b \x03(\v2$.airgate.plugin.v2.FrontendPageProtoR\rfrontendPages\x12Q\n" +
-	"\x10frontend_widgets\x18\t \x03(\v2&.airgate.plugin.v2.FrontendWidgetProtoR\x0ffrontendWidgets\x12\x1f\n" +
+	"\raccount_types\x18\a \x03(\v2#.airgate.plugin.v1.AccountTypeProtoR\faccountTypes\x12K\n" +
+	"\x0efrontend_pages\x18\b \x03(\v2$.airgate.plugin.v1.FrontendPageProtoR\rfrontendPages\x12Q\n" +
+	"\x10frontend_widgets\x18\t \x03(\v2&.airgate.plugin.v1.FrontendWidgetProtoR\x0ffrontendWidgets\x12\x1f\n" +
 	"\vsdk_version\x18\n" +
 	" \x01(\tR\n" +
 	"sdkVersion\x12\"\n" +
 	"\fdependencies\x18\v \x03(\tR\fdependencies\x12H\n" +
-	"\rconfig_schema\x18\f \x03(\v2#.airgate.plugin.v2.ConfigFieldProtoR\fconfigSchema\x12/\n" +
+	"\rconfig_schema\x18\f \x03(\v2#.airgate.plugin.v1.ConfigFieldProtoR\fconfigSchema\x12/\n" +
 	"\x13instruction_presets\x18\r \x03(\tR\x12instructionPresets\x12\"\n" +
 	"\fcapabilities\x18\x0e \x03(\tR\fcapabilities\x12\x1a\n" +
 	"\bpriority\x18\x0f \x01(\x05R\bpriority\x12O\n" +
-	"\bmetadata\x18\x10 \x03(\v23.airgate.plugin.v2.PluginInfoResponse.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\x10 \x03(\v23.airgate.plugin.v1.PluginInfoResponse.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd3\x01\n" +
@@ -4183,7 +4183,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12?\n" +
-	"\x06fields\x18\x04 \x03(\v2'.airgate.plugin.v2.CredentialFieldProtoR\x06fields\"\xb5\x01\n" +
+	"\x06fields\x18\x04 \x03(\v2'.airgate.plugin.v1.CredentialFieldProtoR\x06fields\"\xb5\x01\n" +
 	"\x14CredentialFieldProto\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
@@ -4203,7 +4203,7 @@ const file_plugin_proto_rawDesc = "" +
 	"entry_file\x18\x02 \x01(\tR\tentryFile\x12\x14\n" +
 	"\x05title\x18\x03 \x01(\tR\x05title\"\xdc\x01\n" +
 	"\vInitRequest\x12B\n" +
-	"\x06config\x18\x01 \x03(\v2*.airgate.plugin.v2.InitRequest.ConfigEntryR\x06config\x12\x1b\n" +
+	"\x06config\x18\x01 \x03(\v2*.airgate.plugin.v1.InitRequest.ConfigEntryR\x06config\x12\x1b\n" +
 	"\tlog_level\x18\x02 \x01(\tR\blogLevel\x121\n" +
 	"\x15core_invoke_broker_id\x18\x03 \x01(\rR\x12coreInvokeBrokerId\x1a9\n" +
 	"\vConfigEntry\x12\x10\n" +
@@ -4215,22 +4215,22 @@ const file_plugin_proto_rawDesc = "" +
 	"\x0econtext_window\x18\x03 \x01(\x03R\rcontextWindow\x12*\n" +
 	"\x11max_output_tokens\x18\x04 \x01(\x03R\x0fmaxOutputTokens\x12\"\n" +
 	"\fcapabilities\x18\x05 \x03(\tR\fcapabilities\x12K\n" +
-	"\bmetadata\x18\x06 \x03(\v2/.airgate.plugin.v2.ModelInfoProto.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\x06 \x03(\v2/.airgate.plugin.v1.ModelInfoProto.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"K\n" +
 	"\x0eModelsResponse\x129\n" +
-	"\x06models\x18\x01 \x03(\v2!.airgate.plugin.v2.ModelInfoProtoR\x06models\"\xf4\x01\n" +
+	"\x06models\x18\x01 \x03(\v2!.airgate.plugin.v1.ModelInfoProtoR\x06models\"\xf4\x01\n" +
 	"\x14RouteDefinitionProto\x12\x16\n" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12Q\n" +
-	"\bmetadata\x18\x04 \x03(\v25.airgate.plugin.v2.RouteDefinitionProto.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\x04 \x03(\v25.airgate.plugin.v1.RouteDefinitionProto.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Q\n" +
 	"\x0eRoutesResponse\x12?\n" +
-	"\x06routes\x18\x01 \x03(\v2'.airgate.plugin.v2.RouteDefinitionProtoR\x06routes\"\xaa\x01\n" +
+	"\x06routes\x18\x01 \x03(\v2'.airgate.plugin.v1.RouteDefinitionProtoR\x06routes\"\xaa\x01\n" +
 	"\fAccountProto\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
@@ -4240,28 +4240,28 @@ const file_plugin_proto_rawDesc = "" +
 	"\tproxy_url\x18\x06 \x01(\tR\bproxyUrl\"\xd8\x02\n" +
 	"\x0eForwardRequest\x12\x12\n" +
 	"\x04body\x18\a \x01(\fR\x04body\x12H\n" +
-	"\aheaders\x18\b \x03(\v2..airgate.plugin.v2.ForwardRequest.HeadersEntryR\aheaders\x12\x14\n" +
+	"\aheaders\x18\b \x03(\v2..airgate.plugin.v1.ForwardRequest.HeadersEntryR\aheaders\x12\x14\n" +
 	"\x05model\x18\t \x01(\tR\x05model\x12\x16\n" +
 	"\x06stream\x18\n" +
 	" \x01(\bR\x06stream\x129\n" +
-	"\aaccount\x18\v \x01(\v2\x1f.airgate.plugin.v2.AccountProtoR\aaccount\x1a[\n" +
+	"\aaccount\x18\v \x01(\v2\x1f.airgate.plugin.v1.AccountProtoR\aaccount\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v2.HeaderValuesR\x05value:\x028\x01J\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x03\x10\x04J\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\a\"\xf0\x01\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01J\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x03\x10\x04J\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\a\"\xf0\x01\n" +
 	"\x10UpstreamResponse\x12\x1f\n" +
 	"\vstatus_code\x18\x01 \x01(\x05R\n" +
 	"statusCode\x12J\n" +
-	"\aheaders\x18\x02 \x03(\v20.airgate.plugin.v2.UpstreamResponse.HeadersEntryR\aheaders\x12\x12\n" +
+	"\aheaders\x18\x02 \x03(\v20.airgate.plugin.v1.UpstreamResponse.HeadersEntryR\aheaders\x12\x12\n" +
 	"\x04body\x18\x03 \x01(\fR\x04body\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v2.HeaderValuesR\x05value:\x028\x01\"\xec\x01\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xec\x01\n" +
 	"\x0eUsageAttribute\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
 	"\x04kind\x18\x03 \x01(\tR\x04kind\x12\x14\n" +
 	"\x05value\x18\x04 \x01(\tR\x05value\x12K\n" +
-	"\bmetadata\x18\x05 \x03(\v2/.airgate.plugin.v2.UsageAttribute.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\x05 \x03(\v2/.airgate.plugin.v1.UsageAttribute.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb9\x02\n" +
@@ -4273,7 +4273,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x05value\x18\x05 \x01(\x01R\x05value\x12!\n" +
 	"\faccount_cost\x18\x06 \x01(\x01R\vaccountCost\x12\x1a\n" +
 	"\bcurrency\x18\a \x01(\tR\bcurrency\x12H\n" +
-	"\bmetadata\x18\b \x03(\v2,.airgate.plugin.v2.UsageMetric.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\b \x03(\v2,.airgate.plugin.v1.UsageMetric.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xcf\x02\n" +
@@ -4284,7 +4284,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\tuser_cost\x18\x04 \x01(\x01R\buserCost\x12-\n" +
 	"\x12billing_multiplier\x18\x05 \x01(\x01R\x11billingMultiplier\x12\x1a\n" +
 	"\bcurrency\x18\x06 \x01(\tR\bcurrency\x12L\n" +
-	"\bmetadata\x18\a \x03(\v20.airgate.plugin.v2.UsageCostDetail.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\a \x03(\v20.airgate.plugin.v1.UsageCostDetail.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xad\x04\n" +
@@ -4296,40 +4296,40 @@ const file_plugin_proto_rawDesc = "" +
 	"\bcurrency\x18\x05 \x01(\tR\bcurrency\x12\x18\n" +
 	"\asummary\x18\x06 \x01(\tR\asummary\x12$\n" +
 	"\x0efirst_token_ms\x18\a \x01(\x03R\ffirstTokenMs\x128\n" +
-	"\ametrics\x18\b \x03(\v2\x1e.airgate.plugin.v2.UsageMetricR\ametrics\x12A\n" +
+	"\ametrics\x18\b \x03(\v2\x1e.airgate.plugin.v1.UsageMetricR\ametrics\x12A\n" +
 	"\n" +
-	"attributes\x18\t \x03(\v2!.airgate.plugin.v2.UsageAttributeR\n" +
+	"attributes\x18\t \x03(\v2!.airgate.plugin.v1.UsageAttributeR\n" +
 	"attributes\x12E\n" +
 	"\fcost_details\x18\n" +
-	" \x03(\v2\".airgate.plugin.v2.UsageCostDetailR\vcostDetails\x12B\n" +
-	"\bmetadata\x18\v \x03(\v2&.airgate.plugin.v2.Usage.MetadataEntryR\bmetadata\x1a;\n" +
+	" \x03(\v2\".airgate.plugin.v1.UsageCostDetailR\vcostDetails\x12B\n" +
+	"\bmetadata\x18\v \x03(\v2&.airgate.plugin.v1.Usage.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc7\x03\n" +
 	"\x0eForwardOutcome\x122\n" +
-	"\x04kind\x18\x01 \x01(\x0e2\x1e.airgate.plugin.v2.OutcomeKindR\x04kind\x12?\n" +
-	"\bupstream\x18\x02 \x01(\v2#.airgate.plugin.v2.UpstreamResponseR\bupstream\x12.\n" +
-	"\x05usage\x18\x03 \x01(\v2\x18.airgate.plugin.v2.UsageR\x05usage\x12\x1f\n" +
+	"\x04kind\x18\x01 \x01(\x0e2\x1e.airgate.plugin.v1.OutcomeKindR\x04kind\x12?\n" +
+	"\bupstream\x18\x02 \x01(\v2#.airgate.plugin.v1.UpstreamResponseR\bupstream\x12.\n" +
+	"\x05usage\x18\x03 \x01(\v2\x18.airgate.plugin.v1.UsageR\x05usage\x12\x1f\n" +
 	"\vduration_ms\x18\x04 \x01(\x03R\n" +
 	"durationMs\x12$\n" +
 	"\x0eretry_after_ms\x18\x05 \x01(\x03R\fretryAfterMs\x12\x16\n" +
 	"\x06reason\x18\x06 \x01(\tR\x06reason\x12j\n" +
-	"\x13updated_credentials\x18\a \x03(\v29.airgate.plugin.v2.ForwardOutcome.UpdatedCredentialsEntryR\x12updatedCredentials\x1aE\n" +
+	"\x13updated_credentials\x18\a \x03(\v29.airgate.plugin.v1.ForwardOutcome.UpdatedCredentialsEntryR\x12updatedCredentials\x1aE\n" +
 	"\x17UpdatedCredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc4\x02\n" +
 	"\fForwardChunk\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12\x12\n" +
 	"\x04done\x18\x02 \x01(\bR\x04done\x12F\n" +
-	"\rfinal_outcome\x18\x03 \x01(\v2!.airgate.plugin.v2.ForwardOutcomeR\ffinalOutcome\x12\x1f\n" +
+	"\rfinal_outcome\x18\x03 \x01(\v2!.airgate.plugin.v1.ForwardOutcomeR\ffinalOutcome\x12\x1f\n" +
 	"\vstatus_code\x18\x04 \x01(\x05R\n" +
 	"statusCode\x12F\n" +
-	"\aheaders\x18\x05 \x03(\v2,.airgate.plugin.v2.ForwardChunk.HeadersEntryR\aheaders\x1a[\n" +
+	"\aheaders\x18\x05 \x03(\v2,.airgate.plugin.v1.ForwardChunk.HeadersEntryR\aheaders\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v2.HeaderValuesR\x05value:\x028\x01\"\xae\x01\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xae\x01\n" +
 	"\x12CredentialsRequest\x12X\n" +
-	"\vcredentials\x18\x01 \x03(\v26.airgate.plugin.v2.CredentialsRequest.CredentialsEntryR\vcredentials\x1a>\n" +
+	"\vcredentials\x18\x01 \x03(\v26.airgate.plugin.v1.CredentialsRequest.CredentialsEntryR\vcredentials\x1a>\n" +
 	"\x10CredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa8\x02\n" +
@@ -4337,46 +4337,46 @@ const file_plugin_proto_rawDesc = "" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12\x14\n" +
 	"\x05query\x18\x03 \x01(\tR\x05query\x12E\n" +
-	"\aheaders\x18\x04 \x03(\v2+.airgate.plugin.v2.HttpRequest.HeadersEntryR\aheaders\x12\x12\n" +
+	"\aheaders\x18\x04 \x03(\v2+.airgate.plugin.v1.HttpRequest.HeadersEntryR\aheaders\x12\x12\n" +
 	"\x04body\x18\x05 \x01(\fR\x04body\x12\x1f\n" +
 	"\vremote_addr\x18\x06 \x01(\tR\n" +
 	"remoteAddr\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v2.HeaderValuesR\x05value:\x028\x01\"\xe8\x01\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xe8\x01\n" +
 	"\fHttpResponse\x12\x1f\n" +
 	"\vstatus_code\x18\x01 \x01(\x05R\n" +
 	"statusCode\x12F\n" +
-	"\aheaders\x18\x02 \x03(\v2,.airgate.plugin.v2.HttpResponse.HeadersEntryR\aheaders\x12\x12\n" +
+	"\aheaders\x18\x02 \x03(\v2,.airgate.plugin.v1.HttpResponse.HeadersEntryR\aheaders\x12\x12\n" +
 	"\x04body\x18\x03 \x01(\fR\x04body\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v2.HeaderValuesR\x05value:\x028\x01\"\x86\x02\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\x86\x02\n" +
 	"\x11HttpResponseChunk\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12\x12\n" +
 	"\x04done\x18\x02 \x01(\bR\x04done\x12\x1f\n" +
 	"\vstatus_code\x18\x03 \x01(\x05R\n" +
 	"statusCode\x12K\n" +
-	"\aheaders\x18\x04 \x03(\v21.airgate.plugin.v2.HttpResponseChunk.HeadersEntryR\aheaders\x1a[\n" +
+	"\aheaders\x18\x04 \x03(\v21.airgate.plugin.v1.HttpResponseChunk.HeadersEntryR\aheaders\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v2.HeaderValuesR\x05value:\x028\x01\"J\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"J\n" +
 	"\x13BackgroundTaskProto\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1f\n" +
 	"\vinterval_ms\x18\x02 \x01(\x03R\n" +
 	"intervalMs\"W\n" +
 	"\x17BackgroundTasksResponse\x12<\n" +
-	"\x05tasks\x18\x01 \x03(\v2&.airgate.plugin.v2.BackgroundTaskProtoR\x05tasks\".\n" +
+	"\x05tasks\x18\x01 \x03(\v2&.airgate.plugin.v1.BackgroundTaskProtoR\x05tasks\".\n" +
 	"\x18RunBackgroundTaskRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"\xf7\x02\n" +
 	"\x0eWebSocketFrame\x12?\n" +
-	"\x04type\x18\x01 \x01(\x0e2+.airgate.plugin.v2.WebSocketFrame.FrameTypeR\x04type\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\x0e2+.airgate.plugin.v1.WebSocketFrame.FrameTypeR\x04type\x12\x12\n" +
 	"\x04data\x18\x02 \x01(\fR\x04data\x12J\n" +
-	"\fconnect_info\x18\x03 \x01(\v2'.airgate.plugin.v2.WebSocketConnectInfoR\vconnectInfo\x12\x1d\n" +
+	"\fconnect_info\x18\x03 \x01(\v2'.airgate.plugin.v1.WebSocketConnectInfoR\vconnectInfo\x12\x1d\n" +
 	"\n" +
 	"close_code\x18\x04 \x01(\x05R\tcloseCode\x12!\n" +
 	"\fclose_reason\x18\x05 \x01(\tR\vcloseReason\x12;\n" +
-	"\aoutcome\x18\x06 \x01(\v2!.airgate.plugin.v2.ForwardOutcomeR\aoutcome\"E\n" +
+	"\aoutcome\x18\x06 \x01(\v2!.airgate.plugin.v1.ForwardOutcomeR\aoutcome\"E\n" +
 	"\tFrameType\x12\v\n" +
 	"\aCONNECT\x10\x00\x12\b\n" +
 	"\x04TEXT\x10\x01\x12\n" +
@@ -4388,28 +4388,28 @@ const file_plugin_proto_rawDesc = "" +
 	"\x14WebSocketConnectInfo\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x14\n" +
 	"\x05query\x18\x02 \x01(\tR\x05query\x12N\n" +
-	"\aheaders\x18\x03 \x03(\v24.airgate.plugin.v2.WebSocketConnectInfo.HeadersEntryR\aheaders\x12\x1f\n" +
+	"\aheaders\x18\x03 \x03(\v24.airgate.plugin.v1.WebSocketConnectInfo.HeadersEntryR\aheaders\x12\x1f\n" +
 	"\vremote_addr\x18\x04 \x01(\tR\n" +
 	"remoteAddr\x12#\n" +
 	"\rconnection_id\x18\x05 \x01(\tR\fconnectionId\x129\n" +
-	"\aaccount\x18\f \x01(\v2\x1f.airgate.plugin.v2.AccountProtoR\aaccount\x1a[\n" +
+	"\aaccount\x18\f \x01(\v2\x1f.airgate.plugin.v1.AccountProtoR\aaccount\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v2.HeaderValuesR\x05value:\x028\x01J\x04\b\x06\x10\aJ\x04\b\a\x10\bJ\x04\b\b\x10\tJ\x04\b\t\x10\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01J\x04\b\x06\x10\aJ\x04\b\a\x10\bJ\x04\b\b\x10\tJ\x04\b\t\x10\n" +
 	"J\x04\b\n" +
 	"\x10\vJ\x04\b\v\x10\f\"<\n" +
 	"\fWebAssetFile\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x18\n" +
 	"\acontent\x18\x02 \x01(\fR\acontent\"i\n" +
 	"\x11WebAssetsResponse\x125\n" +
-	"\x05files\x18\x01 \x03(\v2\x1f.airgate.plugin.v2.WebAssetFileR\x05files\x12\x1d\n" +
+	"\x05files\x18\x01 \x03(\v2\x1f.airgate.plugin.v1.WebAssetFileR\x05files\x12\x1d\n" +
 	"\n" +
 	"has_assets\x18\x02 \x01(\bR\thasAssets\"\xf7\x01\n" +
 	"\x12PayloadSchemaProto\x12!\n" +
 	"\fcontent_type\x18\x01 \x01(\tR\vcontentType\x12\x16\n" +
 	"\x06schema\x18\x02 \x01(\tR\x06schema\x12\x18\n" +
 	"\aexample\x18\x03 \x01(\tR\aexample\x12O\n" +
-	"\bmetadata\x18\x04 \x03(\v23.airgate.plugin.v2.PayloadSchemaProto.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\x04 \x03(\v23.airgate.plugin.v1.PayloadSchemaProto.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe8\x02\n" +
@@ -4417,18 +4417,18 @@ const file_plugin_proto_rawDesc = "" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12\x18\n" +
 	"\asummary\x18\x03 \x01(\tR\asummary\x12?\n" +
-	"\arequest\x18\x04 \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\arequest\x12A\n" +
-	"\bresponse\x18\x05 \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\bresponse\x12M\n" +
-	"\bmetadata\x18\x06 \x03(\v21.airgate.plugin.v2.RouteSchemaProto.MetadataEntryR\bmetadata\x1a;\n" +
+	"\arequest\x18\x04 \x01(\v2%.airgate.plugin.v1.PayloadSchemaProtoR\arequest\x12A\n" +
+	"\bresponse\x18\x05 \x01(\v2%.airgate.plugin.v1.PayloadSchemaProtoR\bresponse\x12M\n" +
+	"\bmetadata\x18\x06 \x03(\v21.airgate.plugin.v1.RouteSchemaProto.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc6\x02\n" +
 	"\x0fTaskSchemaProto\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x18\n" +
 	"\asummary\x18\x02 \x01(\tR\asummary\x12;\n" +
-	"\x05input\x18\x03 \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\x05input\x12=\n" +
-	"\x06output\x18\x04 \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\x06output\x12L\n" +
-	"\bmetadata\x18\x05 \x03(\v20.airgate.plugin.v2.TaskSchemaProto.MetadataEntryR\bmetadata\x1a;\n" +
+	"\x05input\x18\x03 \x01(\v2%.airgate.plugin.v1.PayloadSchemaProtoR\x05input\x12=\n" +
+	"\x06output\x18\x04 \x01(\v2%.airgate.plugin.v1.PayloadSchemaProtoR\x06output\x12L\n" +
+	"\bmetadata\x18\x05 \x03(\v20.airgate.plugin.v1.TaskSchemaProto.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa5\x02\n" +
@@ -4436,29 +4436,29 @@ const file_plugin_proto_rawDesc = "" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12\x18\n" +
 	"\asummary\x18\x03 \x01(\tR\asummary\x12?\n" +
-	"\apayload\x18\x04 \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\apayload\x12M\n" +
-	"\bmetadata\x18\x05 \x03(\v21.airgate.plugin.v2.EventSchemaProto.MetadataEntryR\bmetadata\x1a;\n" +
+	"\apayload\x18\x04 \x01(\v2%.airgate.plugin.v1.PayloadSchemaProtoR\apayload\x12M\n" +
+	"\bmetadata\x18\x05 \x03(\v21.airgate.plugin.v1.EventSchemaProto.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x88\x04\n" +
 	"\x11InvokeSchemaProto\x12\x16\n" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x18\n" +
 	"\asummary\x18\x02 \x01(\tR\asummary\x12?\n" +
-	"\arequest\x18\x03 \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\arequest\x12A\n" +
-	"\bresponse\x18\x04 \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\bresponse\x12N\n" +
-	"\bmetadata\x18\x05 \x03(\v22.airgate.plugin.v2.InvokeSchemaProto.MetadataEntryR\bmetadata\x12\x1c\n" +
+	"\arequest\x18\x03 \x01(\v2%.airgate.plugin.v1.PayloadSchemaProtoR\arequest\x12A\n" +
+	"\bresponse\x18\x04 \x01(\v2%.airgate.plugin.v1.PayloadSchemaProtoR\bresponse\x12N\n" +
+	"\bmetadata\x18\x05 \x03(\v22.airgate.plugin.v1.InvokeSchemaProto.MetadataEntryR\bmetadata\x12\x1c\n" +
 	"\ttransport\x18\x06 \x01(\tR\ttransport\x12H\n" +
-	"\fclient_frame\x18\a \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\vclientFrame\x12H\n" +
-	"\fserver_frame\x18\b \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\vserverFrame\x1a;\n" +
+	"\fclient_frame\x18\a \x01(\v2%.airgate.plugin.v1.PayloadSchemaProtoR\vclientFrame\x12H\n" +
+	"\fserver_frame\x18\b \x01(\v2%.airgate.plugin.v1.PayloadSchemaProtoR\vserverFrame\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9a\x03\n" +
 	"\x14PluginSchemaResponse\x12;\n" +
-	"\x06routes\x18\x01 \x03(\v2#.airgate.plugin.v2.RouteSchemaProtoR\x06routes\x128\n" +
-	"\x05tasks\x18\x02 \x03(\v2\".airgate.plugin.v2.TaskSchemaProtoR\x05tasks\x12;\n" +
-	"\x06events\x18\x03 \x03(\v2#.airgate.plugin.v2.EventSchemaProtoR\x06events\x12>\n" +
-	"\ainvokes\x18\x04 \x03(\v2$.airgate.plugin.v2.InvokeSchemaProtoR\ainvokes\x12Q\n" +
-	"\bmetadata\x18\x05 \x03(\v25.airgate.plugin.v2.PluginSchemaResponse.MetadataEntryR\bmetadata\x1a;\n" +
+	"\x06routes\x18\x01 \x03(\v2#.airgate.plugin.v1.RouteSchemaProtoR\x06routes\x128\n" +
+	"\x05tasks\x18\x02 \x03(\v2\".airgate.plugin.v1.TaskSchemaProtoR\x05tasks\x12;\n" +
+	"\x06events\x18\x03 \x03(\v2#.airgate.plugin.v1.EventSchemaProtoR\x06events\x12>\n" +
+	"\ainvokes\x18\x04 \x03(\v2$.airgate.plugin.v1.InvokeSchemaProtoR\ainvokes\x12Q\n" +
+	"\bmetadata\x18\x05 \x03(\v25.airgate.plugin.v1.PluginSchemaResponse.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x84\x05\n" +
@@ -4472,16 +4472,16 @@ const file_plugin_proto_rawDesc = "" +
 	"\bplatform\x18\x05 \x01(\tR\bplatform\x12\x14\n" +
 	"\x05model\x18\x06 \x01(\tR\x05model\x12\x16\n" +
 	"\x06stream\x18\a \x01(\bR\x06stream\x12<\n" +
-	"\testimates\x18\b \x03(\v2\x1e.airgate.plugin.v2.UsageMetricR\testimates\x12N\n" +
-	"\bmetadata\x18\t \x03(\v22.airgate.plugin.v2.MiddlewareRequest.MetadataEntryR\bmetadata\x12!\n" +
+	"\testimates\x18\b \x03(\v2\x1e.airgate.plugin.v1.UsageMetricR\testimates\x12N\n" +
+	"\bmetadata\x18\t \x03(\v22.airgate.plugin.v1.MiddlewareRequest.MetadataEntryR\bmetadata\x12!\n" +
 	"\frequest_body\x18d \x01(\fR\vrequestBody\x12a\n" +
-	"\x0frequest_headers\x18e \x03(\v28.airgate.plugin.v2.MiddlewareRequest.RequestHeadersEntryR\x0erequestHeaders\x1a;\n" +
+	"\x0frequest_headers\x18e \x03(\v28.airgate.plugin.v1.MiddlewareRequest.RequestHeadersEntryR\x0erequestHeaders\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ab\n" +
 	"\x13RequestHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v2.HeaderValuesR\x05value:\x028\x01\"\xb2\x06\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xb2\x06\n" +
 	"\x0fMiddlewareEvent\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x17\n" +
@@ -4492,35 +4492,35 @@ const file_plugin_proto_rawDesc = "" +
 	"\bplatform\x18\x05 \x01(\tR\bplatform\x12\x14\n" +
 	"\x05model\x18\x06 \x01(\tR\x05model\x12\x16\n" +
 	"\x06stream\x18\a \x01(\bR\x06stream\x12<\n" +
-	"\testimates\x18\b \x03(\v2\x1e.airgate.plugin.v2.UsageMetricR\testimates\x12\x1f\n" +
+	"\testimates\x18\b \x03(\v2\x1e.airgate.plugin.v1.UsageMetricR\testimates\x12\x1f\n" +
 	"\vstatus_code\x18\x14 \x01(\x03R\n" +
 	"statusCode\x12\x1f\n" +
 	"\vduration_ms\x18\x15 \x01(\x03R\n" +
 	"durationMs\x12.\n" +
-	"\x05usage\x18\x16 \x01(\v2\x18.airgate.plugin.v2.UsageR\x05usage\x12\x1d\n" +
+	"\x05usage\x18\x16 \x01(\v2\x18.airgate.plugin.v1.UsageR\x05usage\x12\x1d\n" +
 	"\n" +
 	"error_kind\x18\x17 \x01(\tR\terrorKind\x12\x1b\n" +
 	"\terror_msg\x18\x18 \x01(\tR\berrorMsg\x12L\n" +
-	"\bmetadata\x18( \x03(\v20.airgate.plugin.v2.MiddlewareEvent.MetadataEntryR\bmetadata\x12#\n" +
+	"\bmetadata\x18( \x03(\v20.airgate.plugin.v1.MiddlewareEvent.MetadataEntryR\bmetadata\x12#\n" +
 	"\rresponse_body\x18d \x01(\fR\fresponseBody\x12b\n" +
-	"\x10response_headers\x18e \x03(\v27.airgate.plugin.v2.MiddlewareEvent.ResponseHeadersEntryR\x0fresponseHeaders\x1a;\n" +
+	"\x10response_headers\x18e \x03(\v27.airgate.plugin.v1.MiddlewareEvent.ResponseHeadersEntryR\x0fresponseHeaders\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ac\n" +
 	"\x14ResponseHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v2.HeaderValuesR\x05value:\x028\x01\"\x98\x04\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\x98\x04\n" +
 	"\x12MiddlewareDecision\x12D\n" +
-	"\x06action\x18\x01 \x01(\x0e2,.airgate.plugin.v2.MiddlewareDecision.ActionR\x06action\x12(\n" +
+	"\x06action\x18\x01 \x01(\x0e2,.airgate.plugin.v1.MiddlewareDecision.ActionR\x06action\x12(\n" +
 	"\x10deny_status_code\x18\n" +
 	" \x01(\x05R\x0edenyStatusCode\x12!\n" +
 	"\fdeny_message\x18\v \x01(\tR\vdenyMessage\x12V\n" +
-	"\vset_headers\x18\x14 \x03(\v25.airgate.plugin.v2.MiddlewareDecision.SetHeadersEntryR\n" +
+	"\vset_headers\x18\x14 \x03(\v25.airgate.plugin.v1.MiddlewareDecision.SetHeadersEntryR\n" +
 	"setHeaders\x12O\n" +
-	"\bmetadata\x18\x1e \x03(\v23.airgate.plugin.v2.MiddlewareDecision.MetadataEntryR\bmetadata\x1a^\n" +
+	"\bmetadata\x18\x1e \x03(\v23.airgate.plugin.v1.MiddlewareDecision.MetadataEntryR\bmetadata\x1a^\n" +
 	"\x0fSetHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v2.HeaderValuesR\x05value:\x028\x01\x1a;\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\")\n" +
@@ -4532,8 +4532,8 @@ const file_plugin_proto_rawDesc = "" +
 	"\x16EventSubscriptionProto\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12M\n" +
-	"\x06filter\x18\x03 \x03(\v25.airgate.plugin.v2.EventSubscriptionProto.FilterEntryR\x06filter\x12S\n" +
-	"\bmetadata\x18\x04 \x03(\v27.airgate.plugin.v2.EventSubscriptionProto.MetadataEntryR\bmetadata\x1a9\n" +
+	"\x06filter\x18\x03 \x03(\v25.airgate.plugin.v1.EventSubscriptionProto.FilterEntryR\x06filter\x12S\n" +
+	"\bmetadata\x18\x04 \x03(\v27.airgate.plugin.v1.EventSubscriptionProto.MetadataEntryR\bmetadata\x1a9\n" +
 	"\vFilterEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a;\n" +
@@ -4541,7 +4541,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"m\n" +
 	"\x1aEventSubscriptionsResponse\x12O\n" +
-	"\rsubscriptions\x18\x01 \x03(\v2).airgate.plugin.v2.EventSubscriptionProtoR\rsubscriptions\"\xd9\x02\n" +
+	"\rsubscriptions\x18\x01 \x03(\v2).airgate.plugin.v1.EventSubscriptionProtoR\rsubscriptions\"\xd9\x02\n" +
 	"\vPluginEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x16\n" +
@@ -4550,7 +4550,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\auser_id\x18\x05 \x01(\x03R\x06userId\x12\x19\n" +
 	"\bgroup_id\x18\x06 \x01(\x03R\agroupId\x12\x18\n" +
 	"\apayload\x18\a \x01(\fR\apayload\x12H\n" +
-	"\bmetadata\x18\b \x03(\v2,.airgate.plugin.v2.PluginEvent.MetadataEntryR\bmetadata\x12\x1f\n" +
+	"\bmetadata\x18\b \x03(\v2,.airgate.plugin.v1.PluginEvent.MetadataEntryR\bmetadata\x12\x1f\n" +
 	"\voccurred_at\x18\t \x01(\x03R\n" +
 	"occurredAt\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
@@ -4563,14 +4563,14 @@ const file_plugin_proto_rawDesc = "" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x18\n" +
 	"\apayload\x18\x02 \x01(\fR\apayload\x12'\n" +
 	"\x0fidempotency_key\x18\x03 \x01(\tR\x0eidempotencyKey\x12N\n" +
-	"\bmetadata\x18\x04 \x03(\v22.airgate.plugin.v2.HostInvokeRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\x04 \x03(\v22.airgate.plugin.v1.HostInvokeRequest.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd4\x01\n" +
 	"\x12HostInvokeResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
 	"\apayload\x18\x02 \x01(\fR\apayload\x12O\n" +
-	"\bmetadata\x18\x03 \x03(\v23.airgate.plugin.v2.HostInvokeResponse.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\x03 \x03(\v23.airgate.plugin.v1.HostInvokeResponse.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb9\x02\n" +
@@ -4579,7 +4579,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x05event\x18\x02 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x03 \x01(\fR\apayload\x12'\n" +
 	"\x0fidempotency_key\x18\x04 \x01(\tR\x0eidempotencyKey\x12L\n" +
-	"\bmetadata\x18\x05 \x03(\v20.airgate.plugin.v2.HostStreamFrame.MetadataEntryR\bmetadata\x12\x12\n" +
+	"\bmetadata\x18\x05 \x03(\v20.airgate.plugin.v1.HostStreamFrame.MetadataEntryR\bmetadata\x12\x12\n" +
 	"\x04done\x18\x06 \x01(\bR\x04done\x12\x16\n" +
 	"\x06status\x18\a \x01(\tR\x06status\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
@@ -4604,39 +4604,39 @@ const file_plugin_proto_rawDesc = "" +
 	"\x1aOUTCOME_UPSTREAM_TRANSIENT\x10\x05\x12\x1a\n" +
 	"\x16OUTCOME_STREAM_ABORTED\x10\x062\xcb\x04\n" +
 	"\rPluginService\x12J\n" +
-	"\aGetInfo\x12\x18.airgate.plugin.v2.Empty\x1a%.airgate.plugin.v2.PluginInfoResponse\x12@\n" +
-	"\x04Init\x12\x1e.airgate.plugin.v2.InitRequest\x1a\x18.airgate.plugin.v2.Empty\x12;\n" +
-	"\x05Start\x12\x18.airgate.plugin.v2.Empty\x1a\x18.airgate.plugin.v2.Empty\x12:\n" +
-	"\x04Stop\x12\x18.airgate.plugin.v2.Empty\x1a\x18.airgate.plugin.v2.Empty\x12N\n" +
-	"\fGetWebAssets\x12\x18.airgate.plugin.v2.Empty\x1a$.airgate.plugin.v2.WebAssetsResponse\x12N\n" +
-	"\tGetSchema\x12\x18.airgate.plugin.v2.Empty\x1a'.airgate.plugin.v2.PluginSchemaResponse\x12A\n" +
-	"\vHealthCheck\x12\x18.airgate.plugin.v2.Empty\x1a\x18.airgate.plugin.v2.Empty\x12P\n" +
-	"\rHandleRequest\x12\x1e.airgate.plugin.v2.HttpRequest\x1a\x1f.airgate.plugin.v2.HttpResponse2\xc9\x04\n" +
+	"\aGetInfo\x12\x18.airgate.plugin.v1.Empty\x1a%.airgate.plugin.v1.PluginInfoResponse\x12@\n" +
+	"\x04Init\x12\x1e.airgate.plugin.v1.InitRequest\x1a\x18.airgate.plugin.v1.Empty\x12;\n" +
+	"\x05Start\x12\x18.airgate.plugin.v1.Empty\x1a\x18.airgate.plugin.v1.Empty\x12:\n" +
+	"\x04Stop\x12\x18.airgate.plugin.v1.Empty\x1a\x18.airgate.plugin.v1.Empty\x12N\n" +
+	"\fGetWebAssets\x12\x18.airgate.plugin.v1.Empty\x1a$.airgate.plugin.v1.WebAssetsResponse\x12N\n" +
+	"\tGetSchema\x12\x18.airgate.plugin.v1.Empty\x1a'.airgate.plugin.v1.PluginSchemaResponse\x12A\n" +
+	"\vHealthCheck\x12\x18.airgate.plugin.v1.Empty\x1a\x18.airgate.plugin.v1.Empty\x12P\n" +
+	"\rHandleRequest\x12\x1e.airgate.plugin.v1.HttpRequest\x1a\x1f.airgate.plugin.v1.HttpResponse2\xc9\x04\n" +
 	"\x0eGatewayService\x12J\n" +
-	"\vGetPlatform\x12\x18.airgate.plugin.v2.Empty\x1a!.airgate.plugin.v2.StringResponse\x12H\n" +
-	"\tGetModels\x12\x18.airgate.plugin.v2.Empty\x1a!.airgate.plugin.v2.ModelsResponse\x12H\n" +
-	"\tGetRoutes\x12\x18.airgate.plugin.v2.Empty\x1a!.airgate.plugin.v2.RoutesResponse\x12O\n" +
-	"\aForward\x12!.airgate.plugin.v2.ForwardRequest\x1a!.airgate.plugin.v2.ForwardOutcome\x12U\n" +
-	"\rForwardStream\x12!.airgate.plugin.v2.ForwardRequest\x1a\x1f.airgate.plugin.v2.ForwardChunk0\x01\x12R\n" +
-	"\x0fValidateAccount\x12%.airgate.plugin.v2.CredentialsRequest\x1a\x18.airgate.plugin.v2.Empty\x12[\n" +
-	"\x0fHandleWebSocket\x12!.airgate.plugin.v2.WebSocketFrame\x1a!.airgate.plugin.v2.WebSocketFrame(\x010\x012\xe8\x04\n" +
+	"\vGetPlatform\x12\x18.airgate.plugin.v1.Empty\x1a!.airgate.plugin.v1.StringResponse\x12H\n" +
+	"\tGetModels\x12\x18.airgate.plugin.v1.Empty\x1a!.airgate.plugin.v1.ModelsResponse\x12H\n" +
+	"\tGetRoutes\x12\x18.airgate.plugin.v1.Empty\x1a!.airgate.plugin.v1.RoutesResponse\x12O\n" +
+	"\aForward\x12!.airgate.plugin.v1.ForwardRequest\x1a!.airgate.plugin.v1.ForwardOutcome\x12U\n" +
+	"\rForwardStream\x12!.airgate.plugin.v1.ForwardRequest\x1a\x1f.airgate.plugin.v1.ForwardChunk0\x01\x12R\n" +
+	"\x0fValidateAccount\x12%.airgate.plugin.v1.CredentialsRequest\x1a\x18.airgate.plugin.v1.Empty\x12[\n" +
+	"\x0fHandleWebSocket\x12!.airgate.plugin.v1.WebSocketFrame\x1a!.airgate.plugin.v1.WebSocketFrame(\x010\x012\xe8\x04\n" +
 	"\x10ExtensionService\x12=\n" +
-	"\aMigrate\x12\x18.airgate.plugin.v2.Empty\x1a\x18.airgate.plugin.v2.Empty\x12Z\n" +
-	"\x12GetBackgroundTasks\x12\x18.airgate.plugin.v2.Empty\x1a*.airgate.plugin.v2.BackgroundTasksResponse\x12Z\n" +
-	"\x11RunBackgroundTask\x12+.airgate.plugin.v2.RunBackgroundTaskRequest\x1a\x18.airgate.plugin.v2.Empty\x12P\n" +
-	"\rHandleRequest\x12\x1e.airgate.plugin.v2.HttpRequest\x1a\x1f.airgate.plugin.v2.HttpResponse\x12]\n" +
-	"\x13HandleStreamRequest\x12\x1e.airgate.plugin.v2.HttpRequest\x1a$.airgate.plugin.v2.HttpResponseChunk0\x01\x12\\\n" +
-	"\vProcessTask\x12%.airgate.plugin.v2.ProcessTaskRequest\x1a&.airgate.plugin.v2.ProcessTaskResponse\x12N\n" +
-	"\fGetTaskTypes\x12\x18.airgate.plugin.v2.Empty\x1a$.airgate.plugin.v2.TaskTypesResponse2\xc0\x01\n" +
+	"\aMigrate\x12\x18.airgate.plugin.v1.Empty\x1a\x18.airgate.plugin.v1.Empty\x12Z\n" +
+	"\x12GetBackgroundTasks\x12\x18.airgate.plugin.v1.Empty\x1a*.airgate.plugin.v1.BackgroundTasksResponse\x12Z\n" +
+	"\x11RunBackgroundTask\x12+.airgate.plugin.v1.RunBackgroundTaskRequest\x1a\x18.airgate.plugin.v1.Empty\x12P\n" +
+	"\rHandleRequest\x12\x1e.airgate.plugin.v1.HttpRequest\x1a\x1f.airgate.plugin.v1.HttpResponse\x12]\n" +
+	"\x13HandleStreamRequest\x12\x1e.airgate.plugin.v1.HttpRequest\x1a$.airgate.plugin.v1.HttpResponseChunk0\x01\x12\\\n" +
+	"\vProcessTask\x12%.airgate.plugin.v1.ProcessTaskRequest\x1a&.airgate.plugin.v1.ProcessTaskResponse\x12N\n" +
+	"\fGetTaskTypes\x12\x18.airgate.plugin.v1.Empty\x1a$.airgate.plugin.v1.TaskTypesResponse2\xc0\x01\n" +
 	"\x11MiddlewareService\x12]\n" +
-	"\x0eOnForwardBegin\x12$.airgate.plugin.v2.MiddlewareRequest\x1a%.airgate.plugin.v2.MiddlewareDecision\x12L\n" +
-	"\fOnForwardEnd\x12\".airgate.plugin.v2.MiddlewareEvent\x1a\x18.airgate.plugin.v2.Empty2\xc7\x01\n" +
+	"\x0eOnForwardBegin\x12$.airgate.plugin.v1.MiddlewareRequest\x1a%.airgate.plugin.v1.MiddlewareDecision\x12L\n" +
+	"\fOnForwardEnd\x12\".airgate.plugin.v1.MiddlewareEvent\x1a\x18.airgate.plugin.v1.Empty2\xc7\x01\n" +
 	"\fEventService\x12`\n" +
-	"\x15GetEventSubscriptions\x12\x18.airgate.plugin.v2.Empty\x1a-.airgate.plugin.v2.EventSubscriptionsResponse\x12U\n" +
-	"\vHandleEvent\x12\x1e.airgate.plugin.v2.PluginEvent\x1a&.airgate.plugin.v2.EventHandleResponse2\xc6\x01\n" +
+	"\x15GetEventSubscriptions\x12\x18.airgate.plugin.v1.Empty\x1a-.airgate.plugin.v1.EventSubscriptionsResponse\x12U\n" +
+	"\vHandleEvent\x12\x1e.airgate.plugin.v1.PluginEvent\x1a&.airgate.plugin.v1.EventHandleResponse2\xc6\x01\n" +
 	"\x11CoreInvokeService\x12U\n" +
-	"\x06Invoke\x12$.airgate.plugin.v2.HostInvokeRequest\x1a%.airgate.plugin.v2.HostInvokeResponse\x12Z\n" +
-	"\fInvokeStream\x12\".airgate.plugin.v2.HostStreamFrame\x1a\".airgate.plugin.v2.HostStreamFrame(\x010\x01B4Z2github.com/DouDOU-start/airgate-sdk/protocol/protob\x06proto3"
+	"\x06Invoke\x12$.airgate.plugin.v1.HostInvokeRequest\x1a%.airgate.plugin.v1.HostInvokeResponse\x12Z\n" +
+	"\fInvokeStream\x12\".airgate.plugin.v1.HostStreamFrame\x1a\".airgate.plugin.v1.HostStreamFrame(\x010\x01B4Z2github.com/DouDOU-start/airgate-sdk/protocol/protob\x06proto3"
 
 var (
 	file_plugin_proto_rawDescOnce sync.Once
@@ -4653,239 +4653,239 @@ func file_plugin_proto_rawDescGZIP() []byte {
 var file_plugin_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 88)
 var file_plugin_proto_goTypes = []any{
-	(OutcomeKind)(0),                   // 0: airgate.plugin.v2.OutcomeKind
-	(WebSocketFrame_FrameType)(0),      // 1: airgate.plugin.v2.WebSocketFrame.FrameType
-	(MiddlewareDecision_Action)(0),     // 2: airgate.plugin.v2.MiddlewareDecision.Action
-	(*Empty)(nil),                      // 3: airgate.plugin.v2.Empty
-	(*StringResponse)(nil),             // 4: airgate.plugin.v2.StringResponse
-	(*HeaderValues)(nil),               // 5: airgate.plugin.v2.HeaderValues
-	(*PluginInfoResponse)(nil),         // 6: airgate.plugin.v2.PluginInfoResponse
-	(*ConfigFieldProto)(nil),           // 7: airgate.plugin.v2.ConfigFieldProto
-	(*AccountTypeProto)(nil),           // 8: airgate.plugin.v2.AccountTypeProto
-	(*CredentialFieldProto)(nil),       // 9: airgate.plugin.v2.CredentialFieldProto
-	(*FrontendPageProto)(nil),          // 10: airgate.plugin.v2.FrontendPageProto
-	(*FrontendWidgetProto)(nil),        // 11: airgate.plugin.v2.FrontendWidgetProto
-	(*InitRequest)(nil),                // 12: airgate.plugin.v2.InitRequest
-	(*ModelInfoProto)(nil),             // 13: airgate.plugin.v2.ModelInfoProto
-	(*ModelsResponse)(nil),             // 14: airgate.plugin.v2.ModelsResponse
-	(*RouteDefinitionProto)(nil),       // 15: airgate.plugin.v2.RouteDefinitionProto
-	(*RoutesResponse)(nil),             // 16: airgate.plugin.v2.RoutesResponse
-	(*AccountProto)(nil),               // 17: airgate.plugin.v2.AccountProto
-	(*ForwardRequest)(nil),             // 18: airgate.plugin.v2.ForwardRequest
-	(*UpstreamResponse)(nil),           // 19: airgate.plugin.v2.UpstreamResponse
-	(*UsageAttribute)(nil),             // 20: airgate.plugin.v2.UsageAttribute
-	(*UsageMetric)(nil),                // 21: airgate.plugin.v2.UsageMetric
-	(*UsageCostDetail)(nil),            // 22: airgate.plugin.v2.UsageCostDetail
-	(*Usage)(nil),                      // 23: airgate.plugin.v2.Usage
-	(*ForwardOutcome)(nil),             // 24: airgate.plugin.v2.ForwardOutcome
-	(*ForwardChunk)(nil),               // 25: airgate.plugin.v2.ForwardChunk
-	(*CredentialsRequest)(nil),         // 26: airgate.plugin.v2.CredentialsRequest
-	(*HttpRequest)(nil),                // 27: airgate.plugin.v2.HttpRequest
-	(*HttpResponse)(nil),               // 28: airgate.plugin.v2.HttpResponse
-	(*HttpResponseChunk)(nil),          // 29: airgate.plugin.v2.HttpResponseChunk
-	(*BackgroundTaskProto)(nil),        // 30: airgate.plugin.v2.BackgroundTaskProto
-	(*BackgroundTasksResponse)(nil),    // 31: airgate.plugin.v2.BackgroundTasksResponse
-	(*RunBackgroundTaskRequest)(nil),   // 32: airgate.plugin.v2.RunBackgroundTaskRequest
-	(*WebSocketFrame)(nil),             // 33: airgate.plugin.v2.WebSocketFrame
-	(*WebSocketConnectInfo)(nil),       // 34: airgate.plugin.v2.WebSocketConnectInfo
-	(*WebAssetFile)(nil),               // 35: airgate.plugin.v2.WebAssetFile
-	(*WebAssetsResponse)(nil),          // 36: airgate.plugin.v2.WebAssetsResponse
-	(*PayloadSchemaProto)(nil),         // 37: airgate.plugin.v2.PayloadSchemaProto
-	(*RouteSchemaProto)(nil),           // 38: airgate.plugin.v2.RouteSchemaProto
-	(*TaskSchemaProto)(nil),            // 39: airgate.plugin.v2.TaskSchemaProto
-	(*EventSchemaProto)(nil),           // 40: airgate.plugin.v2.EventSchemaProto
-	(*InvokeSchemaProto)(nil),          // 41: airgate.plugin.v2.InvokeSchemaProto
-	(*PluginSchemaResponse)(nil),       // 42: airgate.plugin.v2.PluginSchemaResponse
-	(*MiddlewareRequest)(nil),          // 43: airgate.plugin.v2.MiddlewareRequest
-	(*MiddlewareEvent)(nil),            // 44: airgate.plugin.v2.MiddlewareEvent
-	(*MiddlewareDecision)(nil),         // 45: airgate.plugin.v2.MiddlewareDecision
-	(*EventSubscriptionProto)(nil),     // 46: airgate.plugin.v2.EventSubscriptionProto
-	(*EventSubscriptionsResponse)(nil), // 47: airgate.plugin.v2.EventSubscriptionsResponse
-	(*PluginEvent)(nil),                // 48: airgate.plugin.v2.PluginEvent
-	(*EventHandleResponse)(nil),        // 49: airgate.plugin.v2.EventHandleResponse
-	(*HostInvokeRequest)(nil),          // 50: airgate.plugin.v2.HostInvokeRequest
-	(*HostInvokeResponse)(nil),         // 51: airgate.plugin.v2.HostInvokeResponse
-	(*HostStreamFrame)(nil),            // 52: airgate.plugin.v2.HostStreamFrame
-	(*ProcessTaskRequest)(nil),         // 53: airgate.plugin.v2.ProcessTaskRequest
-	(*ProcessTaskResponse)(nil),        // 54: airgate.plugin.v2.ProcessTaskResponse
-	(*TaskTypesResponse)(nil),          // 55: airgate.plugin.v2.TaskTypesResponse
-	nil,                                // 56: airgate.plugin.v2.PluginInfoResponse.MetadataEntry
-	nil,                                // 57: airgate.plugin.v2.InitRequest.ConfigEntry
-	nil,                                // 58: airgate.plugin.v2.ModelInfoProto.MetadataEntry
-	nil,                                // 59: airgate.plugin.v2.RouteDefinitionProto.MetadataEntry
-	nil,                                // 60: airgate.plugin.v2.ForwardRequest.HeadersEntry
-	nil,                                // 61: airgate.plugin.v2.UpstreamResponse.HeadersEntry
-	nil,                                // 62: airgate.plugin.v2.UsageAttribute.MetadataEntry
-	nil,                                // 63: airgate.plugin.v2.UsageMetric.MetadataEntry
-	nil,                                // 64: airgate.plugin.v2.UsageCostDetail.MetadataEntry
-	nil,                                // 65: airgate.plugin.v2.Usage.MetadataEntry
-	nil,                                // 66: airgate.plugin.v2.ForwardOutcome.UpdatedCredentialsEntry
-	nil,                                // 67: airgate.plugin.v2.ForwardChunk.HeadersEntry
-	nil,                                // 68: airgate.plugin.v2.CredentialsRequest.CredentialsEntry
-	nil,                                // 69: airgate.plugin.v2.HttpRequest.HeadersEntry
-	nil,                                // 70: airgate.plugin.v2.HttpResponse.HeadersEntry
-	nil,                                // 71: airgate.plugin.v2.HttpResponseChunk.HeadersEntry
-	nil,                                // 72: airgate.plugin.v2.WebSocketConnectInfo.HeadersEntry
-	nil,                                // 73: airgate.plugin.v2.PayloadSchemaProto.MetadataEntry
-	nil,                                // 74: airgate.plugin.v2.RouteSchemaProto.MetadataEntry
-	nil,                                // 75: airgate.plugin.v2.TaskSchemaProto.MetadataEntry
-	nil,                                // 76: airgate.plugin.v2.EventSchemaProto.MetadataEntry
-	nil,                                // 77: airgate.plugin.v2.InvokeSchemaProto.MetadataEntry
-	nil,                                // 78: airgate.plugin.v2.PluginSchemaResponse.MetadataEntry
-	nil,                                // 79: airgate.plugin.v2.MiddlewareRequest.MetadataEntry
-	nil,                                // 80: airgate.plugin.v2.MiddlewareRequest.RequestHeadersEntry
-	nil,                                // 81: airgate.plugin.v2.MiddlewareEvent.MetadataEntry
-	nil,                                // 82: airgate.plugin.v2.MiddlewareEvent.ResponseHeadersEntry
-	nil,                                // 83: airgate.plugin.v2.MiddlewareDecision.SetHeadersEntry
-	nil,                                // 84: airgate.plugin.v2.MiddlewareDecision.MetadataEntry
-	nil,                                // 85: airgate.plugin.v2.EventSubscriptionProto.FilterEntry
-	nil,                                // 86: airgate.plugin.v2.EventSubscriptionProto.MetadataEntry
-	nil,                                // 87: airgate.plugin.v2.PluginEvent.MetadataEntry
-	nil,                                // 88: airgate.plugin.v2.HostInvokeRequest.MetadataEntry
-	nil,                                // 89: airgate.plugin.v2.HostInvokeResponse.MetadataEntry
-	nil,                                // 90: airgate.plugin.v2.HostStreamFrame.MetadataEntry
+	(OutcomeKind)(0),                   // 0: airgate.plugin.v1.OutcomeKind
+	(WebSocketFrame_FrameType)(0),      // 1: airgate.plugin.v1.WebSocketFrame.FrameType
+	(MiddlewareDecision_Action)(0),     // 2: airgate.plugin.v1.MiddlewareDecision.Action
+	(*Empty)(nil),                      // 3: airgate.plugin.v1.Empty
+	(*StringResponse)(nil),             // 4: airgate.plugin.v1.StringResponse
+	(*HeaderValues)(nil),               // 5: airgate.plugin.v1.HeaderValues
+	(*PluginInfoResponse)(nil),         // 6: airgate.plugin.v1.PluginInfoResponse
+	(*ConfigFieldProto)(nil),           // 7: airgate.plugin.v1.ConfigFieldProto
+	(*AccountTypeProto)(nil),           // 8: airgate.plugin.v1.AccountTypeProto
+	(*CredentialFieldProto)(nil),       // 9: airgate.plugin.v1.CredentialFieldProto
+	(*FrontendPageProto)(nil),          // 10: airgate.plugin.v1.FrontendPageProto
+	(*FrontendWidgetProto)(nil),        // 11: airgate.plugin.v1.FrontendWidgetProto
+	(*InitRequest)(nil),                // 12: airgate.plugin.v1.InitRequest
+	(*ModelInfoProto)(nil),             // 13: airgate.plugin.v1.ModelInfoProto
+	(*ModelsResponse)(nil),             // 14: airgate.plugin.v1.ModelsResponse
+	(*RouteDefinitionProto)(nil),       // 15: airgate.plugin.v1.RouteDefinitionProto
+	(*RoutesResponse)(nil),             // 16: airgate.plugin.v1.RoutesResponse
+	(*AccountProto)(nil),               // 17: airgate.plugin.v1.AccountProto
+	(*ForwardRequest)(nil),             // 18: airgate.plugin.v1.ForwardRequest
+	(*UpstreamResponse)(nil),           // 19: airgate.plugin.v1.UpstreamResponse
+	(*UsageAttribute)(nil),             // 20: airgate.plugin.v1.UsageAttribute
+	(*UsageMetric)(nil),                // 21: airgate.plugin.v1.UsageMetric
+	(*UsageCostDetail)(nil),            // 22: airgate.plugin.v1.UsageCostDetail
+	(*Usage)(nil),                      // 23: airgate.plugin.v1.Usage
+	(*ForwardOutcome)(nil),             // 24: airgate.plugin.v1.ForwardOutcome
+	(*ForwardChunk)(nil),               // 25: airgate.plugin.v1.ForwardChunk
+	(*CredentialsRequest)(nil),         // 26: airgate.plugin.v1.CredentialsRequest
+	(*HttpRequest)(nil),                // 27: airgate.plugin.v1.HttpRequest
+	(*HttpResponse)(nil),               // 28: airgate.plugin.v1.HttpResponse
+	(*HttpResponseChunk)(nil),          // 29: airgate.plugin.v1.HttpResponseChunk
+	(*BackgroundTaskProto)(nil),        // 30: airgate.plugin.v1.BackgroundTaskProto
+	(*BackgroundTasksResponse)(nil),    // 31: airgate.plugin.v1.BackgroundTasksResponse
+	(*RunBackgroundTaskRequest)(nil),   // 32: airgate.plugin.v1.RunBackgroundTaskRequest
+	(*WebSocketFrame)(nil),             // 33: airgate.plugin.v1.WebSocketFrame
+	(*WebSocketConnectInfo)(nil),       // 34: airgate.plugin.v1.WebSocketConnectInfo
+	(*WebAssetFile)(nil),               // 35: airgate.plugin.v1.WebAssetFile
+	(*WebAssetsResponse)(nil),          // 36: airgate.plugin.v1.WebAssetsResponse
+	(*PayloadSchemaProto)(nil),         // 37: airgate.plugin.v1.PayloadSchemaProto
+	(*RouteSchemaProto)(nil),           // 38: airgate.plugin.v1.RouteSchemaProto
+	(*TaskSchemaProto)(nil),            // 39: airgate.plugin.v1.TaskSchemaProto
+	(*EventSchemaProto)(nil),           // 40: airgate.plugin.v1.EventSchemaProto
+	(*InvokeSchemaProto)(nil),          // 41: airgate.plugin.v1.InvokeSchemaProto
+	(*PluginSchemaResponse)(nil),       // 42: airgate.plugin.v1.PluginSchemaResponse
+	(*MiddlewareRequest)(nil),          // 43: airgate.plugin.v1.MiddlewareRequest
+	(*MiddlewareEvent)(nil),            // 44: airgate.plugin.v1.MiddlewareEvent
+	(*MiddlewareDecision)(nil),         // 45: airgate.plugin.v1.MiddlewareDecision
+	(*EventSubscriptionProto)(nil),     // 46: airgate.plugin.v1.EventSubscriptionProto
+	(*EventSubscriptionsResponse)(nil), // 47: airgate.plugin.v1.EventSubscriptionsResponse
+	(*PluginEvent)(nil),                // 48: airgate.plugin.v1.PluginEvent
+	(*EventHandleResponse)(nil),        // 49: airgate.plugin.v1.EventHandleResponse
+	(*HostInvokeRequest)(nil),          // 50: airgate.plugin.v1.HostInvokeRequest
+	(*HostInvokeResponse)(nil),         // 51: airgate.plugin.v1.HostInvokeResponse
+	(*HostStreamFrame)(nil),            // 52: airgate.plugin.v1.HostStreamFrame
+	(*ProcessTaskRequest)(nil),         // 53: airgate.plugin.v1.ProcessTaskRequest
+	(*ProcessTaskResponse)(nil),        // 54: airgate.plugin.v1.ProcessTaskResponse
+	(*TaskTypesResponse)(nil),          // 55: airgate.plugin.v1.TaskTypesResponse
+	nil,                                // 56: airgate.plugin.v1.PluginInfoResponse.MetadataEntry
+	nil,                                // 57: airgate.plugin.v1.InitRequest.ConfigEntry
+	nil,                                // 58: airgate.plugin.v1.ModelInfoProto.MetadataEntry
+	nil,                                // 59: airgate.plugin.v1.RouteDefinitionProto.MetadataEntry
+	nil,                                // 60: airgate.plugin.v1.ForwardRequest.HeadersEntry
+	nil,                                // 61: airgate.plugin.v1.UpstreamResponse.HeadersEntry
+	nil,                                // 62: airgate.plugin.v1.UsageAttribute.MetadataEntry
+	nil,                                // 63: airgate.plugin.v1.UsageMetric.MetadataEntry
+	nil,                                // 64: airgate.plugin.v1.UsageCostDetail.MetadataEntry
+	nil,                                // 65: airgate.plugin.v1.Usage.MetadataEntry
+	nil,                                // 66: airgate.plugin.v1.ForwardOutcome.UpdatedCredentialsEntry
+	nil,                                // 67: airgate.plugin.v1.ForwardChunk.HeadersEntry
+	nil,                                // 68: airgate.plugin.v1.CredentialsRequest.CredentialsEntry
+	nil,                                // 69: airgate.plugin.v1.HttpRequest.HeadersEntry
+	nil,                                // 70: airgate.plugin.v1.HttpResponse.HeadersEntry
+	nil,                                // 71: airgate.plugin.v1.HttpResponseChunk.HeadersEntry
+	nil,                                // 72: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
+	nil,                                // 73: airgate.plugin.v1.PayloadSchemaProto.MetadataEntry
+	nil,                                // 74: airgate.plugin.v1.RouteSchemaProto.MetadataEntry
+	nil,                                // 75: airgate.plugin.v1.TaskSchemaProto.MetadataEntry
+	nil,                                // 76: airgate.plugin.v1.EventSchemaProto.MetadataEntry
+	nil,                                // 77: airgate.plugin.v1.InvokeSchemaProto.MetadataEntry
+	nil,                                // 78: airgate.plugin.v1.PluginSchemaResponse.MetadataEntry
+	nil,                                // 79: airgate.plugin.v1.MiddlewareRequest.MetadataEntry
+	nil,                                // 80: airgate.plugin.v1.MiddlewareRequest.RequestHeadersEntry
+	nil,                                // 81: airgate.plugin.v1.MiddlewareEvent.MetadataEntry
+	nil,                                // 82: airgate.plugin.v1.MiddlewareEvent.ResponseHeadersEntry
+	nil,                                // 83: airgate.plugin.v1.MiddlewareDecision.SetHeadersEntry
+	nil,                                // 84: airgate.plugin.v1.MiddlewareDecision.MetadataEntry
+	nil,                                // 85: airgate.plugin.v1.EventSubscriptionProto.FilterEntry
+	nil,                                // 86: airgate.plugin.v1.EventSubscriptionProto.MetadataEntry
+	nil,                                // 87: airgate.plugin.v1.PluginEvent.MetadataEntry
+	nil,                                // 88: airgate.plugin.v1.HostInvokeRequest.MetadataEntry
+	nil,                                // 89: airgate.plugin.v1.HostInvokeResponse.MetadataEntry
+	nil,                                // 90: airgate.plugin.v1.HostStreamFrame.MetadataEntry
 }
 var file_plugin_proto_depIdxs = []int32{
-	8,   // 0: airgate.plugin.v2.PluginInfoResponse.account_types:type_name -> airgate.plugin.v2.AccountTypeProto
-	10,  // 1: airgate.plugin.v2.PluginInfoResponse.frontend_pages:type_name -> airgate.plugin.v2.FrontendPageProto
-	11,  // 2: airgate.plugin.v2.PluginInfoResponse.frontend_widgets:type_name -> airgate.plugin.v2.FrontendWidgetProto
-	7,   // 3: airgate.plugin.v2.PluginInfoResponse.config_schema:type_name -> airgate.plugin.v2.ConfigFieldProto
-	56,  // 4: airgate.plugin.v2.PluginInfoResponse.metadata:type_name -> airgate.plugin.v2.PluginInfoResponse.MetadataEntry
-	9,   // 5: airgate.plugin.v2.AccountTypeProto.fields:type_name -> airgate.plugin.v2.CredentialFieldProto
-	57,  // 6: airgate.plugin.v2.InitRequest.config:type_name -> airgate.plugin.v2.InitRequest.ConfigEntry
-	58,  // 7: airgate.plugin.v2.ModelInfoProto.metadata:type_name -> airgate.plugin.v2.ModelInfoProto.MetadataEntry
-	13,  // 8: airgate.plugin.v2.ModelsResponse.models:type_name -> airgate.plugin.v2.ModelInfoProto
-	59,  // 9: airgate.plugin.v2.RouteDefinitionProto.metadata:type_name -> airgate.plugin.v2.RouteDefinitionProto.MetadataEntry
-	15,  // 10: airgate.plugin.v2.RoutesResponse.routes:type_name -> airgate.plugin.v2.RouteDefinitionProto
-	60,  // 11: airgate.plugin.v2.ForwardRequest.headers:type_name -> airgate.plugin.v2.ForwardRequest.HeadersEntry
-	17,  // 12: airgate.plugin.v2.ForwardRequest.account:type_name -> airgate.plugin.v2.AccountProto
-	61,  // 13: airgate.plugin.v2.UpstreamResponse.headers:type_name -> airgate.plugin.v2.UpstreamResponse.HeadersEntry
-	62,  // 14: airgate.plugin.v2.UsageAttribute.metadata:type_name -> airgate.plugin.v2.UsageAttribute.MetadataEntry
-	63,  // 15: airgate.plugin.v2.UsageMetric.metadata:type_name -> airgate.plugin.v2.UsageMetric.MetadataEntry
-	64,  // 16: airgate.plugin.v2.UsageCostDetail.metadata:type_name -> airgate.plugin.v2.UsageCostDetail.MetadataEntry
-	21,  // 17: airgate.plugin.v2.Usage.metrics:type_name -> airgate.plugin.v2.UsageMetric
-	20,  // 18: airgate.plugin.v2.Usage.attributes:type_name -> airgate.plugin.v2.UsageAttribute
-	22,  // 19: airgate.plugin.v2.Usage.cost_details:type_name -> airgate.plugin.v2.UsageCostDetail
-	65,  // 20: airgate.plugin.v2.Usage.metadata:type_name -> airgate.plugin.v2.Usage.MetadataEntry
-	0,   // 21: airgate.plugin.v2.ForwardOutcome.kind:type_name -> airgate.plugin.v2.OutcomeKind
-	19,  // 22: airgate.plugin.v2.ForwardOutcome.upstream:type_name -> airgate.plugin.v2.UpstreamResponse
-	23,  // 23: airgate.plugin.v2.ForwardOutcome.usage:type_name -> airgate.plugin.v2.Usage
-	66,  // 24: airgate.plugin.v2.ForwardOutcome.updated_credentials:type_name -> airgate.plugin.v2.ForwardOutcome.UpdatedCredentialsEntry
-	24,  // 25: airgate.plugin.v2.ForwardChunk.final_outcome:type_name -> airgate.plugin.v2.ForwardOutcome
-	67,  // 26: airgate.plugin.v2.ForwardChunk.headers:type_name -> airgate.plugin.v2.ForwardChunk.HeadersEntry
-	68,  // 27: airgate.plugin.v2.CredentialsRequest.credentials:type_name -> airgate.plugin.v2.CredentialsRequest.CredentialsEntry
-	69,  // 28: airgate.plugin.v2.HttpRequest.headers:type_name -> airgate.plugin.v2.HttpRequest.HeadersEntry
-	70,  // 29: airgate.plugin.v2.HttpResponse.headers:type_name -> airgate.plugin.v2.HttpResponse.HeadersEntry
-	71,  // 30: airgate.plugin.v2.HttpResponseChunk.headers:type_name -> airgate.plugin.v2.HttpResponseChunk.HeadersEntry
-	30,  // 31: airgate.plugin.v2.BackgroundTasksResponse.tasks:type_name -> airgate.plugin.v2.BackgroundTaskProto
-	1,   // 32: airgate.plugin.v2.WebSocketFrame.type:type_name -> airgate.plugin.v2.WebSocketFrame.FrameType
-	34,  // 33: airgate.plugin.v2.WebSocketFrame.connect_info:type_name -> airgate.plugin.v2.WebSocketConnectInfo
-	24,  // 34: airgate.plugin.v2.WebSocketFrame.outcome:type_name -> airgate.plugin.v2.ForwardOutcome
-	72,  // 35: airgate.plugin.v2.WebSocketConnectInfo.headers:type_name -> airgate.plugin.v2.WebSocketConnectInfo.HeadersEntry
-	17,  // 36: airgate.plugin.v2.WebSocketConnectInfo.account:type_name -> airgate.plugin.v2.AccountProto
-	35,  // 37: airgate.plugin.v2.WebAssetsResponse.files:type_name -> airgate.plugin.v2.WebAssetFile
-	73,  // 38: airgate.plugin.v2.PayloadSchemaProto.metadata:type_name -> airgate.plugin.v2.PayloadSchemaProto.MetadataEntry
-	37,  // 39: airgate.plugin.v2.RouteSchemaProto.request:type_name -> airgate.plugin.v2.PayloadSchemaProto
-	37,  // 40: airgate.plugin.v2.RouteSchemaProto.response:type_name -> airgate.plugin.v2.PayloadSchemaProto
-	74,  // 41: airgate.plugin.v2.RouteSchemaProto.metadata:type_name -> airgate.plugin.v2.RouteSchemaProto.MetadataEntry
-	37,  // 42: airgate.plugin.v2.TaskSchemaProto.input:type_name -> airgate.plugin.v2.PayloadSchemaProto
-	37,  // 43: airgate.plugin.v2.TaskSchemaProto.output:type_name -> airgate.plugin.v2.PayloadSchemaProto
-	75,  // 44: airgate.plugin.v2.TaskSchemaProto.metadata:type_name -> airgate.plugin.v2.TaskSchemaProto.MetadataEntry
-	37,  // 45: airgate.plugin.v2.EventSchemaProto.payload:type_name -> airgate.plugin.v2.PayloadSchemaProto
-	76,  // 46: airgate.plugin.v2.EventSchemaProto.metadata:type_name -> airgate.plugin.v2.EventSchemaProto.MetadataEntry
-	37,  // 47: airgate.plugin.v2.InvokeSchemaProto.request:type_name -> airgate.plugin.v2.PayloadSchemaProto
-	37,  // 48: airgate.plugin.v2.InvokeSchemaProto.response:type_name -> airgate.plugin.v2.PayloadSchemaProto
-	77,  // 49: airgate.plugin.v2.InvokeSchemaProto.metadata:type_name -> airgate.plugin.v2.InvokeSchemaProto.MetadataEntry
-	37,  // 50: airgate.plugin.v2.InvokeSchemaProto.client_frame:type_name -> airgate.plugin.v2.PayloadSchemaProto
-	37,  // 51: airgate.plugin.v2.InvokeSchemaProto.server_frame:type_name -> airgate.plugin.v2.PayloadSchemaProto
-	38,  // 52: airgate.plugin.v2.PluginSchemaResponse.routes:type_name -> airgate.plugin.v2.RouteSchemaProto
-	39,  // 53: airgate.plugin.v2.PluginSchemaResponse.tasks:type_name -> airgate.plugin.v2.TaskSchemaProto
-	40,  // 54: airgate.plugin.v2.PluginSchemaResponse.events:type_name -> airgate.plugin.v2.EventSchemaProto
-	41,  // 55: airgate.plugin.v2.PluginSchemaResponse.invokes:type_name -> airgate.plugin.v2.InvokeSchemaProto
-	78,  // 56: airgate.plugin.v2.PluginSchemaResponse.metadata:type_name -> airgate.plugin.v2.PluginSchemaResponse.MetadataEntry
-	21,  // 57: airgate.plugin.v2.MiddlewareRequest.estimates:type_name -> airgate.plugin.v2.UsageMetric
-	79,  // 58: airgate.plugin.v2.MiddlewareRequest.metadata:type_name -> airgate.plugin.v2.MiddlewareRequest.MetadataEntry
-	80,  // 59: airgate.plugin.v2.MiddlewareRequest.request_headers:type_name -> airgate.plugin.v2.MiddlewareRequest.RequestHeadersEntry
-	21,  // 60: airgate.plugin.v2.MiddlewareEvent.estimates:type_name -> airgate.plugin.v2.UsageMetric
-	23,  // 61: airgate.plugin.v2.MiddlewareEvent.usage:type_name -> airgate.plugin.v2.Usage
-	81,  // 62: airgate.plugin.v2.MiddlewareEvent.metadata:type_name -> airgate.plugin.v2.MiddlewareEvent.MetadataEntry
-	82,  // 63: airgate.plugin.v2.MiddlewareEvent.response_headers:type_name -> airgate.plugin.v2.MiddlewareEvent.ResponseHeadersEntry
-	2,   // 64: airgate.plugin.v2.MiddlewareDecision.action:type_name -> airgate.plugin.v2.MiddlewareDecision.Action
-	83,  // 65: airgate.plugin.v2.MiddlewareDecision.set_headers:type_name -> airgate.plugin.v2.MiddlewareDecision.SetHeadersEntry
-	84,  // 66: airgate.plugin.v2.MiddlewareDecision.metadata:type_name -> airgate.plugin.v2.MiddlewareDecision.MetadataEntry
-	85,  // 67: airgate.plugin.v2.EventSubscriptionProto.filter:type_name -> airgate.plugin.v2.EventSubscriptionProto.FilterEntry
-	86,  // 68: airgate.plugin.v2.EventSubscriptionProto.metadata:type_name -> airgate.plugin.v2.EventSubscriptionProto.MetadataEntry
-	46,  // 69: airgate.plugin.v2.EventSubscriptionsResponse.subscriptions:type_name -> airgate.plugin.v2.EventSubscriptionProto
-	87,  // 70: airgate.plugin.v2.PluginEvent.metadata:type_name -> airgate.plugin.v2.PluginEvent.MetadataEntry
-	88,  // 71: airgate.plugin.v2.HostInvokeRequest.metadata:type_name -> airgate.plugin.v2.HostInvokeRequest.MetadataEntry
-	89,  // 72: airgate.plugin.v2.HostInvokeResponse.metadata:type_name -> airgate.plugin.v2.HostInvokeResponse.MetadataEntry
-	90,  // 73: airgate.plugin.v2.HostStreamFrame.metadata:type_name -> airgate.plugin.v2.HostStreamFrame.MetadataEntry
-	5,   // 74: airgate.plugin.v2.ForwardRequest.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 75: airgate.plugin.v2.UpstreamResponse.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 76: airgate.plugin.v2.ForwardChunk.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 77: airgate.plugin.v2.HttpRequest.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 78: airgate.plugin.v2.HttpResponse.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 79: airgate.plugin.v2.HttpResponseChunk.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 80: airgate.plugin.v2.WebSocketConnectInfo.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 81: airgate.plugin.v2.MiddlewareRequest.RequestHeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 82: airgate.plugin.v2.MiddlewareEvent.ResponseHeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 83: airgate.plugin.v2.MiddlewareDecision.SetHeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	3,   // 84: airgate.plugin.v2.PluginService.GetInfo:input_type -> airgate.plugin.v2.Empty
-	12,  // 85: airgate.plugin.v2.PluginService.Init:input_type -> airgate.plugin.v2.InitRequest
-	3,   // 86: airgate.plugin.v2.PluginService.Start:input_type -> airgate.plugin.v2.Empty
-	3,   // 87: airgate.plugin.v2.PluginService.Stop:input_type -> airgate.plugin.v2.Empty
-	3,   // 88: airgate.plugin.v2.PluginService.GetWebAssets:input_type -> airgate.plugin.v2.Empty
-	3,   // 89: airgate.plugin.v2.PluginService.GetSchema:input_type -> airgate.plugin.v2.Empty
-	3,   // 90: airgate.plugin.v2.PluginService.HealthCheck:input_type -> airgate.plugin.v2.Empty
-	27,  // 91: airgate.plugin.v2.PluginService.HandleRequest:input_type -> airgate.plugin.v2.HttpRequest
-	3,   // 92: airgate.plugin.v2.GatewayService.GetPlatform:input_type -> airgate.plugin.v2.Empty
-	3,   // 93: airgate.plugin.v2.GatewayService.GetModels:input_type -> airgate.plugin.v2.Empty
-	3,   // 94: airgate.plugin.v2.GatewayService.GetRoutes:input_type -> airgate.plugin.v2.Empty
-	18,  // 95: airgate.plugin.v2.GatewayService.Forward:input_type -> airgate.plugin.v2.ForwardRequest
-	18,  // 96: airgate.plugin.v2.GatewayService.ForwardStream:input_type -> airgate.plugin.v2.ForwardRequest
-	26,  // 97: airgate.plugin.v2.GatewayService.ValidateAccount:input_type -> airgate.plugin.v2.CredentialsRequest
-	33,  // 98: airgate.plugin.v2.GatewayService.HandleWebSocket:input_type -> airgate.plugin.v2.WebSocketFrame
-	3,   // 99: airgate.plugin.v2.ExtensionService.Migrate:input_type -> airgate.plugin.v2.Empty
-	3,   // 100: airgate.plugin.v2.ExtensionService.GetBackgroundTasks:input_type -> airgate.plugin.v2.Empty
-	32,  // 101: airgate.plugin.v2.ExtensionService.RunBackgroundTask:input_type -> airgate.plugin.v2.RunBackgroundTaskRequest
-	27,  // 102: airgate.plugin.v2.ExtensionService.HandleRequest:input_type -> airgate.plugin.v2.HttpRequest
-	27,  // 103: airgate.plugin.v2.ExtensionService.HandleStreamRequest:input_type -> airgate.plugin.v2.HttpRequest
-	53,  // 104: airgate.plugin.v2.ExtensionService.ProcessTask:input_type -> airgate.plugin.v2.ProcessTaskRequest
-	3,   // 105: airgate.plugin.v2.ExtensionService.GetTaskTypes:input_type -> airgate.plugin.v2.Empty
-	43,  // 106: airgate.plugin.v2.MiddlewareService.OnForwardBegin:input_type -> airgate.plugin.v2.MiddlewareRequest
-	44,  // 107: airgate.plugin.v2.MiddlewareService.OnForwardEnd:input_type -> airgate.plugin.v2.MiddlewareEvent
-	3,   // 108: airgate.plugin.v2.EventService.GetEventSubscriptions:input_type -> airgate.plugin.v2.Empty
-	48,  // 109: airgate.plugin.v2.EventService.HandleEvent:input_type -> airgate.plugin.v2.PluginEvent
-	50,  // 110: airgate.plugin.v2.CoreInvokeService.Invoke:input_type -> airgate.plugin.v2.HostInvokeRequest
-	52,  // 111: airgate.plugin.v2.CoreInvokeService.InvokeStream:input_type -> airgate.plugin.v2.HostStreamFrame
-	6,   // 112: airgate.plugin.v2.PluginService.GetInfo:output_type -> airgate.plugin.v2.PluginInfoResponse
-	3,   // 113: airgate.plugin.v2.PluginService.Init:output_type -> airgate.plugin.v2.Empty
-	3,   // 114: airgate.plugin.v2.PluginService.Start:output_type -> airgate.plugin.v2.Empty
-	3,   // 115: airgate.plugin.v2.PluginService.Stop:output_type -> airgate.plugin.v2.Empty
-	36,  // 116: airgate.plugin.v2.PluginService.GetWebAssets:output_type -> airgate.plugin.v2.WebAssetsResponse
-	42,  // 117: airgate.plugin.v2.PluginService.GetSchema:output_type -> airgate.plugin.v2.PluginSchemaResponse
-	3,   // 118: airgate.plugin.v2.PluginService.HealthCheck:output_type -> airgate.plugin.v2.Empty
-	28,  // 119: airgate.plugin.v2.PluginService.HandleRequest:output_type -> airgate.plugin.v2.HttpResponse
-	4,   // 120: airgate.plugin.v2.GatewayService.GetPlatform:output_type -> airgate.plugin.v2.StringResponse
-	14,  // 121: airgate.plugin.v2.GatewayService.GetModels:output_type -> airgate.plugin.v2.ModelsResponse
-	16,  // 122: airgate.plugin.v2.GatewayService.GetRoutes:output_type -> airgate.plugin.v2.RoutesResponse
-	24,  // 123: airgate.plugin.v2.GatewayService.Forward:output_type -> airgate.plugin.v2.ForwardOutcome
-	25,  // 124: airgate.plugin.v2.GatewayService.ForwardStream:output_type -> airgate.plugin.v2.ForwardChunk
-	3,   // 125: airgate.plugin.v2.GatewayService.ValidateAccount:output_type -> airgate.plugin.v2.Empty
-	33,  // 126: airgate.plugin.v2.GatewayService.HandleWebSocket:output_type -> airgate.plugin.v2.WebSocketFrame
-	3,   // 127: airgate.plugin.v2.ExtensionService.Migrate:output_type -> airgate.plugin.v2.Empty
-	31,  // 128: airgate.plugin.v2.ExtensionService.GetBackgroundTasks:output_type -> airgate.plugin.v2.BackgroundTasksResponse
-	3,   // 129: airgate.plugin.v2.ExtensionService.RunBackgroundTask:output_type -> airgate.plugin.v2.Empty
-	28,  // 130: airgate.plugin.v2.ExtensionService.HandleRequest:output_type -> airgate.plugin.v2.HttpResponse
-	29,  // 131: airgate.plugin.v2.ExtensionService.HandleStreamRequest:output_type -> airgate.plugin.v2.HttpResponseChunk
-	54,  // 132: airgate.plugin.v2.ExtensionService.ProcessTask:output_type -> airgate.plugin.v2.ProcessTaskResponse
-	55,  // 133: airgate.plugin.v2.ExtensionService.GetTaskTypes:output_type -> airgate.plugin.v2.TaskTypesResponse
-	45,  // 134: airgate.plugin.v2.MiddlewareService.OnForwardBegin:output_type -> airgate.plugin.v2.MiddlewareDecision
-	3,   // 135: airgate.plugin.v2.MiddlewareService.OnForwardEnd:output_type -> airgate.plugin.v2.Empty
-	47,  // 136: airgate.plugin.v2.EventService.GetEventSubscriptions:output_type -> airgate.plugin.v2.EventSubscriptionsResponse
-	49,  // 137: airgate.plugin.v2.EventService.HandleEvent:output_type -> airgate.plugin.v2.EventHandleResponse
-	51,  // 138: airgate.plugin.v2.CoreInvokeService.Invoke:output_type -> airgate.plugin.v2.HostInvokeResponse
-	52,  // 139: airgate.plugin.v2.CoreInvokeService.InvokeStream:output_type -> airgate.plugin.v2.HostStreamFrame
+	8,   // 0: airgate.plugin.v1.PluginInfoResponse.account_types:type_name -> airgate.plugin.v1.AccountTypeProto
+	10,  // 1: airgate.plugin.v1.PluginInfoResponse.frontend_pages:type_name -> airgate.plugin.v1.FrontendPageProto
+	11,  // 2: airgate.plugin.v1.PluginInfoResponse.frontend_widgets:type_name -> airgate.plugin.v1.FrontendWidgetProto
+	7,   // 3: airgate.plugin.v1.PluginInfoResponse.config_schema:type_name -> airgate.plugin.v1.ConfigFieldProto
+	56,  // 4: airgate.plugin.v1.PluginInfoResponse.metadata:type_name -> airgate.plugin.v1.PluginInfoResponse.MetadataEntry
+	9,   // 5: airgate.plugin.v1.AccountTypeProto.fields:type_name -> airgate.plugin.v1.CredentialFieldProto
+	57,  // 6: airgate.plugin.v1.InitRequest.config:type_name -> airgate.plugin.v1.InitRequest.ConfigEntry
+	58,  // 7: airgate.plugin.v1.ModelInfoProto.metadata:type_name -> airgate.plugin.v1.ModelInfoProto.MetadataEntry
+	13,  // 8: airgate.plugin.v1.ModelsResponse.models:type_name -> airgate.plugin.v1.ModelInfoProto
+	59,  // 9: airgate.plugin.v1.RouteDefinitionProto.metadata:type_name -> airgate.plugin.v1.RouteDefinitionProto.MetadataEntry
+	15,  // 10: airgate.plugin.v1.RoutesResponse.routes:type_name -> airgate.plugin.v1.RouteDefinitionProto
+	60,  // 11: airgate.plugin.v1.ForwardRequest.headers:type_name -> airgate.plugin.v1.ForwardRequest.HeadersEntry
+	17,  // 12: airgate.plugin.v1.ForwardRequest.account:type_name -> airgate.plugin.v1.AccountProto
+	61,  // 13: airgate.plugin.v1.UpstreamResponse.headers:type_name -> airgate.plugin.v1.UpstreamResponse.HeadersEntry
+	62,  // 14: airgate.plugin.v1.UsageAttribute.metadata:type_name -> airgate.plugin.v1.UsageAttribute.MetadataEntry
+	63,  // 15: airgate.plugin.v1.UsageMetric.metadata:type_name -> airgate.plugin.v1.UsageMetric.MetadataEntry
+	64,  // 16: airgate.plugin.v1.UsageCostDetail.metadata:type_name -> airgate.plugin.v1.UsageCostDetail.MetadataEntry
+	21,  // 17: airgate.plugin.v1.Usage.metrics:type_name -> airgate.plugin.v1.UsageMetric
+	20,  // 18: airgate.plugin.v1.Usage.attributes:type_name -> airgate.plugin.v1.UsageAttribute
+	22,  // 19: airgate.plugin.v1.Usage.cost_details:type_name -> airgate.plugin.v1.UsageCostDetail
+	65,  // 20: airgate.plugin.v1.Usage.metadata:type_name -> airgate.plugin.v1.Usage.MetadataEntry
+	0,   // 21: airgate.plugin.v1.ForwardOutcome.kind:type_name -> airgate.plugin.v1.OutcomeKind
+	19,  // 22: airgate.plugin.v1.ForwardOutcome.upstream:type_name -> airgate.plugin.v1.UpstreamResponse
+	23,  // 23: airgate.plugin.v1.ForwardOutcome.usage:type_name -> airgate.plugin.v1.Usage
+	66,  // 24: airgate.plugin.v1.ForwardOutcome.updated_credentials:type_name -> airgate.plugin.v1.ForwardOutcome.UpdatedCredentialsEntry
+	24,  // 25: airgate.plugin.v1.ForwardChunk.final_outcome:type_name -> airgate.plugin.v1.ForwardOutcome
+	67,  // 26: airgate.plugin.v1.ForwardChunk.headers:type_name -> airgate.plugin.v1.ForwardChunk.HeadersEntry
+	68,  // 27: airgate.plugin.v1.CredentialsRequest.credentials:type_name -> airgate.plugin.v1.CredentialsRequest.CredentialsEntry
+	69,  // 28: airgate.plugin.v1.HttpRequest.headers:type_name -> airgate.plugin.v1.HttpRequest.HeadersEntry
+	70,  // 29: airgate.plugin.v1.HttpResponse.headers:type_name -> airgate.plugin.v1.HttpResponse.HeadersEntry
+	71,  // 30: airgate.plugin.v1.HttpResponseChunk.headers:type_name -> airgate.plugin.v1.HttpResponseChunk.HeadersEntry
+	30,  // 31: airgate.plugin.v1.BackgroundTasksResponse.tasks:type_name -> airgate.plugin.v1.BackgroundTaskProto
+	1,   // 32: airgate.plugin.v1.WebSocketFrame.type:type_name -> airgate.plugin.v1.WebSocketFrame.FrameType
+	34,  // 33: airgate.plugin.v1.WebSocketFrame.connect_info:type_name -> airgate.plugin.v1.WebSocketConnectInfo
+	24,  // 34: airgate.plugin.v1.WebSocketFrame.outcome:type_name -> airgate.plugin.v1.ForwardOutcome
+	72,  // 35: airgate.plugin.v1.WebSocketConnectInfo.headers:type_name -> airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry
+	17,  // 36: airgate.plugin.v1.WebSocketConnectInfo.account:type_name -> airgate.plugin.v1.AccountProto
+	35,  // 37: airgate.plugin.v1.WebAssetsResponse.files:type_name -> airgate.plugin.v1.WebAssetFile
+	73,  // 38: airgate.plugin.v1.PayloadSchemaProto.metadata:type_name -> airgate.plugin.v1.PayloadSchemaProto.MetadataEntry
+	37,  // 39: airgate.plugin.v1.RouteSchemaProto.request:type_name -> airgate.plugin.v1.PayloadSchemaProto
+	37,  // 40: airgate.plugin.v1.RouteSchemaProto.response:type_name -> airgate.plugin.v1.PayloadSchemaProto
+	74,  // 41: airgate.plugin.v1.RouteSchemaProto.metadata:type_name -> airgate.plugin.v1.RouteSchemaProto.MetadataEntry
+	37,  // 42: airgate.plugin.v1.TaskSchemaProto.input:type_name -> airgate.plugin.v1.PayloadSchemaProto
+	37,  // 43: airgate.plugin.v1.TaskSchemaProto.output:type_name -> airgate.plugin.v1.PayloadSchemaProto
+	75,  // 44: airgate.plugin.v1.TaskSchemaProto.metadata:type_name -> airgate.plugin.v1.TaskSchemaProto.MetadataEntry
+	37,  // 45: airgate.plugin.v1.EventSchemaProto.payload:type_name -> airgate.plugin.v1.PayloadSchemaProto
+	76,  // 46: airgate.plugin.v1.EventSchemaProto.metadata:type_name -> airgate.plugin.v1.EventSchemaProto.MetadataEntry
+	37,  // 47: airgate.plugin.v1.InvokeSchemaProto.request:type_name -> airgate.plugin.v1.PayloadSchemaProto
+	37,  // 48: airgate.plugin.v1.InvokeSchemaProto.response:type_name -> airgate.plugin.v1.PayloadSchemaProto
+	77,  // 49: airgate.plugin.v1.InvokeSchemaProto.metadata:type_name -> airgate.plugin.v1.InvokeSchemaProto.MetadataEntry
+	37,  // 50: airgate.plugin.v1.InvokeSchemaProto.client_frame:type_name -> airgate.plugin.v1.PayloadSchemaProto
+	37,  // 51: airgate.plugin.v1.InvokeSchemaProto.server_frame:type_name -> airgate.plugin.v1.PayloadSchemaProto
+	38,  // 52: airgate.plugin.v1.PluginSchemaResponse.routes:type_name -> airgate.plugin.v1.RouteSchemaProto
+	39,  // 53: airgate.plugin.v1.PluginSchemaResponse.tasks:type_name -> airgate.plugin.v1.TaskSchemaProto
+	40,  // 54: airgate.plugin.v1.PluginSchemaResponse.events:type_name -> airgate.plugin.v1.EventSchemaProto
+	41,  // 55: airgate.plugin.v1.PluginSchemaResponse.invokes:type_name -> airgate.plugin.v1.InvokeSchemaProto
+	78,  // 56: airgate.plugin.v1.PluginSchemaResponse.metadata:type_name -> airgate.plugin.v1.PluginSchemaResponse.MetadataEntry
+	21,  // 57: airgate.plugin.v1.MiddlewareRequest.estimates:type_name -> airgate.plugin.v1.UsageMetric
+	79,  // 58: airgate.plugin.v1.MiddlewareRequest.metadata:type_name -> airgate.plugin.v1.MiddlewareRequest.MetadataEntry
+	80,  // 59: airgate.plugin.v1.MiddlewareRequest.request_headers:type_name -> airgate.plugin.v1.MiddlewareRequest.RequestHeadersEntry
+	21,  // 60: airgate.plugin.v1.MiddlewareEvent.estimates:type_name -> airgate.plugin.v1.UsageMetric
+	23,  // 61: airgate.plugin.v1.MiddlewareEvent.usage:type_name -> airgate.plugin.v1.Usage
+	81,  // 62: airgate.plugin.v1.MiddlewareEvent.metadata:type_name -> airgate.plugin.v1.MiddlewareEvent.MetadataEntry
+	82,  // 63: airgate.plugin.v1.MiddlewareEvent.response_headers:type_name -> airgate.plugin.v1.MiddlewareEvent.ResponseHeadersEntry
+	2,   // 64: airgate.plugin.v1.MiddlewareDecision.action:type_name -> airgate.plugin.v1.MiddlewareDecision.Action
+	83,  // 65: airgate.plugin.v1.MiddlewareDecision.set_headers:type_name -> airgate.plugin.v1.MiddlewareDecision.SetHeadersEntry
+	84,  // 66: airgate.plugin.v1.MiddlewareDecision.metadata:type_name -> airgate.plugin.v1.MiddlewareDecision.MetadataEntry
+	85,  // 67: airgate.plugin.v1.EventSubscriptionProto.filter:type_name -> airgate.plugin.v1.EventSubscriptionProto.FilterEntry
+	86,  // 68: airgate.plugin.v1.EventSubscriptionProto.metadata:type_name -> airgate.plugin.v1.EventSubscriptionProto.MetadataEntry
+	46,  // 69: airgate.plugin.v1.EventSubscriptionsResponse.subscriptions:type_name -> airgate.plugin.v1.EventSubscriptionProto
+	87,  // 70: airgate.plugin.v1.PluginEvent.metadata:type_name -> airgate.plugin.v1.PluginEvent.MetadataEntry
+	88,  // 71: airgate.plugin.v1.HostInvokeRequest.metadata:type_name -> airgate.plugin.v1.HostInvokeRequest.MetadataEntry
+	89,  // 72: airgate.plugin.v1.HostInvokeResponse.metadata:type_name -> airgate.plugin.v1.HostInvokeResponse.MetadataEntry
+	90,  // 73: airgate.plugin.v1.HostStreamFrame.metadata:type_name -> airgate.plugin.v1.HostStreamFrame.MetadataEntry
+	5,   // 74: airgate.plugin.v1.ForwardRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	5,   // 75: airgate.plugin.v1.UpstreamResponse.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	5,   // 76: airgate.plugin.v1.ForwardChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	5,   // 77: airgate.plugin.v1.HttpRequest.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	5,   // 78: airgate.plugin.v1.HttpResponse.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	5,   // 79: airgate.plugin.v1.HttpResponseChunk.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	5,   // 80: airgate.plugin.v1.WebSocketConnectInfo.HeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	5,   // 81: airgate.plugin.v1.MiddlewareRequest.RequestHeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	5,   // 82: airgate.plugin.v1.MiddlewareEvent.ResponseHeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	5,   // 83: airgate.plugin.v1.MiddlewareDecision.SetHeadersEntry.value:type_name -> airgate.plugin.v1.HeaderValues
+	3,   // 84: airgate.plugin.v1.PluginService.GetInfo:input_type -> airgate.plugin.v1.Empty
+	12,  // 85: airgate.plugin.v1.PluginService.Init:input_type -> airgate.plugin.v1.InitRequest
+	3,   // 86: airgate.plugin.v1.PluginService.Start:input_type -> airgate.plugin.v1.Empty
+	3,   // 87: airgate.plugin.v1.PluginService.Stop:input_type -> airgate.plugin.v1.Empty
+	3,   // 88: airgate.plugin.v1.PluginService.GetWebAssets:input_type -> airgate.plugin.v1.Empty
+	3,   // 89: airgate.plugin.v1.PluginService.GetSchema:input_type -> airgate.plugin.v1.Empty
+	3,   // 90: airgate.plugin.v1.PluginService.HealthCheck:input_type -> airgate.plugin.v1.Empty
+	27,  // 91: airgate.plugin.v1.PluginService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
+	3,   // 92: airgate.plugin.v1.GatewayService.GetPlatform:input_type -> airgate.plugin.v1.Empty
+	3,   // 93: airgate.plugin.v1.GatewayService.GetModels:input_type -> airgate.plugin.v1.Empty
+	3,   // 94: airgate.plugin.v1.GatewayService.GetRoutes:input_type -> airgate.plugin.v1.Empty
+	18,  // 95: airgate.plugin.v1.GatewayService.Forward:input_type -> airgate.plugin.v1.ForwardRequest
+	18,  // 96: airgate.plugin.v1.GatewayService.ForwardStream:input_type -> airgate.plugin.v1.ForwardRequest
+	26,  // 97: airgate.plugin.v1.GatewayService.ValidateAccount:input_type -> airgate.plugin.v1.CredentialsRequest
+	33,  // 98: airgate.plugin.v1.GatewayService.HandleWebSocket:input_type -> airgate.plugin.v1.WebSocketFrame
+	3,   // 99: airgate.plugin.v1.ExtensionService.Migrate:input_type -> airgate.plugin.v1.Empty
+	3,   // 100: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:input_type -> airgate.plugin.v1.Empty
+	32,  // 101: airgate.plugin.v1.ExtensionService.RunBackgroundTask:input_type -> airgate.plugin.v1.RunBackgroundTaskRequest
+	27,  // 102: airgate.plugin.v1.ExtensionService.HandleRequest:input_type -> airgate.plugin.v1.HttpRequest
+	27,  // 103: airgate.plugin.v1.ExtensionService.HandleStreamRequest:input_type -> airgate.plugin.v1.HttpRequest
+	53,  // 104: airgate.plugin.v1.ExtensionService.ProcessTask:input_type -> airgate.plugin.v1.ProcessTaskRequest
+	3,   // 105: airgate.plugin.v1.ExtensionService.GetTaskTypes:input_type -> airgate.plugin.v1.Empty
+	43,  // 106: airgate.plugin.v1.MiddlewareService.OnForwardBegin:input_type -> airgate.plugin.v1.MiddlewareRequest
+	44,  // 107: airgate.plugin.v1.MiddlewareService.OnForwardEnd:input_type -> airgate.plugin.v1.MiddlewareEvent
+	3,   // 108: airgate.plugin.v1.EventService.GetEventSubscriptions:input_type -> airgate.plugin.v1.Empty
+	48,  // 109: airgate.plugin.v1.EventService.HandleEvent:input_type -> airgate.plugin.v1.PluginEvent
+	50,  // 110: airgate.plugin.v1.CoreInvokeService.Invoke:input_type -> airgate.plugin.v1.HostInvokeRequest
+	52,  // 111: airgate.plugin.v1.CoreInvokeService.InvokeStream:input_type -> airgate.plugin.v1.HostStreamFrame
+	6,   // 112: airgate.plugin.v1.PluginService.GetInfo:output_type -> airgate.plugin.v1.PluginInfoResponse
+	3,   // 113: airgate.plugin.v1.PluginService.Init:output_type -> airgate.plugin.v1.Empty
+	3,   // 114: airgate.plugin.v1.PluginService.Start:output_type -> airgate.plugin.v1.Empty
+	3,   // 115: airgate.plugin.v1.PluginService.Stop:output_type -> airgate.plugin.v1.Empty
+	36,  // 116: airgate.plugin.v1.PluginService.GetWebAssets:output_type -> airgate.plugin.v1.WebAssetsResponse
+	42,  // 117: airgate.plugin.v1.PluginService.GetSchema:output_type -> airgate.plugin.v1.PluginSchemaResponse
+	3,   // 118: airgate.plugin.v1.PluginService.HealthCheck:output_type -> airgate.plugin.v1.Empty
+	28,  // 119: airgate.plugin.v1.PluginService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
+	4,   // 120: airgate.plugin.v1.GatewayService.GetPlatform:output_type -> airgate.plugin.v1.StringResponse
+	14,  // 121: airgate.plugin.v1.GatewayService.GetModels:output_type -> airgate.plugin.v1.ModelsResponse
+	16,  // 122: airgate.plugin.v1.GatewayService.GetRoutes:output_type -> airgate.plugin.v1.RoutesResponse
+	24,  // 123: airgate.plugin.v1.GatewayService.Forward:output_type -> airgate.plugin.v1.ForwardOutcome
+	25,  // 124: airgate.plugin.v1.GatewayService.ForwardStream:output_type -> airgate.plugin.v1.ForwardChunk
+	3,   // 125: airgate.plugin.v1.GatewayService.ValidateAccount:output_type -> airgate.plugin.v1.Empty
+	33,  // 126: airgate.plugin.v1.GatewayService.HandleWebSocket:output_type -> airgate.plugin.v1.WebSocketFrame
+	3,   // 127: airgate.plugin.v1.ExtensionService.Migrate:output_type -> airgate.plugin.v1.Empty
+	31,  // 128: airgate.plugin.v1.ExtensionService.GetBackgroundTasks:output_type -> airgate.plugin.v1.BackgroundTasksResponse
+	3,   // 129: airgate.plugin.v1.ExtensionService.RunBackgroundTask:output_type -> airgate.plugin.v1.Empty
+	28,  // 130: airgate.plugin.v1.ExtensionService.HandleRequest:output_type -> airgate.plugin.v1.HttpResponse
+	29,  // 131: airgate.plugin.v1.ExtensionService.HandleStreamRequest:output_type -> airgate.plugin.v1.HttpResponseChunk
+	54,  // 132: airgate.plugin.v1.ExtensionService.ProcessTask:output_type -> airgate.plugin.v1.ProcessTaskResponse
+	55,  // 133: airgate.plugin.v1.ExtensionService.GetTaskTypes:output_type -> airgate.plugin.v1.TaskTypesResponse
+	45,  // 134: airgate.plugin.v1.MiddlewareService.OnForwardBegin:output_type -> airgate.plugin.v1.MiddlewareDecision
+	3,   // 135: airgate.plugin.v1.MiddlewareService.OnForwardEnd:output_type -> airgate.plugin.v1.Empty
+	47,  // 136: airgate.plugin.v1.EventService.GetEventSubscriptions:output_type -> airgate.plugin.v1.EventSubscriptionsResponse
+	49,  // 137: airgate.plugin.v1.EventService.HandleEvent:output_type -> airgate.plugin.v1.EventHandleResponse
+	51,  // 138: airgate.plugin.v1.CoreInvokeService.Invoke:output_type -> airgate.plugin.v1.HostInvokeResponse
+	52,  // 139: airgate.plugin.v1.CoreInvokeService.InvokeStream:output_type -> airgate.plugin.v1.HostStreamFrame
 	112, // [112:140] is the sub-list for method output_type
 	84,  // [84:112] is the sub-list for method input_type
 	84,  // [84:84] is the sub-list for extension type_name

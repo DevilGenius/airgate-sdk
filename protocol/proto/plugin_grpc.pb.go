@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PluginService_GetInfo_FullMethodName       = "/airgate.plugin.v2.PluginService/GetInfo"
-	PluginService_Init_FullMethodName          = "/airgate.plugin.v2.PluginService/Init"
-	PluginService_Start_FullMethodName         = "/airgate.plugin.v2.PluginService/Start"
-	PluginService_Stop_FullMethodName          = "/airgate.plugin.v2.PluginService/Stop"
-	PluginService_GetWebAssets_FullMethodName  = "/airgate.plugin.v2.PluginService/GetWebAssets"
-	PluginService_GetSchema_FullMethodName     = "/airgate.plugin.v2.PluginService/GetSchema"
-	PluginService_HealthCheck_FullMethodName   = "/airgate.plugin.v2.PluginService/HealthCheck"
-	PluginService_HandleRequest_FullMethodName = "/airgate.plugin.v2.PluginService/HandleRequest"
+	PluginService_GetInfo_FullMethodName       = "/airgate.plugin.v1.PluginService/GetInfo"
+	PluginService_Init_FullMethodName          = "/airgate.plugin.v1.PluginService/Init"
+	PluginService_Start_FullMethodName         = "/airgate.plugin.v1.PluginService/Start"
+	PluginService_Stop_FullMethodName          = "/airgate.plugin.v1.PluginService/Stop"
+	PluginService_GetWebAssets_FullMethodName  = "/airgate.plugin.v1.PluginService/GetWebAssets"
+	PluginService_GetSchema_FullMethodName     = "/airgate.plugin.v1.PluginService/GetSchema"
+	PluginService_HealthCheck_FullMethodName   = "/airgate.plugin.v1.PluginService/HealthCheck"
+	PluginService_HandleRequest_FullMethodName = "/airgate.plugin.v1.PluginService/HandleRequest"
 )
 
 // PluginServiceClient is the client API for PluginService service.
@@ -354,7 +354,7 @@ func _PluginService_HandleRequest_Handler(srv interface{}, ctx context.Context, 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PluginService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "airgate.plugin.v2.PluginService",
+	ServiceName: "airgate.plugin.v1.PluginService",
 	HandlerType: (*PluginServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -395,13 +395,13 @@ var PluginService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	GatewayService_GetPlatform_FullMethodName     = "/airgate.plugin.v2.GatewayService/GetPlatform"
-	GatewayService_GetModels_FullMethodName       = "/airgate.plugin.v2.GatewayService/GetModels"
-	GatewayService_GetRoutes_FullMethodName       = "/airgate.plugin.v2.GatewayService/GetRoutes"
-	GatewayService_Forward_FullMethodName         = "/airgate.plugin.v2.GatewayService/Forward"
-	GatewayService_ForwardStream_FullMethodName   = "/airgate.plugin.v2.GatewayService/ForwardStream"
-	GatewayService_ValidateAccount_FullMethodName = "/airgate.plugin.v2.GatewayService/ValidateAccount"
-	GatewayService_HandleWebSocket_FullMethodName = "/airgate.plugin.v2.GatewayService/HandleWebSocket"
+	GatewayService_GetPlatform_FullMethodName     = "/airgate.plugin.v1.GatewayService/GetPlatform"
+	GatewayService_GetModels_FullMethodName       = "/airgate.plugin.v1.GatewayService/GetModels"
+	GatewayService_GetRoutes_FullMethodName       = "/airgate.plugin.v1.GatewayService/GetRoutes"
+	GatewayService_Forward_FullMethodName         = "/airgate.plugin.v1.GatewayService/Forward"
+	GatewayService_ForwardStream_FullMethodName   = "/airgate.plugin.v1.GatewayService/ForwardStream"
+	GatewayService_ValidateAccount_FullMethodName = "/airgate.plugin.v1.GatewayService/ValidateAccount"
+	GatewayService_HandleWebSocket_FullMethodName = "/airgate.plugin.v1.GatewayService/HandleWebSocket"
 )
 
 // GatewayServiceClient is the client API for GatewayService service.
@@ -684,7 +684,7 @@ type GatewayService_HandleWebSocketServer = grpc.BidiStreamingServer[WebSocketFr
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var GatewayService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "airgate.plugin.v2.GatewayService",
+	ServiceName: "airgate.plugin.v1.GatewayService",
 	HandlerType: (*GatewayServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -725,13 +725,13 @@ var GatewayService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ExtensionService_Migrate_FullMethodName             = "/airgate.plugin.v2.ExtensionService/Migrate"
-	ExtensionService_GetBackgroundTasks_FullMethodName  = "/airgate.plugin.v2.ExtensionService/GetBackgroundTasks"
-	ExtensionService_RunBackgroundTask_FullMethodName   = "/airgate.plugin.v2.ExtensionService/RunBackgroundTask"
-	ExtensionService_HandleRequest_FullMethodName       = "/airgate.plugin.v2.ExtensionService/HandleRequest"
-	ExtensionService_HandleStreamRequest_FullMethodName = "/airgate.plugin.v2.ExtensionService/HandleStreamRequest"
-	ExtensionService_ProcessTask_FullMethodName         = "/airgate.plugin.v2.ExtensionService/ProcessTask"
-	ExtensionService_GetTaskTypes_FullMethodName        = "/airgate.plugin.v2.ExtensionService/GetTaskTypes"
+	ExtensionService_Migrate_FullMethodName             = "/airgate.plugin.v1.ExtensionService/Migrate"
+	ExtensionService_GetBackgroundTasks_FullMethodName  = "/airgate.plugin.v1.ExtensionService/GetBackgroundTasks"
+	ExtensionService_RunBackgroundTask_FullMethodName   = "/airgate.plugin.v1.ExtensionService/RunBackgroundTask"
+	ExtensionService_HandleRequest_FullMethodName       = "/airgate.plugin.v1.ExtensionService/HandleRequest"
+	ExtensionService_HandleStreamRequest_FullMethodName = "/airgate.plugin.v1.ExtensionService/HandleStreamRequest"
+	ExtensionService_ProcessTask_FullMethodName         = "/airgate.plugin.v1.ExtensionService/ProcessTask"
+	ExtensionService_GetTaskTypes_FullMethodName        = "/airgate.plugin.v1.ExtensionService/GetTaskTypes"
 )
 
 // ExtensionServiceClient is the client API for ExtensionService service.
@@ -1028,7 +1028,7 @@ func _ExtensionService_GetTaskTypes_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ExtensionService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "airgate.plugin.v2.ExtensionService",
+	ServiceName: "airgate.plugin.v1.ExtensionService",
 	HandlerType: (*ExtensionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -1067,8 +1067,8 @@ var ExtensionService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	MiddlewareService_OnForwardBegin_FullMethodName = "/airgate.plugin.v2.MiddlewareService/OnForwardBegin"
-	MiddlewareService_OnForwardEnd_FullMethodName   = "/airgate.plugin.v2.MiddlewareService/OnForwardEnd"
+	MiddlewareService_OnForwardBegin_FullMethodName = "/airgate.plugin.v1.MiddlewareService/OnForwardBegin"
+	MiddlewareService_OnForwardEnd_FullMethodName   = "/airgate.plugin.v1.MiddlewareService/OnForwardEnd"
 )
 
 // MiddlewareServiceClient is the client API for MiddlewareService service.
@@ -1226,7 +1226,7 @@ func _MiddlewareService_OnForwardEnd_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MiddlewareService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "airgate.plugin.v2.MiddlewareService",
+	ServiceName: "airgate.plugin.v1.MiddlewareService",
 	HandlerType: (*MiddlewareServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -1243,8 +1243,8 @@ var MiddlewareService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	EventService_GetEventSubscriptions_FullMethodName = "/airgate.plugin.v2.EventService/GetEventSubscriptions"
-	EventService_HandleEvent_FullMethodName           = "/airgate.plugin.v2.EventService/HandleEvent"
+	EventService_GetEventSubscriptions_FullMethodName = "/airgate.plugin.v1.EventService/GetEventSubscriptions"
+	EventService_HandleEvent_FullMethodName           = "/airgate.plugin.v1.EventService/HandleEvent"
 )
 
 // EventServiceClient is the client API for EventService service.
@@ -1366,7 +1366,7 @@ func _EventService_HandleEvent_Handler(srv interface{}, ctx context.Context, dec
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var EventService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "airgate.plugin.v2.EventService",
+	ServiceName: "airgate.plugin.v1.EventService",
 	HandlerType: (*EventServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -1383,8 +1383,8 @@ var EventService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	CoreInvokeService_Invoke_FullMethodName       = "/airgate.plugin.v2.CoreInvokeService/Invoke"
-	CoreInvokeService_InvokeStream_FullMethodName = "/airgate.plugin.v2.CoreInvokeService/InvokeStream"
+	CoreInvokeService_Invoke_FullMethodName       = "/airgate.plugin.v1.CoreInvokeService/Invoke"
+	CoreInvokeService_InvokeStream_FullMethodName = "/airgate.plugin.v1.CoreInvokeService/InvokeStream"
 )
 
 // CoreInvokeServiceClient is the client API for CoreInvokeService service.
@@ -1510,7 +1510,7 @@ type CoreInvokeService_InvokeStreamServer = grpc.BidiStreamingServer[HostStreamF
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var CoreInvokeService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "airgate.plugin.v2.CoreInvokeService",
+	ServiceName: "airgate.plugin.v1.CoreInvokeService",
 	HandlerType: (*CoreInvokeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

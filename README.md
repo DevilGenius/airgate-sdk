@@ -62,7 +62,7 @@ import (
 | 目录 | 用途 | 谁会用 |
 |---|---|---|
 | `sdkgo/` | Go 插件接口、共享类型、Capability、Host 调用类型 | 插件作者 |
-| `protocol/proto/` | `airgate.plugin.v2` protobuf 协议和生成代码 | Core / runtime |
+| `protocol/proto/` | `airgate.plugin.v1` protobuf 协议和生成代码 | Core / runtime |
 | `runtimego/grpc/` | hashicorp/go-plugin、gRPC bridge、proto 转换、Core 反向调用通道 | 插件入口 / Core 加载器 |
 | `devkit/devserver/` | 本地开发服务器，无需启动完整 Core 即可调试插件 | 插件作者 |
 | `theme/` | `@doudou-start/airgate-theme`：主题 token、样式隔离、Tailwind helper、公共组件 | 插件前端 |
