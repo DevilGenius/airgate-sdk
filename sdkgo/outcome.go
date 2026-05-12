@@ -100,18 +100,17 @@ type UpstreamResponse struct {
 // 插件填 AccountCost / Currency；Core 统一入库后按用户、分组、模型等倍率
 // 写入 UserCost / BillingMultiplier。
 type Usage struct {
-	Model             string
-	AccountCost       float64
-	UserCost          float64
-	BillingMultiplier float64
-	Currency          string
-	Summary           string
-	FirstTokenMs      int64
-
-	Attributes  []UsageAttribute
-	Metrics     []UsageMetric
-	CostDetails []UsageCostDetail
-	Metadata    map[string]string
+	Model             string            `json:"model,omitempty"`
+	AccountCost       float64           `json:"account_cost,omitempty"`
+	UserCost          float64           `json:"user_cost,omitempty"`
+	BillingMultiplier float64           `json:"billing_multiplier,omitempty"`
+	Currency          string            `json:"currency,omitempty"`
+	Summary           string            `json:"summary,omitempty"`
+	FirstTokenMs      int64             `json:"first_token_ms,omitempty"`
+	Attributes        []UsageAttribute  `json:"attributes,omitempty"`
+	Metrics           []UsageMetric     `json:"metrics,omitempty"`
+	CostDetails       []UsageCostDetail `json:"cost_details,omitempty"`
+	Metadata          map[string]string `json:"metadata,omitempty"`
 }
 
 // ForwardOutcome 是插件对一次 Forward 的完整判决结果。

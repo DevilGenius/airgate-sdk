@@ -340,9 +340,9 @@ import {
 ## 开发命令
 
 ```bash
+make ci                            # 运行 Go、proto、前端和主题漂移检查
 make proto                         # 重新生成 protocol/proto
-GOTOOLCHAIN=local go test ./...    # 运行 Go 测试
-GOTOOLCHAIN=local go build ./...   # 验证 Go 包可构建
+make theme                         # 重新生成 DevServer 主题 CSS
 cd frontend && npm run build       # 构建 @airgate/theme
 ```
 

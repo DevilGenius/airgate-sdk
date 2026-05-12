@@ -11,14 +11,14 @@ PROTOC_GEN_GRPC_VER := v1.6.0
 TOOLS_DIR   := $(CURDIR)/.tools
 PROTOC_BIN  := $(TOOLS_DIR)/bin/protoc
 
-.PHONY: help ci pre-commit lint fmt test vet build proto proto-tools clean setup-hooks
+.PHONY: help ci pre-commit lint fmt test vet build frontend-build theme theme-check proto proto-check proto-tools clean setup-hooks
 
 help: ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 # ===================== 质量检查 =====================
 
-ci: lint test vet build ## 本地运行与 CI 完全一致的检查
+ci: lint test vet build proto-check frontend-build theme-check ## 本地运行与 CI 完全一致的检查
 
 pre-commit: lint vet build ## pre-commit hook 调用（跳过耗时的 race 测试）
 
@@ -51,9 +51,11 @@ build: ## 编译检查
 
 # ===================== 前端主题 =====================
 
-theme: ## 构建前端主题包并生成 DevServer 用 theme.css
+frontend-build: ## 构建前端主题包
 	cd frontend && npm run build
-	node --input-type=module -e "import{generateThemeCSS}from'./frontend/dist/css.js';process.stdout.write(generateThemeCSS())" > devkit/devserver/static/theme.css
+
+theme: frontend-build ## 构建前端主题包并生成 DevServer 用 theme.css
+	node --input-type=module -e "import{generateThemeCSS}from'./frontend/dist/css.js';process.stdout.write(generateThemeCSS() + '\n')" > devkit/devserver/static/theme.css
 	@echo "theme.css 已生成"
 
 # ===================== 代码生成 =====================
@@ -84,6 +86,14 @@ proto: proto-tools ## 重新生成 protobuf 代码
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		plugin.proto
 	@echo "Proto 代码生成完成"
+
+proto-check: proto ## 校验 protobuf 生成代码无漂移
+	@git diff --exit-code -- protocol/proto/plugin.pb.go protocol/proto/plugin_grpc.pb.go protocol/proto/plugin.proto
+	@echo "Proto 代码无漂移"
+
+theme-check: theme ## 校验 DevServer 主题 CSS 无漂移
+	@git diff --exit-code -- devkit/devserver/static/theme.css
+	@echo "theme.css 无漂移"
 
 # ===================== Git Hooks =====================
 

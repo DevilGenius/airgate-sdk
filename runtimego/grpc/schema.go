@@ -72,11 +72,14 @@ func schemaToProto(s sdk.PluginSchema) *pb.PluginSchemaResponse {
 		out.Invokes = make([]*pb.InvokeSchemaProto, 0, len(s.Invokes))
 		for _, i := range s.Invokes {
 			out.Invokes = append(out.Invokes, &pb.InvokeSchemaProto{
-				Method:   i.Method,
-				Summary:  i.Summary,
-				Request:  payloadSchemaToProto(i.Request),
-				Response: payloadSchemaToProto(i.Response),
-				Metadata: i.Metadata,
+				Method:      i.Method,
+				Summary:     i.Summary,
+				Request:     payloadSchemaToProto(i.Request),
+				Response:    payloadSchemaToProto(i.Response),
+				Transport:   string(i.Transport),
+				ClientFrame: payloadSchemaToProto(i.ClientFrame),
+				ServerFrame: payloadSchemaToProto(i.ServerFrame),
+				Metadata:    i.Metadata,
 			})
 		}
 	}
@@ -129,11 +132,14 @@ func schemaFromProto(p *pb.PluginSchemaResponse) sdk.PluginSchema {
 		out.Invokes = make([]sdk.InvokeSchema, 0, len(p.Invokes))
 		for _, i := range p.Invokes {
 			out.Invokes = append(out.Invokes, sdk.InvokeSchema{
-				Method:   i.Method,
-				Summary:  i.Summary,
-				Request:  payloadSchemaFromProto(i.Request),
-				Response: payloadSchemaFromProto(i.Response),
-				Metadata: i.Metadata,
+				Method:      i.Method,
+				Summary:     i.Summary,
+				Request:     payloadSchemaFromProto(i.Request),
+				Response:    payloadSchemaFromProto(i.Response),
+				Transport:   sdk.InvokeTransport(i.Transport),
+				ClientFrame: payloadSchemaFromProto(i.ClientFrame),
+				ServerFrame: payloadSchemaFromProto(i.ServerFrame),
+				Metadata:    i.Metadata,
 			})
 		}
 	}

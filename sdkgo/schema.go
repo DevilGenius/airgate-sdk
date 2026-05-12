@@ -38,13 +38,28 @@ type EventSchema struct {
 	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
+// InvokeTransport 描述 Host.Invoke method 的传输模式。
+type InvokeTransport string
+
+const (
+	InvokeTransportUnary               InvokeTransport = "unary"
+	InvokeTransportServerStream        InvokeTransport = "server_stream"
+	InvokeTransportClientStream        InvokeTransport = "client_stream"
+	InvokeTransportBidirectionalStream InvokeTransport = "bidirectional_stream"
+)
+
 // InvokeSchema 描述通过 Host.Invoke 或 Host.InvokeStream 调用的扩展动作。
 type InvokeSchema struct {
-	Method   string            `json:"method"`
-	Summary  string            `json:"summary,omitempty"`
-	Request  PayloadSchema     `json:"request,omitempty"`
-	Response PayloadSchema     `json:"response,omitempty"`
-	Metadata map[string]string `json:"metadata,omitempty"`
+	Method  string `json:"method"`
+	Summary string `json:"summary,omitempty"`
+	// Transport 为空时等价于 unary。
+	Transport InvokeTransport `json:"transport,omitempty"`
+	Request   PayloadSchema   `json:"request,omitempty"`
+	Response  PayloadSchema   `json:"response,omitempty"`
+	// ClientFrame / ServerFrame 只用于 InvokeStream，描述双方 frame payload。
+	ClientFrame PayloadSchema     `json:"client_frame,omitempty"`
+	ServerFrame PayloadSchema     `json:"server_frame,omitempty"`
+	Metadata    map[string]string `json:"metadata,omitempty"`
 }
 
 // PluginSchema 是插件的能力发现清单，用于 Core、管理后台和开发工具了解插件可用能力。

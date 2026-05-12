@@ -72,10 +72,13 @@ func TestPluginSchemaRoundTrip(t *testing.T) {
 			Payload: sdk.PayloadSchema{Schema: `{"type":"object"}`},
 		}},
 		Invokes: []sdk.InvokeSchema{{
-			Method:   "notifications.publish",
-			Summary:  "发送通知",
-			Request:  sdk.PayloadSchema{Schema: `{"type":"object"}`},
-			Response: sdk.PayloadSchema{Schema: `{"type":"object"}`},
+			Method:      "chat.stream",
+			Summary:     "流式对话",
+			Transport:   sdk.InvokeTransportBidirectionalStream,
+			Request:     sdk.PayloadSchema{Schema: `{"type":"object"}`},
+			Response:    sdk.PayloadSchema{Schema: `{"type":"object"}`},
+			ClientFrame: sdk.PayloadSchema{Schema: `{"type":"object","properties":{"delta":{"type":"string"}}}`},
+			ServerFrame: sdk.PayloadSchema{Schema: `{"type":"object","properties":{"text":{"type":"string"}}}`},
 		}},
 		Metadata: map[string]string{"version": "1"},
 	}

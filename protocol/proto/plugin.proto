@@ -215,7 +215,7 @@ message AccountProto {
 }
 
 message ForwardRequest {
-    reserved 1, 2, 3, 4, 5, 6; // 原散落的 account 字段，已合并为 AccountProto
+    reserved 1, 2, 3, 4, 5, 6; // 保留历史字段号，避免 wire 级复用
     bytes  body = 7;
     map<string, HeaderValues> headers = 8;
     string model = 9;
@@ -382,7 +382,7 @@ message WebSocketConnectInfo {
     map<string, HeaderValues> headers = 3;
     string remote_addr    = 4;
     string connection_id  = 5;
-    reserved 6, 7, 8, 9, 10, 11; // 原散落的 account 字段，已合并为 AccountProto
+    reserved 6, 7, 8, 9, 10, 11; // 保留历史字段号，避免 wire 级复用
     AccountProto account = 12;
 }
 
@@ -438,6 +438,9 @@ message InvokeSchemaProto {
     PayloadSchemaProto request = 3;
     PayloadSchemaProto response = 4;
     map<string, string> metadata = 5;
+    string transport = 6; // unary / server_stream / client_stream / bidirectional_stream
+    PayloadSchemaProto client_frame = 7; // InvokeStream client frame payload schema
+    PayloadSchemaProto server_frame = 8; // InvokeStream server frame payload schema
 }
 
 message PluginSchemaResponse {
@@ -464,8 +467,8 @@ message MiddlewareRequest {
     bool   stream           = 7;
     repeated UsageMetric estimates = 8; // Core 或插件提供的通用预估值，仅用于早期决策
 
-    // metadata KV bag：供多个 middleware 之间传递上下文（Open Question Q-open-3）。
-    // 命名空间规则暂不强制，未来可能收紧。
+    // metadata KV bag：供多个 middleware 之间传递上下文。
+    // 命名空间规则由 Core 管理，插件不应依赖未声明的敏感字段。
     map<string, string> metadata = 9;
 
     // === 按需字段（声明了 middleware.read_body capability 的插件才会收到）===

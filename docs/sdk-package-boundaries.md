@@ -54,7 +54,7 @@ SDK 提供少量弱契约扩展点，用来承接展示、分类和通用计量�
 - `Usage.Metadata`：单次调用的展示或审计辅助信息。
 - `EventHandler`：Core 向插件推送标准事件。
 - `Host.Invoke` / `Host.InvokeStream`：插件用 `method + payload` 调用 Core 开放的方法，必须由 `host.invoke` 或 `host.invoke.<method>` capability 门控。
-- `SchemaProvider`：插件声明 routes、tasks、events、invokes 的 payload schema。
+- `SchemaProvider`：插件声明 routes、tasks、events、invokes 的 payload schema；流式 Host method 用 `InvokeSchema.Transport`、`ClientFrame`、`ServerFrame` 描述传输模式和帧结构。
 
 这些字段不能用于权限、调度、账号状态机或敏感数据传递。平台计费规则不得进入 SDK；网关插件负责计算标准账号成本 `Usage.AccountCost` / `Currency` 和审计明细。Core 统一入库、索引、汇总，并写入 `UserCost` / `BillingMultiplier`。
 

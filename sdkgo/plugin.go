@@ -109,7 +109,7 @@ type WebAssetsProvider interface {
 	GetWebAssets() map[string][]byte
 }
 
-// RequestHandler 可选：Core 将 /api/v1/admin/plugins/:name/rpc/* 透传给插件自行路由。
+// RequestHandler 可选：Core 将插件私有 API 请求透传给插件自行路由。
 type RequestHandler interface {
 	HandleRequest(ctx context.Context, method, path, query string, headers http.Header, body []byte) (statusCode int, respHeaders http.Header, respBody []byte, err error)
 }

@@ -2935,6 +2935,9 @@ type InvokeSchemaProto struct {
 	Request       *PayloadSchemaProto    `protobuf:"bytes,3,opt,name=request,proto3" json:"request,omitempty"`
 	Response      *PayloadSchemaProto    `protobuf:"bytes,4,opt,name=response,proto3" json:"response,omitempty"`
 	Metadata      map[string]string      `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Transport     string                 `protobuf:"bytes,6,opt,name=transport,proto3" json:"transport,omitempty"`                        // unary / server_stream / client_stream / bidirectional_stream
+	ClientFrame   *PayloadSchemaProto    `protobuf:"bytes,7,opt,name=client_frame,json=clientFrame,proto3" json:"client_frame,omitempty"` // InvokeStream client frame payload schema
+	ServerFrame   *PayloadSchemaProto    `protobuf:"bytes,8,opt,name=server_frame,json=serverFrame,proto3" json:"server_frame,omitempty"` // InvokeStream server frame payload schema
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3000,6 +3003,27 @@ func (x *InvokeSchemaProto) GetResponse() *PayloadSchemaProto {
 func (x *InvokeSchemaProto) GetMetadata() map[string]string {
 	if x != nil {
 		return x.Metadata
+	}
+	return nil
+}
+
+func (x *InvokeSchemaProto) GetTransport() string {
+	if x != nil {
+		return x.Transport
+	}
+	return ""
+}
+
+func (x *InvokeSchemaProto) GetClientFrame() *PayloadSchemaProto {
+	if x != nil {
+		return x.ClientFrame
+	}
+	return nil
+}
+
+func (x *InvokeSchemaProto) GetServerFrame() *PayloadSchemaProto {
+	if x != nil {
+		return x.ServerFrame
 	}
 	return nil
 }
@@ -3092,8 +3116,8 @@ type MiddlewareRequest struct {
 	Model     string         `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
 	Stream    bool           `protobuf:"varint,7,opt,name=stream,proto3" json:"stream,omitempty"`
 	Estimates []*UsageMetric `protobuf:"bytes,8,rep,name=estimates,proto3" json:"estimates,omitempty"` // Core 或插件提供的通用预估值，仅用于早期决策
-	// metadata KV bag：供多个 middleware 之间传递上下文（Open Question Q-open-3）。
-	// 命名空间规则暂不强制，未来可能收紧。
+	// metadata KV bag：供多个 middleware 之间传递上下文。
+	// 命名空间规则由 Core 管理，插件不应依赖未声明的敏感字段。
 	Metadata map[string]string `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// === 按需字段（声明了 middleware.read_body capability 的插件才会收到）===
 	RequestBody    []byte                   `protobuf:"bytes,100,opt,name=request_body,json=requestBody,proto3" json:"request_body,omitempty"`
@@ -4416,13 +4440,16 @@ const file_plugin_proto_rawDesc = "" +
 	"\bmetadata\x18\x05 \x03(\v21.airgate.plugin.v2.EventSchemaProto.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd6\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x88\x04\n" +
 	"\x11InvokeSchemaProto\x12\x16\n" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x18\n" +
 	"\asummary\x18\x02 \x01(\tR\asummary\x12?\n" +
 	"\arequest\x18\x03 \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\arequest\x12A\n" +
 	"\bresponse\x18\x04 \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\bresponse\x12N\n" +
-	"\bmetadata\x18\x05 \x03(\v22.airgate.plugin.v2.InvokeSchemaProto.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\x05 \x03(\v22.airgate.plugin.v2.InvokeSchemaProto.MetadataEntryR\bmetadata\x12\x1c\n" +
+	"\ttransport\x18\x06 \x01(\tR\ttransport\x12H\n" +
+	"\fclient_frame\x18\a \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\vclientFrame\x12H\n" +
+	"\fserver_frame\x18\b \x01(\v2%.airgate.plugin.v2.PayloadSchemaProtoR\vserverFrame\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9a\x03\n" +
@@ -4769,99 +4796,101 @@ var file_plugin_proto_depIdxs = []int32{
 	37,  // 47: airgate.plugin.v2.InvokeSchemaProto.request:type_name -> airgate.plugin.v2.PayloadSchemaProto
 	37,  // 48: airgate.plugin.v2.InvokeSchemaProto.response:type_name -> airgate.plugin.v2.PayloadSchemaProto
 	77,  // 49: airgate.plugin.v2.InvokeSchemaProto.metadata:type_name -> airgate.plugin.v2.InvokeSchemaProto.MetadataEntry
-	38,  // 50: airgate.plugin.v2.PluginSchemaResponse.routes:type_name -> airgate.plugin.v2.RouteSchemaProto
-	39,  // 51: airgate.plugin.v2.PluginSchemaResponse.tasks:type_name -> airgate.plugin.v2.TaskSchemaProto
-	40,  // 52: airgate.plugin.v2.PluginSchemaResponse.events:type_name -> airgate.plugin.v2.EventSchemaProto
-	41,  // 53: airgate.plugin.v2.PluginSchemaResponse.invokes:type_name -> airgate.plugin.v2.InvokeSchemaProto
-	78,  // 54: airgate.plugin.v2.PluginSchemaResponse.metadata:type_name -> airgate.plugin.v2.PluginSchemaResponse.MetadataEntry
-	21,  // 55: airgate.plugin.v2.MiddlewareRequest.estimates:type_name -> airgate.plugin.v2.UsageMetric
-	79,  // 56: airgate.plugin.v2.MiddlewareRequest.metadata:type_name -> airgate.plugin.v2.MiddlewareRequest.MetadataEntry
-	80,  // 57: airgate.plugin.v2.MiddlewareRequest.request_headers:type_name -> airgate.plugin.v2.MiddlewareRequest.RequestHeadersEntry
-	21,  // 58: airgate.plugin.v2.MiddlewareEvent.estimates:type_name -> airgate.plugin.v2.UsageMetric
-	23,  // 59: airgate.plugin.v2.MiddlewareEvent.usage:type_name -> airgate.plugin.v2.Usage
-	81,  // 60: airgate.plugin.v2.MiddlewareEvent.metadata:type_name -> airgate.plugin.v2.MiddlewareEvent.MetadataEntry
-	82,  // 61: airgate.plugin.v2.MiddlewareEvent.response_headers:type_name -> airgate.plugin.v2.MiddlewareEvent.ResponseHeadersEntry
-	2,   // 62: airgate.plugin.v2.MiddlewareDecision.action:type_name -> airgate.plugin.v2.MiddlewareDecision.Action
-	83,  // 63: airgate.plugin.v2.MiddlewareDecision.set_headers:type_name -> airgate.plugin.v2.MiddlewareDecision.SetHeadersEntry
-	84,  // 64: airgate.plugin.v2.MiddlewareDecision.metadata:type_name -> airgate.plugin.v2.MiddlewareDecision.MetadataEntry
-	85,  // 65: airgate.plugin.v2.EventSubscriptionProto.filter:type_name -> airgate.plugin.v2.EventSubscriptionProto.FilterEntry
-	86,  // 66: airgate.plugin.v2.EventSubscriptionProto.metadata:type_name -> airgate.plugin.v2.EventSubscriptionProto.MetadataEntry
-	46,  // 67: airgate.plugin.v2.EventSubscriptionsResponse.subscriptions:type_name -> airgate.plugin.v2.EventSubscriptionProto
-	87,  // 68: airgate.plugin.v2.PluginEvent.metadata:type_name -> airgate.plugin.v2.PluginEvent.MetadataEntry
-	88,  // 69: airgate.plugin.v2.HostInvokeRequest.metadata:type_name -> airgate.plugin.v2.HostInvokeRequest.MetadataEntry
-	89,  // 70: airgate.plugin.v2.HostInvokeResponse.metadata:type_name -> airgate.plugin.v2.HostInvokeResponse.MetadataEntry
-	90,  // 71: airgate.plugin.v2.HostStreamFrame.metadata:type_name -> airgate.plugin.v2.HostStreamFrame.MetadataEntry
-	5,   // 72: airgate.plugin.v2.ForwardRequest.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 73: airgate.plugin.v2.UpstreamResponse.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 74: airgate.plugin.v2.ForwardChunk.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 75: airgate.plugin.v2.HttpRequest.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 76: airgate.plugin.v2.HttpResponse.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 77: airgate.plugin.v2.HttpResponseChunk.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 78: airgate.plugin.v2.WebSocketConnectInfo.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 79: airgate.plugin.v2.MiddlewareRequest.RequestHeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 80: airgate.plugin.v2.MiddlewareEvent.ResponseHeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	5,   // 81: airgate.plugin.v2.MiddlewareDecision.SetHeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
-	3,   // 82: airgate.plugin.v2.PluginService.GetInfo:input_type -> airgate.plugin.v2.Empty
-	12,  // 83: airgate.plugin.v2.PluginService.Init:input_type -> airgate.plugin.v2.InitRequest
-	3,   // 84: airgate.plugin.v2.PluginService.Start:input_type -> airgate.plugin.v2.Empty
-	3,   // 85: airgate.plugin.v2.PluginService.Stop:input_type -> airgate.plugin.v2.Empty
-	3,   // 86: airgate.plugin.v2.PluginService.GetWebAssets:input_type -> airgate.plugin.v2.Empty
-	3,   // 87: airgate.plugin.v2.PluginService.GetSchema:input_type -> airgate.plugin.v2.Empty
-	3,   // 88: airgate.plugin.v2.PluginService.HealthCheck:input_type -> airgate.plugin.v2.Empty
-	27,  // 89: airgate.plugin.v2.PluginService.HandleRequest:input_type -> airgate.plugin.v2.HttpRequest
-	3,   // 90: airgate.plugin.v2.GatewayService.GetPlatform:input_type -> airgate.plugin.v2.Empty
-	3,   // 91: airgate.plugin.v2.GatewayService.GetModels:input_type -> airgate.plugin.v2.Empty
-	3,   // 92: airgate.plugin.v2.GatewayService.GetRoutes:input_type -> airgate.plugin.v2.Empty
-	18,  // 93: airgate.plugin.v2.GatewayService.Forward:input_type -> airgate.plugin.v2.ForwardRequest
-	18,  // 94: airgate.plugin.v2.GatewayService.ForwardStream:input_type -> airgate.plugin.v2.ForwardRequest
-	26,  // 95: airgate.plugin.v2.GatewayService.ValidateAccount:input_type -> airgate.plugin.v2.CredentialsRequest
-	33,  // 96: airgate.plugin.v2.GatewayService.HandleWebSocket:input_type -> airgate.plugin.v2.WebSocketFrame
-	3,   // 97: airgate.plugin.v2.ExtensionService.Migrate:input_type -> airgate.plugin.v2.Empty
-	3,   // 98: airgate.plugin.v2.ExtensionService.GetBackgroundTasks:input_type -> airgate.plugin.v2.Empty
-	32,  // 99: airgate.plugin.v2.ExtensionService.RunBackgroundTask:input_type -> airgate.plugin.v2.RunBackgroundTaskRequest
-	27,  // 100: airgate.plugin.v2.ExtensionService.HandleRequest:input_type -> airgate.plugin.v2.HttpRequest
-	27,  // 101: airgate.plugin.v2.ExtensionService.HandleStreamRequest:input_type -> airgate.plugin.v2.HttpRequest
-	53,  // 102: airgate.plugin.v2.ExtensionService.ProcessTask:input_type -> airgate.plugin.v2.ProcessTaskRequest
-	3,   // 103: airgate.plugin.v2.ExtensionService.GetTaskTypes:input_type -> airgate.plugin.v2.Empty
-	43,  // 104: airgate.plugin.v2.MiddlewareService.OnForwardBegin:input_type -> airgate.plugin.v2.MiddlewareRequest
-	44,  // 105: airgate.plugin.v2.MiddlewareService.OnForwardEnd:input_type -> airgate.plugin.v2.MiddlewareEvent
-	3,   // 106: airgate.plugin.v2.EventService.GetEventSubscriptions:input_type -> airgate.plugin.v2.Empty
-	48,  // 107: airgate.plugin.v2.EventService.HandleEvent:input_type -> airgate.plugin.v2.PluginEvent
-	50,  // 108: airgate.plugin.v2.CoreInvokeService.Invoke:input_type -> airgate.plugin.v2.HostInvokeRequest
-	52,  // 109: airgate.plugin.v2.CoreInvokeService.InvokeStream:input_type -> airgate.plugin.v2.HostStreamFrame
-	6,   // 110: airgate.plugin.v2.PluginService.GetInfo:output_type -> airgate.plugin.v2.PluginInfoResponse
-	3,   // 111: airgate.plugin.v2.PluginService.Init:output_type -> airgate.plugin.v2.Empty
-	3,   // 112: airgate.plugin.v2.PluginService.Start:output_type -> airgate.plugin.v2.Empty
-	3,   // 113: airgate.plugin.v2.PluginService.Stop:output_type -> airgate.plugin.v2.Empty
-	36,  // 114: airgate.plugin.v2.PluginService.GetWebAssets:output_type -> airgate.plugin.v2.WebAssetsResponse
-	42,  // 115: airgate.plugin.v2.PluginService.GetSchema:output_type -> airgate.plugin.v2.PluginSchemaResponse
-	3,   // 116: airgate.plugin.v2.PluginService.HealthCheck:output_type -> airgate.plugin.v2.Empty
-	28,  // 117: airgate.plugin.v2.PluginService.HandleRequest:output_type -> airgate.plugin.v2.HttpResponse
-	4,   // 118: airgate.plugin.v2.GatewayService.GetPlatform:output_type -> airgate.plugin.v2.StringResponse
-	14,  // 119: airgate.plugin.v2.GatewayService.GetModels:output_type -> airgate.plugin.v2.ModelsResponse
-	16,  // 120: airgate.plugin.v2.GatewayService.GetRoutes:output_type -> airgate.plugin.v2.RoutesResponse
-	24,  // 121: airgate.plugin.v2.GatewayService.Forward:output_type -> airgate.plugin.v2.ForwardOutcome
-	25,  // 122: airgate.plugin.v2.GatewayService.ForwardStream:output_type -> airgate.plugin.v2.ForwardChunk
-	3,   // 123: airgate.plugin.v2.GatewayService.ValidateAccount:output_type -> airgate.plugin.v2.Empty
-	33,  // 124: airgate.plugin.v2.GatewayService.HandleWebSocket:output_type -> airgate.plugin.v2.WebSocketFrame
-	3,   // 125: airgate.plugin.v2.ExtensionService.Migrate:output_type -> airgate.plugin.v2.Empty
-	31,  // 126: airgate.plugin.v2.ExtensionService.GetBackgroundTasks:output_type -> airgate.plugin.v2.BackgroundTasksResponse
-	3,   // 127: airgate.plugin.v2.ExtensionService.RunBackgroundTask:output_type -> airgate.plugin.v2.Empty
-	28,  // 128: airgate.plugin.v2.ExtensionService.HandleRequest:output_type -> airgate.plugin.v2.HttpResponse
-	29,  // 129: airgate.plugin.v2.ExtensionService.HandleStreamRequest:output_type -> airgate.plugin.v2.HttpResponseChunk
-	54,  // 130: airgate.plugin.v2.ExtensionService.ProcessTask:output_type -> airgate.plugin.v2.ProcessTaskResponse
-	55,  // 131: airgate.plugin.v2.ExtensionService.GetTaskTypes:output_type -> airgate.plugin.v2.TaskTypesResponse
-	45,  // 132: airgate.plugin.v2.MiddlewareService.OnForwardBegin:output_type -> airgate.plugin.v2.MiddlewareDecision
-	3,   // 133: airgate.plugin.v2.MiddlewareService.OnForwardEnd:output_type -> airgate.plugin.v2.Empty
-	47,  // 134: airgate.plugin.v2.EventService.GetEventSubscriptions:output_type -> airgate.plugin.v2.EventSubscriptionsResponse
-	49,  // 135: airgate.plugin.v2.EventService.HandleEvent:output_type -> airgate.plugin.v2.EventHandleResponse
-	51,  // 136: airgate.plugin.v2.CoreInvokeService.Invoke:output_type -> airgate.plugin.v2.HostInvokeResponse
-	52,  // 137: airgate.plugin.v2.CoreInvokeService.InvokeStream:output_type -> airgate.plugin.v2.HostStreamFrame
-	110, // [110:138] is the sub-list for method output_type
-	82,  // [82:110] is the sub-list for method input_type
-	82,  // [82:82] is the sub-list for extension type_name
-	82,  // [82:82] is the sub-list for extension extendee
-	0,   // [0:82] is the sub-list for field type_name
+	37,  // 50: airgate.plugin.v2.InvokeSchemaProto.client_frame:type_name -> airgate.plugin.v2.PayloadSchemaProto
+	37,  // 51: airgate.plugin.v2.InvokeSchemaProto.server_frame:type_name -> airgate.plugin.v2.PayloadSchemaProto
+	38,  // 52: airgate.plugin.v2.PluginSchemaResponse.routes:type_name -> airgate.plugin.v2.RouteSchemaProto
+	39,  // 53: airgate.plugin.v2.PluginSchemaResponse.tasks:type_name -> airgate.plugin.v2.TaskSchemaProto
+	40,  // 54: airgate.plugin.v2.PluginSchemaResponse.events:type_name -> airgate.plugin.v2.EventSchemaProto
+	41,  // 55: airgate.plugin.v2.PluginSchemaResponse.invokes:type_name -> airgate.plugin.v2.InvokeSchemaProto
+	78,  // 56: airgate.plugin.v2.PluginSchemaResponse.metadata:type_name -> airgate.plugin.v2.PluginSchemaResponse.MetadataEntry
+	21,  // 57: airgate.plugin.v2.MiddlewareRequest.estimates:type_name -> airgate.plugin.v2.UsageMetric
+	79,  // 58: airgate.plugin.v2.MiddlewareRequest.metadata:type_name -> airgate.plugin.v2.MiddlewareRequest.MetadataEntry
+	80,  // 59: airgate.plugin.v2.MiddlewareRequest.request_headers:type_name -> airgate.plugin.v2.MiddlewareRequest.RequestHeadersEntry
+	21,  // 60: airgate.plugin.v2.MiddlewareEvent.estimates:type_name -> airgate.plugin.v2.UsageMetric
+	23,  // 61: airgate.plugin.v2.MiddlewareEvent.usage:type_name -> airgate.plugin.v2.Usage
+	81,  // 62: airgate.plugin.v2.MiddlewareEvent.metadata:type_name -> airgate.plugin.v2.MiddlewareEvent.MetadataEntry
+	82,  // 63: airgate.plugin.v2.MiddlewareEvent.response_headers:type_name -> airgate.plugin.v2.MiddlewareEvent.ResponseHeadersEntry
+	2,   // 64: airgate.plugin.v2.MiddlewareDecision.action:type_name -> airgate.plugin.v2.MiddlewareDecision.Action
+	83,  // 65: airgate.plugin.v2.MiddlewareDecision.set_headers:type_name -> airgate.plugin.v2.MiddlewareDecision.SetHeadersEntry
+	84,  // 66: airgate.plugin.v2.MiddlewareDecision.metadata:type_name -> airgate.plugin.v2.MiddlewareDecision.MetadataEntry
+	85,  // 67: airgate.plugin.v2.EventSubscriptionProto.filter:type_name -> airgate.plugin.v2.EventSubscriptionProto.FilterEntry
+	86,  // 68: airgate.plugin.v2.EventSubscriptionProto.metadata:type_name -> airgate.plugin.v2.EventSubscriptionProto.MetadataEntry
+	46,  // 69: airgate.plugin.v2.EventSubscriptionsResponse.subscriptions:type_name -> airgate.plugin.v2.EventSubscriptionProto
+	87,  // 70: airgate.plugin.v2.PluginEvent.metadata:type_name -> airgate.plugin.v2.PluginEvent.MetadataEntry
+	88,  // 71: airgate.plugin.v2.HostInvokeRequest.metadata:type_name -> airgate.plugin.v2.HostInvokeRequest.MetadataEntry
+	89,  // 72: airgate.plugin.v2.HostInvokeResponse.metadata:type_name -> airgate.plugin.v2.HostInvokeResponse.MetadataEntry
+	90,  // 73: airgate.plugin.v2.HostStreamFrame.metadata:type_name -> airgate.plugin.v2.HostStreamFrame.MetadataEntry
+	5,   // 74: airgate.plugin.v2.ForwardRequest.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
+	5,   // 75: airgate.plugin.v2.UpstreamResponse.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
+	5,   // 76: airgate.plugin.v2.ForwardChunk.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
+	5,   // 77: airgate.plugin.v2.HttpRequest.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
+	5,   // 78: airgate.plugin.v2.HttpResponse.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
+	5,   // 79: airgate.plugin.v2.HttpResponseChunk.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
+	5,   // 80: airgate.plugin.v2.WebSocketConnectInfo.HeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
+	5,   // 81: airgate.plugin.v2.MiddlewareRequest.RequestHeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
+	5,   // 82: airgate.plugin.v2.MiddlewareEvent.ResponseHeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
+	5,   // 83: airgate.plugin.v2.MiddlewareDecision.SetHeadersEntry.value:type_name -> airgate.plugin.v2.HeaderValues
+	3,   // 84: airgate.plugin.v2.PluginService.GetInfo:input_type -> airgate.plugin.v2.Empty
+	12,  // 85: airgate.plugin.v2.PluginService.Init:input_type -> airgate.plugin.v2.InitRequest
+	3,   // 86: airgate.plugin.v2.PluginService.Start:input_type -> airgate.plugin.v2.Empty
+	3,   // 87: airgate.plugin.v2.PluginService.Stop:input_type -> airgate.plugin.v2.Empty
+	3,   // 88: airgate.plugin.v2.PluginService.GetWebAssets:input_type -> airgate.plugin.v2.Empty
+	3,   // 89: airgate.plugin.v2.PluginService.GetSchema:input_type -> airgate.plugin.v2.Empty
+	3,   // 90: airgate.plugin.v2.PluginService.HealthCheck:input_type -> airgate.plugin.v2.Empty
+	27,  // 91: airgate.plugin.v2.PluginService.HandleRequest:input_type -> airgate.plugin.v2.HttpRequest
+	3,   // 92: airgate.plugin.v2.GatewayService.GetPlatform:input_type -> airgate.plugin.v2.Empty
+	3,   // 93: airgate.plugin.v2.GatewayService.GetModels:input_type -> airgate.plugin.v2.Empty
+	3,   // 94: airgate.plugin.v2.GatewayService.GetRoutes:input_type -> airgate.plugin.v2.Empty
+	18,  // 95: airgate.plugin.v2.GatewayService.Forward:input_type -> airgate.plugin.v2.ForwardRequest
+	18,  // 96: airgate.plugin.v2.GatewayService.ForwardStream:input_type -> airgate.plugin.v2.ForwardRequest
+	26,  // 97: airgate.plugin.v2.GatewayService.ValidateAccount:input_type -> airgate.plugin.v2.CredentialsRequest
+	33,  // 98: airgate.plugin.v2.GatewayService.HandleWebSocket:input_type -> airgate.plugin.v2.WebSocketFrame
+	3,   // 99: airgate.plugin.v2.ExtensionService.Migrate:input_type -> airgate.plugin.v2.Empty
+	3,   // 100: airgate.plugin.v2.ExtensionService.GetBackgroundTasks:input_type -> airgate.plugin.v2.Empty
+	32,  // 101: airgate.plugin.v2.ExtensionService.RunBackgroundTask:input_type -> airgate.plugin.v2.RunBackgroundTaskRequest
+	27,  // 102: airgate.plugin.v2.ExtensionService.HandleRequest:input_type -> airgate.plugin.v2.HttpRequest
+	27,  // 103: airgate.plugin.v2.ExtensionService.HandleStreamRequest:input_type -> airgate.plugin.v2.HttpRequest
+	53,  // 104: airgate.plugin.v2.ExtensionService.ProcessTask:input_type -> airgate.plugin.v2.ProcessTaskRequest
+	3,   // 105: airgate.plugin.v2.ExtensionService.GetTaskTypes:input_type -> airgate.plugin.v2.Empty
+	43,  // 106: airgate.plugin.v2.MiddlewareService.OnForwardBegin:input_type -> airgate.plugin.v2.MiddlewareRequest
+	44,  // 107: airgate.plugin.v2.MiddlewareService.OnForwardEnd:input_type -> airgate.plugin.v2.MiddlewareEvent
+	3,   // 108: airgate.plugin.v2.EventService.GetEventSubscriptions:input_type -> airgate.plugin.v2.Empty
+	48,  // 109: airgate.plugin.v2.EventService.HandleEvent:input_type -> airgate.plugin.v2.PluginEvent
+	50,  // 110: airgate.plugin.v2.CoreInvokeService.Invoke:input_type -> airgate.plugin.v2.HostInvokeRequest
+	52,  // 111: airgate.plugin.v2.CoreInvokeService.InvokeStream:input_type -> airgate.plugin.v2.HostStreamFrame
+	6,   // 112: airgate.plugin.v2.PluginService.GetInfo:output_type -> airgate.plugin.v2.PluginInfoResponse
+	3,   // 113: airgate.plugin.v2.PluginService.Init:output_type -> airgate.plugin.v2.Empty
+	3,   // 114: airgate.plugin.v2.PluginService.Start:output_type -> airgate.plugin.v2.Empty
+	3,   // 115: airgate.plugin.v2.PluginService.Stop:output_type -> airgate.plugin.v2.Empty
+	36,  // 116: airgate.plugin.v2.PluginService.GetWebAssets:output_type -> airgate.plugin.v2.WebAssetsResponse
+	42,  // 117: airgate.plugin.v2.PluginService.GetSchema:output_type -> airgate.plugin.v2.PluginSchemaResponse
+	3,   // 118: airgate.plugin.v2.PluginService.HealthCheck:output_type -> airgate.plugin.v2.Empty
+	28,  // 119: airgate.plugin.v2.PluginService.HandleRequest:output_type -> airgate.plugin.v2.HttpResponse
+	4,   // 120: airgate.plugin.v2.GatewayService.GetPlatform:output_type -> airgate.plugin.v2.StringResponse
+	14,  // 121: airgate.plugin.v2.GatewayService.GetModels:output_type -> airgate.plugin.v2.ModelsResponse
+	16,  // 122: airgate.plugin.v2.GatewayService.GetRoutes:output_type -> airgate.plugin.v2.RoutesResponse
+	24,  // 123: airgate.plugin.v2.GatewayService.Forward:output_type -> airgate.plugin.v2.ForwardOutcome
+	25,  // 124: airgate.plugin.v2.GatewayService.ForwardStream:output_type -> airgate.plugin.v2.ForwardChunk
+	3,   // 125: airgate.plugin.v2.GatewayService.ValidateAccount:output_type -> airgate.plugin.v2.Empty
+	33,  // 126: airgate.plugin.v2.GatewayService.HandleWebSocket:output_type -> airgate.plugin.v2.WebSocketFrame
+	3,   // 127: airgate.plugin.v2.ExtensionService.Migrate:output_type -> airgate.plugin.v2.Empty
+	31,  // 128: airgate.plugin.v2.ExtensionService.GetBackgroundTasks:output_type -> airgate.plugin.v2.BackgroundTasksResponse
+	3,   // 129: airgate.plugin.v2.ExtensionService.RunBackgroundTask:output_type -> airgate.plugin.v2.Empty
+	28,  // 130: airgate.plugin.v2.ExtensionService.HandleRequest:output_type -> airgate.plugin.v2.HttpResponse
+	29,  // 131: airgate.plugin.v2.ExtensionService.HandleStreamRequest:output_type -> airgate.plugin.v2.HttpResponseChunk
+	54,  // 132: airgate.plugin.v2.ExtensionService.ProcessTask:output_type -> airgate.plugin.v2.ProcessTaskResponse
+	55,  // 133: airgate.plugin.v2.ExtensionService.GetTaskTypes:output_type -> airgate.plugin.v2.TaskTypesResponse
+	45,  // 134: airgate.plugin.v2.MiddlewareService.OnForwardBegin:output_type -> airgate.plugin.v2.MiddlewareDecision
+	3,   // 135: airgate.plugin.v2.MiddlewareService.OnForwardEnd:output_type -> airgate.plugin.v2.Empty
+	47,  // 136: airgate.plugin.v2.EventService.GetEventSubscriptions:output_type -> airgate.plugin.v2.EventSubscriptionsResponse
+	49,  // 137: airgate.plugin.v2.EventService.HandleEvent:output_type -> airgate.plugin.v2.EventHandleResponse
+	51,  // 138: airgate.plugin.v2.CoreInvokeService.Invoke:output_type -> airgate.plugin.v2.HostInvokeResponse
+	52,  // 139: airgate.plugin.v2.CoreInvokeService.InvokeStream:output_type -> airgate.plugin.v2.HostStreamFrame
+	112, // [112:140] is the sub-list for method output_type
+	84,  // [84:112] is the sub-list for method input_type
+	84,  // [84:84] is the sub-list for extension type_name
+	84,  // [84:84] is the sub-list for extension extendee
+	0,   // [0:84] is the sub-list for field type_name
 }
 
 func init() { file_plugin_proto_init() }

@@ -189,42 +189,42 @@ export function YourComponent(props) {
 
 ## 5. 设计 Token 参考
 
-所有插件样式通过 CSS 变量 `--ag-*` 引用，Tailwind 工具类已映射好（带 `agw-` 前缀）。
+所有插件样式通过 CSS 变量 `--ag-*` 引用，Tailwind 工具类已映射好（带 `agw-` 前缀）。具体 token 值由 `frontend/src/tokens.ts` 生成，文档只说明语义，避免样式值漂移。
 
 ### 颜色
 
-| Token | Tailwind 类 | 暗色值 | 用途 |
-|---|---|---|---|
-| `--ag-primary` | `agw-text-primary` / `agw-bg-primary` | `#2dd4a8` | 主操作、链接、选中态 |
-| `--ag-primary-hover` | `agw-bg-primary-hover` | `#5de8c2` | 主色悬停 |
-| `--ag-primary-subtle` | `agw-bg-primary-subtle` | `rgba(45,212,168,0.10)` | 主色背景/高亮 |
-| `--ag-primary-glow` | — | `rgba(45,212,168,0.18)` | 发光阴影 |
-| `--ag-success` | `agw-text-success` | `#22c55e` | 成功状态 |
-| `--ag-warning` | `agw-text-warning` | `#f59e0b` | 警告状态 |
-| `--ag-danger` | `agw-text-danger` | `#ef4444` | 错误/删除 |
-| `--ag-info` | `agw-text-info` | `#60a5fa` | 信息/辅助色 |
+| Token | Tailwind 类 | 用途 |
+|---|---|---|
+| `--ag-primary` | `agw-text-primary` / `agw-bg-primary` | 主操作、链接、选中态 |
+| `--ag-primary-hover` | `agw-bg-primary-hover` | 主色悬停 |
+| `--ag-primary-subtle` | `agw-bg-primary-subtle` | 主色背景/高亮 |
+| `--ag-primary-glow` | — | 发光阴影 |
+| `--ag-success` | `agw-text-success` | 成功状态 |
+| `--ag-warning` | `agw-text-warning` | 警告状态 |
+| `--ag-danger` | `agw-text-danger` | 错误/删除 |
+| `--ag-info` | `agw-text-info` | 信息/辅助色 |
 
 ### 背景层级
 
 从深到浅，形成空间层次：
 
-| Token | Tailwind 类 | 暗色值 | 用途 |
-|---|---|---|---|
-| `--ag-bg-deep` | `agw-bg-bg-deep` | `#0a0a0c` | 页面最底层 |
-| `--ag-bg` | `agw-bg-bg` | `#111113` | 侧边栏/主面板 |
-| `--ag-bg-elevated` | `agw-bg-bg-elevated` | `#18181b` | 卡片/弹窗/下拉 |
-| `--ag-bg-surface` | `agw-bg-surface` | `#1e1e21` | 输入框/表单区域 |
-| `--ag-bg-hover` | `agw-bg-bg-hover` | `#27272a` | 悬停态背景 |
-| `--ag-bg-active` | `agw-bg-bg-active` | `#303033` | 按下/激活态 |
+| Token | Tailwind 类 | 用途 |
+|---|---|---|
+| `--ag-bg-deep` | `agw-bg-bg-deep` | 页面最底层 |
+| `--ag-bg` | `agw-bg-bg` | 侧边栏/主面板 |
+| `--ag-bg-elevated` | `agw-bg-bg-elevated` | 卡片/弹窗/下拉 |
+| `--ag-bg-surface` | `agw-bg-surface` | 输入框/表单区域 |
+| `--ag-bg-hover` | `agw-bg-bg-hover` | 悬停态背景 |
+| `--ag-bg-active` | `agw-bg-bg-active` | 按下/激活态 |
 
 ### 文字
 
-| Token | Tailwind 类 | 暗色值 | 用途 |
-|---|---|---|---|
-| `--ag-text` | `agw-text-text` | `#ececf0` | 主文字 |
-| `--ag-text-secondary` | `agw-text-text-secondary` | `#a1a1aa` | 次要文字/标签 |
-| `--ag-text-tertiary` | `agw-text-text-tertiary` | `#63636e` | 提示文字/占位符 |
-| `--ag-text-inverse` | `agw-text-text-inverse` | `#0a0a0c` | 反色（主色按钮文字） |
+| Token | Tailwind 类 | 用途 |
+|---|---|---|
+| `--ag-text` | `agw-text-text` | 主文字 |
+| `--ag-text-secondary` | `agw-text-text-secondary` | 次要文字/标签 |
+| `--ag-text-tertiary` | `agw-text-text-tertiary` | 提示文字/占位符 |
+| `--ag-text-inverse` | `agw-text-text-inverse` | 反色（主色按钮文字） |
 
 ### 边框
 
@@ -237,13 +237,14 @@ export function YourComponent(props) {
 
 ### 其他
 
-| Token | Tailwind 类 | 值 |
+| Token | Tailwind 类 | 用途 |
 |---|---|---|
-| `--ag-radius-sm` | `agw-rounded-sm` | `6px` |
-| `--ag-radius-md` | `agw-rounded-md` | `10px` |
-| `--ag-radius-lg` | `agw-rounded-lg` | `14px` |
-| `--ag-font-sans` | `agw-font-sans` | Inter |
-| `--ag-font-mono` | `agw-font-mono` | JetBrains Mono |
+| `--ag-radius-sm` | `agw-rounded-sm` | 小圆角 |
+| `--ag-radius-md` | `agw-rounded-md` | 中圆角 |
+| `--ag-radius-lg` | `agw-rounded-lg` | 大圆角 |
+| `--ag-field-radius` | `agw-rounded-field` | 表单控件圆角 |
+| `--ag-font-sans` | `agw-font-sans` | 正文字体 |
+| `--ag-font-mono` | `agw-font-mono` | 等宽字体 |
 
 ## 6. SDK 提供的 UI 组件
 
