@@ -53,7 +53,7 @@ build: ## 编译检查
 
 theme: ## 构建前端主题包并生成 DevServer 用 theme.css
 	cd frontend && npm run build
-	node --input-type=module -e "import{generateThemeCSS}from'./frontend/dist/css.js';process.stdout.write(generateThemeCSS())" > devserver/static/theme.css
+	node --input-type=module -e "import{generateThemeCSS}from'./frontend/dist/css.js';process.stdout.write(generateThemeCSS())" > devkit/devserver/static/theme.css
 	@echo "theme.css 已生成"
 
 # ===================== 代码生成 =====================
@@ -79,7 +79,7 @@ proto-tools: ## 安装指定版本的 protoc 和 Go 插件
 	@echo "protoc-gen-go / protoc-gen-go-grpc 已就绪"
 
 proto: proto-tools ## 重新生成 protobuf 代码
-	@cd proto && PATH=$(TOOLS_DIR)/bin:$$PATH $(PROTOC_BIN) \
+	@cd protocol/proto && PATH=$(TOOLS_DIR)/bin:$$PATH $(PROTOC_BIN) \
 		--go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		plugin.proto

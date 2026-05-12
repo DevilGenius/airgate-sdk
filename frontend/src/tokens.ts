@@ -160,7 +160,7 @@ export const staticTokenGroups: StaticTokenGroups = {
   appShell: appShellTokens,
 };
 
-/** 不随主题变化的静态 token（向后兼容的扁平导出） */
+/** 不随主题变化的静态 token */
 export const staticTokens: StaticTokens = {
   ...foundationTokens,
   ...appShellTokens,

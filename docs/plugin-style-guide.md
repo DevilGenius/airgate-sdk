@@ -27,6 +27,8 @@ your-plugin/
 
 ## 2. 依赖配置
 
+插件前端 SDK 的正式包名是 `@airgate/theme`。插件业务代码优先使用 `@airgate/theme/plugin`，该入口提供主题初始化、样式作用域、Tailwind bridge、插件前端类型和公共 UI 组件。
+
 ### package.json
 
 ```json
@@ -151,7 +153,7 @@ import { ensurePluginStyles } from './theme/runtime';
 ensurePluginStyles();
 
 export default {
-  accountForm: YourComponent,  // 或 routes / menuItems
+  accountCreate: YourComponent,  // 或 accountEdit / accountIdentity / accountUsageWindow / usageMetricDetail / usageCostDetail / routes / menuItems
 };
 ```
 
@@ -245,7 +247,7 @@ export function YourComponent(props) {
 
 ## 6. SDK 提供的 UI 组件
 
-SDK 提供了一套预制组件（`@airgate/theme/plugin`），样式与 Core 保持一致，**优先使用这些组件**：
+SDK 提供了一套预制组件（`@airgate/theme/plugin`），样式与 Core 保持一致，属于插件前端稳定公共契约。插件业务 UI **优先使用这些组件**：
 
 ```tsx
 import {

@@ -89,7 +89,7 @@ export interface AppShellTokens {
   topbarHeight: string;
 }
 
-/** 不随主题变化的 token（保持向后兼容的扁平结构） */
+/** 不随主题变化的 token */
 export interface StaticTokens extends FoundationTokens, AppShellTokens {}
 
 export interface StaticTokenGroups {

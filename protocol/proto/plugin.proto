@@ -1,0 +1,597 @@
+syntax = "proto3";
+
+package airgate.plugin.v2;
+
+option go_package = "github.com/DouDOU-start/airgate-sdk/protocol/proto";
+
+// ==================== 插件基础服务 ====================
+
+service PluginService {
+    rpc GetInfo(Empty) returns (PluginInfoResponse);
+    rpc Init(InitRequest) returns (Empty);
+    rpc Start(Empty) returns (Empty);
+    rpc Stop(Empty) returns (Empty);
+    // 获取插件的前端静态资源
+    rpc GetWebAssets(Empty) returns (WebAssetsResponse);
+    // 获取插件结构化能力清单（可选，未实现时返回空）
+    rpc GetSchema(Empty) returns (PluginSchemaResponse);
+    // 健康检查（可选，插件未实现时返回成功）
+    rpc HealthCheck(Empty) returns (Empty);
+    // 通用请求代理：Core 透传，插件自行路由（可选，插件未实现时返回 501）
+    rpc HandleRequest(HttpRequest) returns (HttpResponse);
+}
+
+// ==================== 网关服务 ====================
+
+service GatewayService {
+    rpc GetPlatform(Empty) returns (StringResponse);
+    rpc GetModels(Empty) returns (ModelsResponse);
+    rpc GetRoutes(Empty) returns (RoutesResponse);
+    rpc Forward(ForwardRequest) returns (ForwardOutcome);
+    rpc ForwardStream(ForwardRequest) returns (stream ForwardChunk);
+    rpc ValidateAccount(CredentialsRequest) returns (Empty);
+    // WebSocket 双向流
+    rpc HandleWebSocket(stream WebSocketFrame) returns (stream WebSocketFrame);
+}
+
+// ==================== 扩展服务 ====================
+
+service ExtensionService {
+    rpc Migrate(Empty) returns (Empty);
+    rpc GetBackgroundTasks(Empty) returns (BackgroundTasksResponse);
+    // 由 Core 调度器按 Interval 周期触发；插件进程内查表执行 Handler
+    rpc RunBackgroundTask(RunBackgroundTaskRequest) returns (Empty);
+    // HTTP 请求由核心代理到插件
+    rpc HandleRequest(HttpRequest) returns (HttpResponse);
+    rpc HandleStreamRequest(HttpRequest) returns (stream HttpResponseChunk);
+    // 异步任务：Core 分发 pending 任务给插件处理
+    rpc ProcessTask(ProcessTaskRequest) returns (ProcessTaskResponse);
+    // 返回此插件支持的任务类型列表
+    rpc GetTaskTypes(Empty) returns (TaskTypesResponse);
+}
+
+// ==================== 中间件服务（Core → Plugin，forward 路径拦截） ====================
+//
+// MiddlewareService 让"请求中间层"这种旁路插件能拿到每次 forward 的前后事件：
+//   - OnForwardBegin  — 选完账号 / 还没调 upstream 之前，能改 headers / 拒绝请求
+//   - OnForwardEnd    — upstream 返回之后 / 写 usage_log 之前，拿到完整 metadata
+//
+// 设计原则：
+//   1. middleware 挂了不能 block 生产：返回 error 只 log warn，流程继续；
+//      只有 OnForwardBegin 明确返回 Action=DENY 才会拒绝请求
+//   2. 多个 middleware 按 priority 排序。Begin 升序、End 降序（LIFO）
+//   3. payload 两段式：默认只传元数据，声明 middleware.read_body capability 的插件
+//      才会收到 request_body / response_body
+//   4. 流式响应的 response_body 只给摘要（首次非空 chunk 拼装），完整流式内容应由
+//      独立的流式事件能力承载
+//
+// 新角色：middleware 插件不是 gateway（不替代 upstream），也不是 extension
+//（不跑后台任务 + 自定义 HTTP）。它在 PluginInfo.type = "middleware" 中声明。
+service MiddlewareService {
+    rpc OnForwardBegin(MiddlewareRequest) returns (MiddlewareDecision);
+    rpc OnForwardEnd(MiddlewareEvent) returns (Empty);
+}
+
+// ==================== 事件服务（Core → Plugin） ====================
+
+service EventService {
+    rpc GetEventSubscriptions(Empty) returns (EventSubscriptionsResponse);
+    rpc HandleEvent(PluginEvent) returns (EventHandleResponse);
+}
+
+// ==================== Host 服务（反向调用：插件 → Core） ====================
+//
+// 由 Core 实现，通过 hashicorp/go-plugin 的 GRPCBroker 暴露给插件子进程。
+// SDK 只定义通用 Invoke / InvokeStream 通道；Core 通过方法注册表决定开放哪些方法、
+// 允许哪些插件调用、请求/响应 schema、是否支持流式以及幂等策略。
+service CoreInvokeService {
+    rpc Invoke(HostInvokeRequest) returns (HostInvokeResponse);
+    rpc InvokeStream(stream HostStreamFrame) returns (stream HostStreamFrame);
+}
+
+// ==================== 通用消息 ====================
+
+message Empty {}
+
+message StringResponse {
+    string value = 1;
+}
+
+// HeaderValues 支持同一 Header 有多个值（如 Set-Cookie）
+message HeaderValues {
+    repeated string values = 1;
+}
+
+// ==================== 插件信息 ====================
+
+message PluginInfoResponse {
+    string id = 1;
+    string name = 2;
+    string version = 3;
+    string description = 4;
+    string author = 5;
+    string type = 6;
+    repeated AccountTypeProto account_types = 7;
+    repeated FrontendPageProto frontend_pages = 8;
+    repeated FrontendWidgetProto frontend_widgets = 9;
+    string sdk_version = 10;                          // 插件编译时的 SDK 版本
+    repeated string dependencies = 11;                // 依赖的其他插件 ID
+    repeated ConfigFieldProto config_schema = 12;     // 配置项声明
+    repeated string instruction_presets = 13;         // 可用的 instructions 预设名称列表
+    // capabilities 声明 Host.Invoke / Host.InvokeStream、method 级授权和 Middleware 能力。
+    // Core 启动时按插件类型、方法注册表和 RPC 调用做准入校验。
+    repeated string capabilities = 14;
+    // priority 中间件链中的排序权重（数值越小越早进 Begin、越晚出 End）。
+    // 仅 type="middleware" 插件使用；其他类型忽略。默认 100。
+    int32 priority = 15;
+    // metadata 保存插件声明层面的弱契约扩展信息，例如分类、市场标签、展示提示。
+    // 需要 Core 授权或参与调度的数据必须进入显式字段或 capability。
+    map<string, string> metadata = 16;
+}
+
+message ConfigFieldProto {
+    string key = 1;
+    string label = 2;
+    string type = 3;
+    bool   required = 4;
+    string default_value = 5;
+    string description = 6;
+    string placeholder = 7;
+}
+
+message AccountTypeProto {
+    string key = 1;
+    string label = 2;
+    string description = 3;
+    repeated CredentialFieldProto fields = 4;
+}
+
+message CredentialFieldProto {
+    string key = 1;
+    string label = 2;
+    string type = 3;
+    bool   required = 4;
+    string placeholder = 5;
+    bool   edit_disabled = 6; // 编辑模式下隐藏该字段
+}
+
+message FrontendPageProto {
+    string path = 1;
+    string title = 2;
+    string icon = 3;
+    string description = 4;
+    string audience = 5; // "admin" | "user" | "all"，空 = "admin"
+}
+
+message FrontendWidgetProto {
+    string slot = 1;
+    string entry_file = 2;
+    string title = 3;
+}
+
+message InitRequest {
+    map<string, string> config = 1;
+    string log_level = 2;
+    // core_invoke_broker_id 是 Core 通过 hashicorp/go-plugin GRPCBroker 启动的
+    // 反向调用 stream ID。插件 Init 时拿到 ID 后，可以通过 broker.Dial(id)
+    // 拿到 CoreInvokeService grpc client，通过 Invoke / InvokeStream 回调 Core 开放的方法。
+    // 0 表示 Core 没启用反向调用。
+    uint32 core_invoke_broker_id = 3;
+}
+
+// ==================== 网关消息 ====================
+
+message ModelInfoProto {
+    string id = 1;
+    string name = 2;
+    int64  context_window = 3;
+    int64  max_output_tokens = 4;
+    repeated string capabilities = 5;
+    map<string, string> metadata = 6;
+}
+
+message ModelsResponse {
+    repeated ModelInfoProto models = 1;
+}
+
+message RouteDefinitionProto {
+    string method = 1;
+    string path = 2;
+    string description = 3;
+    map<string, string> metadata = 4;
+}
+
+message RoutesResponse {
+    repeated RouteDefinitionProto routes = 1;
+}
+
+message AccountProto {
+    int64  id = 1;
+    string name = 2;
+    string platform = 3;
+    string type = 4;
+    bytes  credentials_json = 5;
+    string proxy_url = 6;
+}
+
+message ForwardRequest {
+    reserved 1, 2, 3, 4, 5, 6; // 原散落的 account 字段，已合并为 AccountProto
+    bytes  body = 7;
+    map<string, HeaderValues> headers = 8;
+    string model = 9;
+    bool   stream = 10;
+    AccountProto account = 11;
+}
+
+// OutcomeKind 插件对一次 Forward 的判决。
+// 字段值与 sdk.OutcomeKind 常量一一对应；0 = UNKNOWN（插件未声明）。
+enum OutcomeKind {
+    OUTCOME_UNKNOWN               = 0;
+    OUTCOME_SUCCESS               = 1;
+    OUTCOME_CLIENT_ERROR          = 2;
+    OUTCOME_ACCOUNT_RATE_LIMITED  = 3;
+    OUTCOME_ACCOUNT_DEAD          = 4;
+    OUTCOME_UPSTREAM_TRANSIENT    = 5;
+    OUTCOME_STREAM_ABORTED        = 6;
+}
+
+// UpstreamResponse 上游返回的原始 HTTP 快照。
+message UpstreamResponse {
+    int32 status_code = 1;
+    map<string, HeaderValues> headers = 2;
+    bytes body = 3;
+}
+
+// UsageAttribute 是插件计算后的通用审计维度。
+message UsageAttribute {
+    string key = 1;
+    string label = 2;
+    string kind = 3;
+    string value = 4;
+    map<string, string> metadata = 5;
+}
+
+// UsageMetric 是插件计算后的通用计量结果。
+message UsageMetric {
+    string key = 1;
+    string label = 2;
+    string kind = 3;
+    string unit = 4;
+    double value = 5;
+    double account_cost = 6;
+    string currency = 7;
+    map<string, string> metadata = 8;
+}
+
+// UsageCostDetail 是通用费用明细。
+message UsageCostDetail {
+    string key = 1;
+    string label = 2;
+    double account_cost = 3;
+    double user_cost = 4;
+    double billing_multiplier = 5;
+    string currency = 6;
+    map<string, string> metadata = 7;
+}
+
+// Usage 单次调用的用量与费用结果。非 Success 判决下应为空。
+message Usage {
+    string model = 1;
+    double account_cost = 2;
+    double user_cost = 3;
+    double billing_multiplier = 4;
+    string currency = 5;
+    string summary = 6;
+    int64  first_token_ms = 7;
+    repeated UsageMetric metrics = 8;
+    repeated UsageAttribute attributes = 9;
+    repeated UsageCostDetail cost_details = 10;
+    map<string, string> metadata = 11;
+}
+
+// ForwardOutcome 插件对一次 Forward 的完整判决结果。
+message ForwardOutcome {
+    OutcomeKind kind = 1;
+    UpstreamResponse upstream = 2;
+    Usage usage = 3;
+    int64 duration_ms = 4;
+    int64 retry_after_ms = 5;
+    string reason = 6;
+    map<string, string> updated_credentials = 7;
+}
+
+message ForwardChunk {
+    bytes data = 1;
+    bool  done = 2;
+    ForwardOutcome final_outcome = 3;
+    int32 status_code = 4;
+    map<string, HeaderValues> headers = 5;
+}
+
+message CredentialsRequest {
+    map<string, string> credentials = 1;
+}
+
+// ==================== HTTP 代理消息 ====================
+
+message HttpRequest {
+    string method = 1;
+    string path = 2;
+    string query = 3;
+    map<string, HeaderValues> headers = 4;
+    bytes  body = 5;
+    string remote_addr = 6;
+}
+
+message HttpResponse {
+    int32  status_code = 1;
+    map<string, HeaderValues> headers = 2;
+    bytes  body = 3;
+}
+
+message HttpResponseChunk {
+    bytes data = 1;
+    bool  done = 2;
+    int32 status_code = 3;
+    map<string, HeaderValues> headers = 4;
+}
+
+// ==================== 扩展消息 ====================
+
+message BackgroundTaskProto {
+    string name = 1;
+    int64  interval_ms = 2;
+}
+
+message BackgroundTasksResponse {
+    repeated BackgroundTaskProto tasks = 1;
+}
+
+message RunBackgroundTaskRequest {
+    string name = 1;
+}
+
+// ==================== WebSocket 消息 ====================
+
+message WebSocketFrame {
+    enum FrameType {
+        CONNECT = 0;   // 连接建立，携带元信息（仅第一帧）
+        TEXT    = 1;   // 文本消息
+        BINARY  = 2;   // 二进制消息
+        CLOSE   = 3;   // 关闭连接
+        RESULT  = 4;   // 连接结束，携带 ForwardOutcome
+    }
+
+    FrameType type = 1;
+    bytes     data = 2;
+
+    // 仅 CONNECT 帧使用
+    WebSocketConnectInfo connect_info = 3;
+
+    // 仅 CLOSE 帧使用
+    int32  close_code   = 4;
+    string close_reason = 5;
+
+    // 仅 RESULT 帧使用
+    ForwardOutcome outcome = 6;
+}
+
+message WebSocketConnectInfo {
+    string path  = 1;
+    string query = 2;
+    map<string, HeaderValues> headers = 3;
+    string remote_addr    = 4;
+    string connection_id  = 5;
+    reserved 6, 7, 8, 9, 10, 11; // 原散落的 account 字段，已合并为 AccountProto
+    AccountProto account = 12;
+}
+
+// ==================== 前端资源 ====================
+
+message WebAssetFile {
+    string path = 1;
+    bytes content = 2;
+}
+
+message WebAssetsResponse {
+    repeated WebAssetFile files = 1;
+    bool has_assets = 2;
+}
+
+// ==================== 插件能力清单 ====================
+
+message PayloadSchemaProto {
+    string content_type = 1;
+    string schema = 2;  // JSON Schema 字符串
+    string example = 3; // JSON 示例字符串
+    map<string, string> metadata = 4;
+}
+
+message RouteSchemaProto {
+    string method = 1;
+    string path = 2;
+    string summary = 3;
+    PayloadSchemaProto request = 4;
+    PayloadSchemaProto response = 5;
+    map<string, string> metadata = 6;
+}
+
+message TaskSchemaProto {
+    string type = 1;
+    string summary = 2;
+    PayloadSchemaProto input = 3;
+    PayloadSchemaProto output = 4;
+    map<string, string> metadata = 5;
+}
+
+message EventSchemaProto {
+    string type = 1;
+    string source = 2;
+    string summary = 3;
+    PayloadSchemaProto payload = 4;
+    map<string, string> metadata = 5;
+}
+
+message InvokeSchemaProto {
+    string method = 1;
+    string summary = 2;
+    PayloadSchemaProto request = 3;
+    PayloadSchemaProto response = 4;
+    map<string, string> metadata = 5;
+}
+
+message PluginSchemaResponse {
+    repeated RouteSchemaProto routes = 1;
+    repeated TaskSchemaProto tasks = 2;
+    repeated EventSchemaProto events = 3;
+    repeated InvokeSchemaProto invokes = 4;
+    map<string, string> metadata = 5;
+}
+
+// ==================== 中间件消息 ====================
+//
+// MiddlewareRequest / MiddlewareEvent / MiddlewareDecision 用于 MiddlewareService。
+
+// MiddlewareRequest OnForwardBegin 的输入：请求元数据 + 可选的 request body。
+message MiddlewareRequest {
+    // === 核心元数据（默认总是填充）===
+    string request_id       = 1;  // core 为本次请求分配的唯一 ID（便于跨 Begin/End 关联）
+    int64  user_id          = 2;
+    int64  group_id         = 3;
+    int64  account_id       = 4;  // 已由 scheduler 选出
+    string platform         = 5;
+    string model            = 6;
+    bool   stream           = 7;
+    repeated UsageMetric estimates = 8; // Core 或插件提供的通用预估值，仅用于早期决策
+
+    // metadata KV bag：供多个 middleware 之间传递上下文（Open Question Q-open-3）。
+    // 命名空间规则暂不强制，未来可能收紧。
+    map<string, string> metadata = 9;
+
+    // === 按需字段（声明了 middleware.read_body capability 的插件才会收到）===
+    bytes request_body                         = 100;
+    map<string, HeaderValues> request_headers  = 101;
+}
+
+// MiddlewareEvent OnForwardEnd 的输入：完整的请求 + 响应元数据。
+message MiddlewareEvent {
+    // === 核心元数据（与 MiddlewareRequest 对齐）===
+    string request_id  = 1;
+    int64  user_id     = 2;
+    int64  group_id    = 3;
+    int64  account_id  = 4;
+    string platform    = 5;
+    string model       = 6;
+    bool   stream      = 7;
+    repeated UsageMetric estimates = 8; // 与 MiddlewareRequest 字段对齐，便于 estimate vs actual 比对。
+
+    // === 响应结果 ===
+    int64  status_code    = 20;
+    int64  duration_ms    = 21;
+    Usage  usage          = 22;
+    string error_kind     = 23; // "" / "upstream_5xx" / "timeout" / "no_account" / ...
+    string error_msg      = 24; // 限长 512，见 core 实现
+
+    // metadata 延续自 OnForwardBegin 的 bag
+    map<string, string> metadata = 40;
+
+    // === 按需字段（声明了 middleware.read_body capability 的插件才会收到）===
+    // 流式响应时 response_body 只给摘要（首次非空 chunk 拼装）。
+    bytes response_body                         = 100;
+    map<string, HeaderValues> response_headers  = 101;
+}
+
+// MiddlewareDecision OnForwardBegin 的输出：放行 / 拒绝 / 改请求。
+message MiddlewareDecision {
+    enum Action {
+        ALLOW  = 0; // 默认放行
+        DENY   = 1; // 拒绝请求，status_code + error_message 会直接返回给用户
+        MUTATE = 2; // 放行但修改请求（当前只支持 set_headers）
+    }
+    Action action = 1;
+
+    // action=DENY 时的错误码 / 文案（对用户可见）
+    int32  deny_status_code = 10; // 默认 403 if Action=DENY and 未指定
+    string deny_message     = 11;
+
+    // action=MUTATE 时要追加/覆盖的请求头
+    map<string, HeaderValues> set_headers = 20;
+
+    // 贯穿式 metadata：无论 allow/deny/mutate，都能往 bag 里写东西供后续 middleware / End 使用
+    map<string, string> metadata = 30;
+}
+
+// ==================== 事件消息 ====================
+
+message EventSubscriptionProto {
+    string type = 1;
+    string source = 2;
+    map<string, string> filter = 3;
+    map<string, string> metadata = 4;
+}
+
+message EventSubscriptionsResponse {
+    repeated EventSubscriptionProto subscriptions = 1;
+}
+
+message PluginEvent {
+    string id = 1;
+    string type = 2;
+    string source = 3;
+    string subject = 4;
+    int64 user_id = 5;
+    int64 group_id = 6;
+    bytes payload = 7; // JSON 编码的对象
+    map<string, string> metadata = 8;
+    int64 occurred_at = 9; // unix millis, 0 = unset
+}
+
+message EventHandleResponse {
+    bool success = 1;
+    string error_message = 2;
+}
+
+// ==================== Host 调用消息 ====================
+
+message HostInvokeRequest {
+    string method = 1;
+    bytes payload = 2; // JSON 编码的对象，由 Core method 自己校验 schema
+    string idempotency_key = 3; // 副作用方法的幂等键；只读方法可留空
+    map<string, string> metadata = 4; // 调用级辅助信息，不用于替代权限、调度或核心业务字段
+}
+
+message HostInvokeResponse {
+    string status = 1; // method 业务状态；传输/鉴权/schema 错误走 gRPC error
+    bytes payload = 2; // JSON 编码的对象
+    map<string, string> metadata = 3; // 调用级辅助信息
+}
+
+message HostStreamFrame {
+    string method = 1; // 首个 client frame 必填；后续 frame 可留空
+    string event = 2; // method 内部约定的帧类型
+    bytes payload = 3; // JSON 编码的对象
+    string idempotency_key = 4; // 首个 client frame 使用
+    map<string, string> metadata = 5; // 调用级或帧级辅助信息
+    bool done = 6; // method 业务最终帧；传输结束仍以 stream EOF 为准
+    string status = 7; // method 业务状态，通常只在最终帧使用
+}
+
+// ==================== 异步任务 ====================
+
+// Core → Extension (task dispatch)
+
+message ProcessTaskRequest {
+    int64  task_id   = 1;
+    string task_type = 2;
+    bytes  input     = 3; // JSON
+    int64  user_id   = 4;
+}
+
+message ProcessTaskResponse {
+    bool   success       = 1;
+    string error_message = 2;
+}
+
+message TaskTypesResponse {
+    repeated string types = 1;
+}

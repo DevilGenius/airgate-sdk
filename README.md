@@ -1,208 +1,112 @@
 <div align="center">
   <h1>AirGate SDK</h1>
 
-  <p><strong>AirGate 插件生态的接口契约与开发套件</strong></p>
+  <p><strong>AirGate 插件生态的公共契约与开发工具包</strong></p>
 
   <p>
-    <a href="https://github.com/DouDOU-start/airgate-sdk/releases"><img src="https://img.shields.io/github/v/release/DouDOU-start/airgate-sdk?style=flat-square" alt="release" /></a>
-    <a href="https://pkg.go.dev/github.com/DouDOU-start/airgate-sdk"><img src="https://img.shields.io/badge/pkg.go.dev-reference-007d9c?style=flat-square&logo=go" alt="godoc" /></a>
-    <a href="https://github.com/DouDOU-start/airgate-sdk/blob/master/LICENSE"><img src="https://img.shields.io/github/license/DouDOU-start/airgate-sdk?style=flat-square" alt="license" /></a>
-    <img src="https://img.shields.io/badge/Go-1.25-00ADD8?style=flat-square&logo=go" alt="go" />
-    <img src="https://img.shields.io/badge/gRPC-go--plugin-4c1?style=flat-square" alt="grpc" />
+    <a href="https://github.com/DouDOU-start/airgate-sdk/releases"><img src="https://img.shields.io/github/v/release/DouDOU-start/airgate-sdk?style=flat-square" alt="发布版本" /></a>
+    <a href="https://pkg.go.dev/github.com/DouDOU-start/airgate-sdk"><img src="https://img.shields.io/badge/pkg.go.dev-reference-007d9c?style=flat-square&logo=go" alt="Go 文档" /></a>
+    <a href="https://github.com/DouDOU-start/airgate-sdk/blob/master/LICENSE"><img src="https://img.shields.io/github/license/DouDOU-start/airgate-sdk?style=flat-square" alt="许可证" /></a>
+    <img src="https://img.shields.io/badge/Go-1.25-00ADD8?style=flat-square&logo=go" alt="Go 版本" />
+    <img src="https://img.shields.io/badge/gRPC-go--plugin-4c1?style=flat-square" alt="gRPC 插件协议" />
   </p>
 </div>
 
 ---
 
-AirGate SDK 是 [airgate-core](https://github.com/DouDOU-start/airgate-core) 插件生态的**协议层**，定义了插件与 core 之间的全部边界：接口契约、共享类型、gRPC 桥接、本地开发服务器和统一前端主题。
+AirGate SDK 是 [AirGate Core](https://github.com/DouDOU-start/airgate-core) 和插件之间的公共契约。它定义插件要实现什么接口、Core 如何启动插件进程、双方如何通过 gRPC 通信，以及插件前端如何复用统一主题和公共组件。
 
-- **Core** = 用户、账号、调度、计费、限流、订阅、管理后台 —— 平台无关的通用能力
-- **SDK**（本仓库）= 插件如何被装载、被调度、被回调的全部规则
-- **Plugin** = 依赖 SDK 实现接口的独立 Go 进程，提供具体平台的能力
+简单理解：
 
-同一份契约在 core 和插件两端使用，保证升级不会偏离。底层走 [hashicorp/go-plugin](https://github.com/hashicorp/go-plugin) 的 gRPC 模式，每个插件运行在自己的子进程里，崩溃不影响 core 与其他插件。
+- **Core** 负责用户、账号、调度、限流、插件管理、记录存储和管理后台。
+- **SDK** 定义接口、协议、运行时适配、本地开发工具和前端基础包。
+- **Plugin** 是独立 Go 进程，依赖 SDK 实现具体平台或扩展能力。
+
+## 安装
 
 ```bash
 go get github.com/DouDOU-start/airgate-sdk@latest
 ```
 
-## ✨ 核心特性
-
-- **🔌 三类插件模型** — `GatewayPlugin`（upstream 适配）/ `ExtensionPlugin`（路由 + 后台任务）/ `MiddlewarePlugin`（forward 路径拦截层，旁路观察 / 审计 / 脱敏），详见 [ADR-0001](docs/adr/0001-plugin-capability-and-isolation-model.md)
-- **🛂 能力模型** — 插件显式声明所需的 HostService / Middleware capability，Core 侧 gRPC interceptor 按"插件类型 → 允许集合"做最小权限校验（SDK `0.3.0` 起强制）
-- **🔁 反向通道 HostService** — 插件通过 `HostAware` 可选接口拿到 `Host`，直接回调 core 能力（选号 / 探测 / 列分组），走 hashicorp/go-plugin GRPCBroker 子进程隧道，无需 admin HTTP + API key
-- **🧩 最小契约** — 插件只需声明账号格式 / 模型 / 路由，并实现 `Forward`，core 自动接管账号管理、调度、计费、限流
-- **🎨 前端集成** — 独立页面 (`FrontendPages`) + 组件嵌入 (`FrontendWidgets`)，通过 `WebAssetsProvider` 统一打包到二进制
-- **🎭 统一主题** — 内置 `@airgate/theme` 包提供共享 token、亮暗切换、Tailwind 桥接和插件作用域隔离
-- **🛠 本地开发服务器** — `devserver` 包模拟 core 行为，**插件无需部署 core 即可端到端测试**账号、HTTP/SSE 转发、WebSocket
-- **📦 进程隔离** — 基于 hashicorp/go-plugin gRPC 模式，崩溃隔离、独立热更、独立发版
-
-## 🧩 三类插件
-
-| 类型 | 接口 | 定位 | 参考实现 |
-|---|---|---|---|
-| **网关插件** | `GatewayPlugin` | AI API 代理。声明模型/路由/账号格式 + 实现 `Forward`，core 自动调度 + 计费 + 限流 | [airgate-openai](https://github.com/DouDOU-start/airgate-openai) |
-| **扩展插件** | `ExtensionPlugin` | 一切非网关场景。提供路由注册、数据库迁移、后台任务三大基础能力 | [airgate-epay](https://github.com/DouDOU-start/airgate-epay) · [airgate-health](https://github.com/DouDOU-start/airgate-health) |
-| **中间件插件** | `MiddlewarePlugin` | Forward 路径的旁路拦截层：请求/响应记录、审计、脱敏、流量采样、合规标签注入 | （示例计划：`airgate-audit`） |
-
-三种角色的边界是**互斥**的：gateway **替代** upstream；extension **并行** 扩展（独立路由表 / 定时任务）；middleware **拦截** 每次 forward 的前后事件，**永远不能 block 生产流量**（详见 Decision 2 的失败语义）。
-
-### 网关插件 `GatewayPlugin`
-
-| 方法 | 职责 |
-|---|---|
-| `Platform()` | 返回业务平台键（如 `"openai"`） |
-| `Models()` | 声明支持的模型 + 单价（core 用于计费） |
-| `Routes()` | 声明 API 端点（如 `POST /v1/chat/completions`），core 自动注册 |
-| `Forward(ctx, req)` | 拿到 core 调度好的账号，转发请求并返回 token 用量 + 账号状态反馈 |
-| `ValidateAccount(ctx, cred)` | 添加/导入账号时由 core 调用验证凭证 |
-| `QueryQuota(ctx, cred)` | core 定时巡检账号额度 |
-| `HandleWebSocket(ctx, conn)` | 处理 WebSocket 双向通信（如 Realtime API） |
-
-### 扩展插件 `ExtensionPlugin`
-
-| 能力 | 方法 | 说明 |
-|---|---|---|
-| 自定义路由 | `RegisterRoutes(r)` | 注册任意 HTTP API |
-| 数据库迁移 | `Migrate()` | 创建插件专属表（通过 Config 获取 DSN 自行建连） |
-| 后台任务 | `BackgroundTasks()` | 声明定时任务，core 负责调度 |
-
-### 中间件插件 `MiddlewarePlugin`
-
-| 方法 | 职责 |
-|---|---|
-| `OnForwardBegin(ctx, req)` | 选完账号 / 还没调 upstream 之前触发。返回 `Decision` 可放行 / 拒绝 / 追加 header |
-| `OnForwardEnd(ctx, evt)` | upstream 返回之后 / 写 usage_log 之前触发。拿到完整的请求 + 响应元数据 |
-
-**关键设计约定**（详见 [ADR-0001 Decision 2/3](docs/adr/0001-plugin-capability-and-isolation-model.md)）：
-
-- **失败即跳过**：`OnForwardBegin` / `OnForwardEnd` 返回 `error` 只 log warn，不阻塞主流程。唯一例外是 `OnForwardBegin` 显式返回 `DecisionDeny`
-- **LIFO 链顺序**：多个 middleware 按 `PluginInfo.Priority` 升序调 Begin、**降序**调 End（像 middleware stack 展开）
-- **Payload 两段式**：默认只传元数据（`request_id` / `user_id` / `group_id` / `account_id` / `platform` / `model` / 用量）；声明 `CapabilityMiddlewareReadBody` 的插件额外收到 `request_body` / `response_body` + headers
-- **流式响应的 body 摘要**：End 阶段流式响应的 `ResponseBody` 只给首次非空 chunk 拼装的摘要，完整流式内容留给未来的 `OnStreamChunk`（ADR-0002）
-- **跨 hook 上下文**：`Metadata` 字段是所有 middleware 共享的 KV bag，从 Begin 贯穿到 End
-
-### 可选能力
-
-所有插件类型都可额外实现以下接口，core 通过类型断言自动检测：
-
-| 接口 | 用途 |
-|---|---|
-| `WebAssetsProvider` | 提供前端静态资源（独立页面 / 嵌入组件） |
-| `ConfigWatcher` | 配置热更新 |
-| `HealthChecker` | 自定义健康检查逻辑 |
-| `RequestHandler` | 处理 `/api/v1/admin/plugins/:name/rpc/*` 透传请求 |
-| `HostAware` | 通过 `ctx.(sdk.HostAware).Host()` 拿到反向调用 core 的 `Host` 客户端 |
-
-## 🛂 能力模型（Capability）
-
-`SDKVersion = "0.3.0"` 起，插件调用 `HostService` 或使用 middleware 特殊 payload 必须**显式声明** capability，否则 Core 的 gRPC interceptor 会返回 `PermissionDenied`。
+Go 插件通常只需要两个包：
 
 ```go
-func (p *MyExtension) Info() sdk.PluginInfo {
-    return sdk.PluginInfo{
-        ID:   "ext-monitor",
-        Type: sdk.PluginTypeExtension,
-        Capabilities: []string{
-            sdk.CapabilityHostListGroups,
-            sdk.CapabilityHostProbeForward,
-            sdk.CapabilityHostReportAccountResult,
-        },
-        // ...
-    }
+import (
+    sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+    runtime "github.com/DouDOU-start/airgate-sdk/runtimego/grpc"
+)
+```
+
+前端插件使用：
+
+```json
+{
+  "dependencies": {
+    "@airgate/theme": "file:../../airgate-sdk/frontend"
+  }
 }
 ```
 
-当前 capability 清单（Core 按"插件类型 → 允许集合"做交集后得到有效权限）：
+## 仓库结构
 
-| Capability | 用途 | 允许的插件类型 |
+| 目录 | 用途 | 谁会用 |
 |---|---|---|
-| `host.list_groups` | `Host.ListGroups()` 列出分组 | `extension`, `middleware` |
-| `host.select_account` | `Host.SelectAccount()` 走真实调度选号 | `extension` |
-| `host.probe_forward` | `Host.ProbeForward()` 黑盒探测 | `extension`（probe 子类） |
-| `host.report_account_result` | `Host.ReportAccountResult()` 反馈状态机 | `extension`（probe 子类） |
-| `middleware.read_body` | middleware 接收 `request_body` / `response_body` | `middleware` |
+| `sdkgo/` | Go 插件接口、共享类型、Capability、Host 调用类型 | 插件作者 |
+| `protocol/proto/` | `airgate.plugin.v2` protobuf 协议和生成代码 | Core / runtime |
+| `runtimego/grpc/` | hashicorp/go-plugin、gRPC bridge、proto 转换、Core 反向调用通道 | 插件入口 / Core 加载器 |
+| `devkit/devserver/` | 本地开发服务器，无需启动完整 Core 即可调试插件 | 插件作者 |
+| `frontend/` | `@airgate/theme`：主题 token、样式隔离、Tailwind helper、公共组件 | 插件前端 |
+| `docs/` | 设计边界和前端样式规范 | 维护者 |
 
-**向后兼容**：SDK `<= 0.2.x` 的旧插件不声明 `Capabilities` 仍然可以跑（通过 `sdk_version` 字段豁免），但管理后台会显示"兼容模式"警告。`>= 0.3.x` 起强制校验。
+普通插件业务代码不直接依赖 `protocol/proto`。
 
-**命名规范**：`<domain>.<action>`。新增 capability 必须在 ADR 里说明语义 / owner / 允许的插件类型。
+## 插件类型
 
-## 🔁 反向通道 HostService
+| 类型 | 接口 | 用途 |
+|---|---|---|
+| `gateway` | `sdk.GatewayPlugin` | 接入 AI 平台，声明模型、路由、账号字段，并转发请求 |
+| `extension` | `sdk.ExtensionPlugin` | 后台任务、自定义 API、支付、健康监控等非网关能力 |
+| `middleware` | `sdk.MiddlewarePlugin` | forward 前后的旁路拦截，例如审计、脱敏、采样、合规标签 |
 
-过去插件要回调 core（列分组、选号、探测）只能走 admin HTTP API + admin key —— 管理员要手工生成 key、插件要拼 URL 签 Bearer、同机两个进程也被迫走完整 HTTP+JSON 栈。`HostService` 通过 hashicorp/go-plugin 的 `GRPCBroker` 为每个插件子进程架起一条**反向 gRPC stream**，子进程隧道天然互信。
+## 如何写一个 Gateway 插件
 
-```go
-type MyExtension struct {
-    host sdk.Host
-}
+Gateway 插件的核心工作只有三件事：
 
-func (p *MyExtension) Init(ctx sdk.PluginContext) error {
-    // HostAware 是可选接口：旧版 Core / devserver / 测试 mock 都可以不实现
-    if h, ok := ctx.(sdk.HostAware); ok {
-        p.host = h.Host() // 仍可能为 nil，调用方需 nil-check
-    }
-    return nil
-}
+1. 在 `Info` 中声明插件信息和账号字段。
+2. 在 `Models` / `Routes` 中声明模型和 API 路由。
+3. 在 `Forward` 中把请求转发到真实上游，并返回 `ForwardOutcome`。
 
-func (p *MyExtension) probe(ctx context.Context) {
-    if p.host == nil { return }
+账号管理、添加账号、编辑账号和使用记录页面由插件前端承接。插件通过 `FrontendPages`
+/ `FrontendWidgets` 声明入口，通过 `WebAssetsProvider` 提供静态资源；页面需要的数据走
+插件自己的 API，不进入 `GatewayService`。
 
-    groups, err := p.host.ListGroups(ctx)
-    if err != nil { /* ... */ }
-
-    for _, g := range groups {
-        result, _ := p.host.ProbeForward(ctx, sdk.HostProbeForwardRequest{GroupID: g.ID})
-        p.host.ReportAccountResult(ctx, result.AccountID, result.Success, result.ErrorMsg)
-    }
-}
-```
-
-当前 v1 暴露的 4 个 RPC（克制暴露面，等真实需求再加）：
-
-| RPC | 语义 |
-|---|---|
-| `SelectAccount` | 走和真实用户请求完全相同的调度路径选号 |
-| `ProbeForward` | 黑盒探测 chat completion：跳过 `usage_log` / 余额扣款，但仍触发 `ReportResult` |
-| `ListGroups` | 列出所有分组（id / name / platform / 是否独占 / 倍率） |
-| `ReportAccountResult` | 把账号调用结果反馈给 scheduler 的失败计数器 / 状态机 |
-
-**设计原则**（详见 [ADR-0001 §2](docs/adr/0001-plugin-capability-and-isolation-model.md)）：
-- **只加字段不删字段**（protobuf 天然向前兼容）
-- **加新 RPC 用新 rpc name**，不 hijack 旧的
-- **新能力必须伴随新 capability flag**，旧插件不声明就不启用
-- **Core 是 trust root**：HostService 所有输入做参数校验，credentials / password_hash / admin key 等敏感字段永远不通过 RPC 流向插件
-
-## 🛠 技术栈
-
-| 层 | 技术 |
-|---|---|
-| 语言 | Go 1.25 |
-| 插件协议 | hashicorp/go-plugin (gRPC + protobuf) |
-| 序列化 | protobuf v3 |
-| 前端主题 | TypeScript · CSS Variables · Tailwind 桥接 |
-| 开发服务器 | net/http + 内嵌 HTML 管理 UI |
-
-## 🚀 快速开始
-
-### 1. 编写一个最小网关插件
+入口代码：
 
 ```go
 package main
 
 import (
-    "context"
-    sdk "github.com/DouDOU-start/airgate-sdk"
-    "github.com/DouDOU-start/airgate-sdk/grpc"
+    sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+    runtime "github.com/DouDOU-start/airgate-sdk/runtimego/grpc"
 )
 
-type MyGateway struct{}
+type Gateway struct{}
 
-func (g *MyGateway) Info() sdk.PluginInfo {
+func main() {
+    runtime.Serve(&Gateway{})
+}
+```
+
+关键方法。下面只展示接口形状，不是完整可编译文件：
+
+```go
+func (g *Gateway) Info() sdk.PluginInfo {
     return sdk.PluginInfo{
-        ID:      "gateway-myplatform",
-        Name:    "My Platform 网关",
-        Version: "1.0.0",
-        Type:    sdk.PluginTypeGateway,
+        ID:         "gateway-demo",
+        Name:       "Demo Gateway",
+        Version:    "0.1.0",
+        SDKVersion: sdk.SDKVersion,
+        Type:       sdk.PluginTypeGateway,
         AccountTypes: []sdk.AccountType{{
             Key:   "apikey",
             Label: "API Key",
@@ -213,336 +117,235 @@ func (g *MyGateway) Info() sdk.PluginInfo {
     }
 }
 
-func (g *MyGateway) Init(ctx sdk.PluginContext) error { return nil }
-func (g *MyGateway) Start(_ context.Context) error    { return nil }
-func (g *MyGateway) Stop(_ context.Context) error     { return nil }
+func (g *Gateway) Platform() string { return "demo" }
 
-func (g *MyGateway) Platform() string { return "myplatform" }
-
-func (g *MyGateway) Models() []sdk.ModelInfo {
+func (g *Gateway) Models() []sdk.ModelInfo {
     return []sdk.ModelInfo{{
-        ID: "my-model-v1", Name: "My Model V1",
-        ContextWindow: 128000, MaxOutputTokens: 16384,
-        InputPrice: 1.0, OutputPrice: 3.0,
+        ID:              "demo-model",
+        Name:            "Demo Model",
+        ContextWindow:   128000,
+        MaxOutputTokens: 8192,
+        Capabilities:    []string{sdk.ModelCapChat},
     }}
 }
 
-func (g *MyGateway) Routes() []sdk.RouteDefinition {
-    return []sdk.RouteDefinition{
-        {Method: "POST", Path: "/v1/chat/completions"},
-    }
+func (g *Gateway) Routes() []sdk.RouteDefinition {
+    return []sdk.RouteDefinition{{Method: "POST", Path: "/v1/chat/completions"}}
 }
 
-func (g *MyGateway) Forward(ctx context.Context, req *sdk.ForwardRequest) (*sdk.ForwardResult, error) {
-    // req.Account — Core 已调度好的账号
-    // req.Body / req.Headers — 原始请求
-    // req.Writer — 流式写入 SSE
-    return &sdk.ForwardResult{
-        StatusCode:   200,
-        InputTokens:  100, OutputTokens: 50,
-        InputCost: 0.0001, OutputCost: 0.00015,
-        Model: "my-model-v1",
+func (g *Gateway) Forward(ctx context.Context, req *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
+    // 这里请求真实上游，并把响应写入 req.Writer。
+    return sdk.ForwardOutcome{
+        Kind: sdk.OutcomeSuccess,
+        Usage: &sdk.Usage{
+            Model:    "demo-model",
+            AccountCost: 0.000035,
+            Currency: "USD",
+            Summary:  "输入 10 token，输出 5 token",
+            Attributes: []sdk.UsageAttribute{
+                {Key: "reasoning_effort", Label: "思考层级", Kind: "reasoning", Value: "high"},
+                {Key: "resolution", Label: "分辨率", Kind: "resolution", Value: "1024x1024"},
+            },
+            Metrics: []sdk.UsageMetric{
+                {Key: "input_tokens", Label: "输入 token", Kind: "token", Unit: "token", Value: 10},
+                {Key: "output_tokens", Label: "输出 token", Kind: "token", Unit: "token", Value: 5},
+            },
+            CostDetails: []sdk.UsageCostDetail{
+                {Key: "input", Label: "输入费用", AccountCost: 0.00001, Currency: "USD"},
+                {Key: "output", Label: "输出费用", AccountCost: 0.000025, Currency: "USD"},
+            },
+        },
     }, nil
 }
-
-func (g *MyGateway) ValidateAccount(ctx context.Context, cred map[string]string) error { return nil }
-func (g *MyGateway) QueryQuota(ctx context.Context, cred map[string]string) (*sdk.QuotaInfo, error) {
-    return nil, sdk.ErrNotSupported
-}
-func (g *MyGateway) HandleWebSocket(ctx context.Context, conn sdk.WebSocketConn) (*sdk.ForwardResult, error) {
-    return nil, sdk.ErrNotSupported
-}
-
-func main() { grpc.Serve(&MyGateway{}) }
 ```
 
-### 2. 本地开发验证（无需部署 core）
+完整 `GatewayPlugin` 还需要实现：
+
+| 方法 | 用途 |
+|---|---|
+| `Init` / `Start` / `Stop` | 插件生命周期 |
+| `ValidateAccount` | 添加账号时验证凭证 |
+| `HandleWebSocket` | 处理 WebSocket；不支持时返回 `sdk.ErrNotSupported` |
+
+本地调试使用 devserver：
 
 ```go
 package main
 
-import (
-    "log"
-    "github.com/DouDOU-start/airgate-sdk/devserver"
-)
+import "github.com/DouDOU-start/airgate-sdk/devkit/devserver"
 
 func main() {
-    if err := devserver.Run(devserver.Config{Plugin: &MyGateway{}}); err != nil {
-        log.Fatal(err)
+    if err := devserver.Run(devserver.Config{Plugin: &Gateway{}}); err != nil {
+        panic(err)
     }
 }
 ```
 
-启动后访问 `http://localhost:18080`，即可看到管理 UI，支持账号 CRUD、HTTP/SSE 代理转发、WebSocket 升级、插件前端资源服务。命令行参数 `-addr` / `-data` / `-log` 可覆盖默认配置。
+## 运行原理
 
-### 3. 构建与发布
-
-```bash
-go build -o my-plugin .
-# 打包：my-plugin.tar.gz 包含二进制 + plugin.yaml
-```
-
-完整范例（含 Makefile / release workflow / 前端嵌入）见 [airgate-openai](https://github.com/DouDOU-start/airgate-openai)。
-
-## 🏗 架构
+AirGate 的插件运行链路如下：
 
 ```text
-┌─────────────────────── Core ────────────────────────┐
-│  账号管理 / 调度 / 计费 / 限流 / 订阅 / 管理后台      │
-│                                                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────┐ │
-│  │ PluginService│  │GatewayService│  │ ExtService │ │   Core → Plugin
-│  │ Middleware-  │  │              │  │            │ │
-│  │ Service      │  │              │  │            │ │
-│  └──────────────┘  └──────────────┘  └────────────┘ │
-│         ▲                                            │
-│         │ HostService（反向 stream，经 GRPCBroker）  │   Plugin → Core
-└─────────┼────────────────────────────────────────────┘
-          │
-  ┌───────┴────────────────────────────────────────┐
-  │        Plugin subprocess (hashicorp/go-plugin)  │
-  │                                                 │
-  │  GatewayPlugin / ExtensionPlugin / MiddlewarePl │
-  │  Capabilities: [host.list_groups, ...]          │
-  └─────────────────────────────────────────────────┘
+Core 启动插件子进程
+  -> runtimego/grpc 完成 go-plugin handshake
+  -> Core 调用 Info / Init / Start 获取插件信息
+  -> Core 挂载插件页面、静态资源、schema、健康检查和 API 代理
+  -> Core 按插件类型注册网关、middleware、扩展路由、迁移、后台任务或事件订阅
+  -> 用户请求进入 Core
+  -> Core 完成鉴权、限流和账号调度
+  -> Core 调用 Gateway.Forward
+  -> 插件请求上游并返回 ForwardOutcome
+  -> Core 存储插件返回的 usage/account_cost，按倍率计算用户扣费，更新账号状态，返回用户响应
 ```
 
-**请求生命周期（含 middleware chain）**：
+关键边界：
 
-```text
-用户请求
-  │
-  ▼
-Core 鉴权 + 限流 + 选账号
-  │
-  ▼
-Middleware.OnForwardBegin  (按 Priority 升序依次调)
-  │ ├─ Decision=Allow  → 继续
-  │ ├─ Decision=Mutate → 追加 header 继续
-  │ └─ Decision=Deny   → 直接返回给用户
-  ▼
-Gateway.Forward()  ──►  上游 AI API
-  │
-  ▼
-Middleware.OnForwardEnd    (按 Priority 降序依次调，LIFO)
-  │  拿到完整 metadata + 按需 body
-  ▼
-Core 写 usage_log / 计费 / 账号状态处置
-```
+- Core 默认只管理插件生命周期、页面入口、静态资源、schema、健康检查和 API 代理。
+- Gateway 插件是主请求链路，Core 会主动调用 `Forward`、账号验证和 WebSocket 处理。
+- SDK 不内置平台计费规则；网关插件计算标准账号成本并填入 `Usage.AccountCost`、`Usage.Attributes`、`Usage.Metrics`、`Usage.CostDetails`。
+- Core 统一入库后，根据用户、分组、模型等倍率写入 `UserCost` / `BillingMultiplier`；倍率规则不进入 SDK。
+- 账号管理和使用记录 UI 由插件提供静态资源，Core 只加载页面、插槽和插件 API 代理，不解释平台字段。
+- Middleware、扩展路由、后台任务、事件订阅、异步任务处理都属于插件显式暴露的能力；没有暴露就不会被 Core 调度。
+- Extension 插件做独立业务扩展，业务入口来自页面、插件 API、后台任务或事件，不应绕过 Core 直接访问核心业务库；需要 Core 能力时通过 `Host.Invoke` 或 `Host.InvokeStream` 回调。
 
-**反向调用（插件 → Core）**：
+## 插件回调 Core
 
-```text
-Plugin.probe()
-  └─ ctx.(HostAware).Host().ListGroups(ctx)
-        │
-        │  gRPC stream  (GRPCBroker 子进程隧道，无需 admin key)
-        ▼
-  Core: HostService interceptor
-        │
-        │  检查 plugin capability set
-        │  未声明 → PermissionDenied
-        ▼
-  Core: groupRepo.List()
-```
+插件要回调 Core 能力时，通过 `Host.Invoke` 或 `Host.InvokeStream` 调用。SDK 不为 Core 方法定义强类型接口；Core 自己维护方法注册表，并在加载和调用时校验插件权限、插件类型、请求 schema、是否允许流式和幂等规则。
 
-**账号模型**：Core 用一张 `accounts` 表存所有平台账号，靠 `platform` + `type` 区分。SDK `Account` 是 core 传给插件的**最小视图**，只包含 `ID / Name / Platform / Type / Credentials / ProxyURL` —— 调度和计费参数全部留在 core。
+这意味着后续扩展 Core 能力通常不需要改 SDK：
 
-## 🎨 前端集成
-
-插件的前端能力分两种，通过同一套 `WebAssetsProvider` 资源机制提供：
-
-| 模式 | 说明 | 谁控制布局 |
-|---|---|---|
-| **独立页面** `FrontendPages` | 插件拥有完整页面，core 分配路由和导航入口 | 插件 |
-| **组件嵌入** `FrontendWidgets` | 插件提供组件片段，嵌入 core 已有页面的指定 Slot | Core |
+- Core 新增 method，例如 `scheduler.select_account`、`tasks.update`、`notifications.publish`。
+- 插件声明 `host.invoke`，必要时再声明 `host.invoke.<method>` 做细粒度授权。
+- 普通调用使用 `Invoke`，通过 `Payload` 传 JSON 对象语义的参数，通过 `Response.Payload` 读取结果。
+- 流式调用使用 `InvokeStream`，通过 `HostStreamFrame` 双向传递 chunk、progress、result 等帧。
 
 ```go
-// 独立页面
-FrontendPages: []sdk.FrontendPage{
-    {Path: "/dashboard", Title: "仪表盘", Icon: "chart"},
-},
-
-// 嵌入到 core 账号管理页的指定插槽
-FrontendWidgets: []sdk.FrontendWidget{
-    {Slot: sdk.SlotAccountForm,   EntryFile: "widgets/account-form.js"},
-    {Slot: sdk.SlotAccountDetail, EntryFile: "widgets/account-detail.js"},
-},
+Capabilities: []sdk.Capability{
+    sdk.CapabilityHostInvoke,
+    sdk.CapabilityForHostMethod("tasks.update"),
+}
 ```
 
-**宿主边界**：Core 拥有路由、导航、弹窗骨架、Slot 位置和生命周期；Widget 只渲染 slot 内部内容，不假设控制整个页面。详见 [docs/plugin-style-guide.md](docs/plugin-style-guide.md)。
+插件在 `Init` 中获取 Host：
 
-## 🎭 主题系统 `@airgate/theme`
-
-SDK 在 `frontend/` 目录提供统一的前端主题包，作为 core 和所有插件的颜色/样式**唯一来源**，支持亮暗切换。
-
-```json
-// 插件 package.json
-{ "dependencies": { "@airgate/theme": "file:../../airgate-sdk/frontend" } }
+```go
+func (p *Plugin) Init(ctx sdk.PluginContext) error {
+    if h, ok := ctx.(sdk.HostAware); ok {
+        p.host = h.Host()
+    }
+    return nil
+}
 ```
 
-```typescript
-import { cssVar, themeStyle } from '@airgate/theme';
+调用 Core 方法：
 
-color: cssVar('text')                  // → 'var(--ag-text, #e8ecf4)'
-backgroundColor: cssVar('bgSurface')   // → 'var(--ag-bg-surface, #1c2237)'
+```go
+resp, err := p.host.Invoke(ctx, sdk.HostInvokeRequest{
+    Method: "tasks.update",
+    Payload: map[string]interface{}{
+        "task_id":  taskID,
+        "status":   sdk.TaskStatusCompleted.String(),
+        "progress": 100,
+    },
+})
 ```
 
-`@airgate/theme/plugin` 子包额外提供：`ensurePluginStyleFoundation()` 主题注入、`useScopedPluginTheme()` 亮暗跟随、`createPluginTailwindConfig()` Tailwind 桥接，以及 `Field` / `TextInput` / `Button` 等基础 primitives。
+调用 Core 流式方法：
 
-| 规范 | 说明 |
+```go
+stream, err := p.host.InvokeStream(ctx, sdk.HostStreamRequest{
+    Method:  "chat.stream",
+    Payload: map[string]interface{}{"prompt": "hello"},
+})
+if err != nil {
+    return err
+}
+defer stream.CloseSend()
+
+for {
+    frame, err := stream.Recv()
+    if err != nil {
+        return err
+    }
+    if frame.Done {
+        break
+    }
+    // 使用 frame.Event / frame.Payload 处理流式数据。
+}
+```
+
+当前内置 capability：
+
+| Capability | 用途 |
 |---|---|
-| 唯一 token 源 | 颜色/阴影/圆角/字体统一来自 `@airgate/theme` |
-| 作用域隔离 | 插件根节点必须用自己的 scope selector，Tailwind 配 `important` |
-| 不覆盖宿主骨架 | 插件不得重写 core Modal / Page / Sidebar 全局样式 |
-| 亮暗天然可用 | 不写死颜色，所有前景/背景/边框走 token |
+| `host.invoke` | 允许插件调用 Core 开放的方法 |
+| `host.invoke.<method>` | Core method 级细粒度授权，例如 `host.invoke.tasks.update` |
+| `middleware.read_body` | middleware 接收请求/响应 body |
 
-## 📁 项目结构
+完整规则见 [SDK 包边界](docs/sdk-package-boundaries.md)。
 
-```text
-airgate-sdk/
-├── plugin.go              # Plugin 基础接口 + PluginInfo + Capability 常量 + 可选接口
-├── gateway.go             # GatewayPlugin 接口
-├── extension.go           # ExtensionPlugin 接口
-├── middleware.go          # MiddlewarePlugin 接口 + MiddlewareRequest/Event/Decision
-├── host.go                # HostService 客户端接口（反向通道）+ HostAware 可选接口
-├── models.go              # 共享类型：Account / ForwardRequest / ForwardResult
-├── billing.go             # 计费相关类型 + 账号用量视图
-├── errors.go              # 标准错误（ErrNotSupported 等）
-├── log.go                 # 日志桥接
-├── grpc/                  # gRPC 桥接层（hashicorp/go-plugin 适配）
-│   ├── go_plugin.go       # Serve() 入口 + GRPCBroker 反向 stream
-│   ├── host_client.go     # 插件侧的 HostService 客户端封装
-│   ├── middleware_*.go    # MiddlewareService client / server
-│   └── *_client.go        # 各插件类型的 client / server
-├── devserver/             # 本地开发服务器
-│   ├── server.go          # Config + Run() 入口
-│   ├── accounts.go        # 账号 CRUD（JSON 文件持久化）
-│   ├── proxy.go           # HTTP / SSE / WebSocket 代理
-│   └── static/            # 内嵌管理 UI
-├── frontend/              # @airgate/theme + @airgate/theme/plugin
-├── proto/                 # protobuf 定义（5 个 service: Plugin/Gateway/Extension/Middleware/Host）
-└── docs/
-    ├── adr/               # 架构决策记录（ADR-0001 起）
-    └── plugin-style-guide.md
+## 插件私有数据
+
+插件私有数据库使用 `plugin_dsn`。Core 注入的 DSN 指向插件独立 schema，插件不得读取 Core 业务库 DSN。
+
+```go
+func (p *Plugin) Init(ctx sdk.PluginContext) error {
+    dsn := sdk.GetPluginDSN(ctx)
+    if dsn == "" {
+        return nil
+    }
+    // 使用插件私有 schema 建表和读写数据。
+    return nil
+}
 ```
 
-**推荐的插件项目结构**：
+## 前端插件 SDK
 
-```text
-my-plugin/
-├── backend/
-│   ├── main.go                    # gRPC 入口（grpc.Serve(...)）
-│   ├── cmd/devserver/main.go      # 开发入口（约 20 行）
-│   └── internal/gateway/          # 接口实现
-├── web/                           # 前端源码（可选）
-│   ├── src/{pages,widgets}/
-│   └── dist/                      # 构建产物（go:embed 打入二进制）
-├── .github/workflows/             # ci.yml + release.yml
-├── Makefile
-└── plugin.yaml                    # 由代码生成的分发文件
+`frontend/` 发布为 `@airgate/theme`，用于插件前端复用 AirGate 的主题和公共组件。
+
+| 入口 | 用途 |
+|---|---|
+| `@airgate/theme` | token、CSS 工具、Tailwind bridge、插件前端类型和公共组件统一出口 |
+| `@airgate/theme/plugin` | 插件样式隔离、主题同步、Tailwind helper、公共 UI 组件 |
+| `@airgate/theme/css` | CSS 变量生成和运行时主题注入 |
+| `@airgate/theme/tailwind` | Tailwind 主题桥接 |
+
+推荐插件前端使用：
+
+```tsx
+import {
+    Button,
+    Field,
+    SecretInput,
+    createPluginTailwindConfig,
+    ensurePluginStyleFoundation,
+    useScopedPluginTheme,
+} from "@airgate/theme/plugin";
 ```
 
-## 📦 打包与发布
+完整样式规则见 [插件前端样式规范](docs/plugin-style-guide.md)。
 
-`plugin.yaml` 是由插件代码生成的**分发文件**，仅用于安装和市场展示。**运行时真相始终在插件代码里**，core 不依赖 `plugin.yaml` 做运行时决策。
+网关插件账号相关 UI 建议使用这些稳定插槽。Core 仍提供通用账号列表和详情框架，
+插件只补平台差异片段；需要完整独立页面时使用 `FrontendPages`。
 
-```yaml
-id: gateway-myplatform
-name: My Platform 网关
-version: 1.0.0
-type: gateway
-min_core_version: "1.0.0"
-platform: myplatform
-routes:
-  - { method: POST, path: /v1/chat/completions }
-models:
-  - { id: my-model-v1, name: My Model V1, input_price: 1.0, output_price: 3.0 }
-account_types:
-  - key: apikey
-    fields:
-      - { key: api_key, label: API Key, type: password, required: true }
-```
+| Slot | 用途 |
+|---|---|
+| `account-identity` | 账号标识、套餐、状态等平台差异信息 |
+| `account-create` | 添加账号 |
+| `account-edit` | 编辑账号 |
+| `account-usage-window` | 账号用量窗口、额度、重置时间等平台差异信息 |
+| `usage-metric-detail` | 使用记录里的计量明细，例如 token、模型、思考层级、分辨率、图片张数 |
+| `usage-cost-detail` | 使用记录里的费用明细，例如单价、账号成本、Core 倍率、用户扣费 |
 
-**打包格式**：
-
-```text
-my-plugin.tar.gz
-├── my-plugin           # 插件二进制（前端资源已 go:embed 打入）
-└── plugin.yaml         # 分发元信息
-```
-
-**发布检查清单**：
-
-- [ ] `go test ./...` / `go vet ./...` 通过
-- [ ] 重新生成最新 `plugin.yaml`
-- [ ] 构建多架构二进制（amd64 / arm64）
-- [ ] 如有前端，构建并嵌入 `dist/`
-- [ ] 打包并验证完整性
-
-## 🔧 SDK 开发工具
+## 开发命令
 
 ```bash
-make lint    # 代码检查
-make fmt     # 代码格式化
-make test    # 运行测试
-make proto   # 重新生成 protobuf 代码
+make proto                         # 重新生成 protocol/proto
+GOTOOLCHAIN=local go test ./...    # 运行 Go 测试
+GOTOOLCHAIN=local go build ./...   # 验证 Go 包可构建
+cd frontend && npm run build       # 构建 @airgate/theme
 ```
 
-## 👀 给 Core 开发者
-
-Core 启动插件后的消费流程：
-
-```text
-启动插件进程（go-plugin）
-  → 通过 GRPCBroker 注册 HostService 反向 stream（若启用）
-  → Info()       获取元信息（ID、类型、Capabilities、账号格式、前端声明）
-  → Capability 校验：
-        有效集 = Info.Capabilities ∩ 插件类型允许集合
-        注册到 HostService interceptor 的 per-plugin context
-  → Init(ctx)    注入 config + log_level + host_broker_id
-  → Start(ctx)
-
-Gateway 插件专属：
-  → Platform() / Models() / Routes() / GetWebAssets()
-  → ValidateAccount(ctx, cred)  添加账号时
-  → QueryQuota(ctx, cred)       定时巡检
-
-Extension 插件专属：
-  → Migrate()
-  → GetBackgroundTasks() + 调度器按 Interval 触发 RunBackgroundTask(name)
-  → HandleRequest / HandleStreamRequest（/api/v1/admin/plugins/:name/rpc/* 透传）
-
-HTTP 请求到达时（forward 路径）：
-  → Core 鉴权 + 限流 + 调度账号
-  → Middleware.OnForwardBegin（按 Priority 升序；Deny → 直接拒绝）
-  → Gateway.Forward(ctx, req)
-  → Middleware.OnForwardEnd（按 Priority 降序，LIFO）
-  → Core 写 usage_log + 处置账号状态（rate_limited / disabled / expired）
-
-插件发起反向调用时：
-  → HostService gRPC interceptor 从 context 取出该插件的 capability set
-  → 未声明 → status.PermissionDenied
-  → 放行 → core 业务层处理
-```
-
-Core 必须遵守的约定：
-
-- 以 `PluginInfo.ID` 作为运行时键（API 路径、资源挂载、缓存）
-- 以 `Platform()` 作为业务键（账号关联、调度、计费）
-- 以插件运行时返回的元信息为准，**不依赖 `plugin.yaml` 做运行时决策**
-- 添加账号时必须调用 `ValidateAccount`，验证失败拒绝保存
-- 账号管理 UI 统一由插件 `FrontendWidgets` 渲染，core 不做默认表单生成
-- **middleware 的失败永远不能 block 生产流量**：`OnForwardBegin/End` 返回 error 只 log warn；唯一阻断途径是 `OnForwardBegin` 返回 `Decision{Action: Deny}`
-- **capability 校验在 interceptor 层强制**：core 业务代码不应再做 capability 判断（单一真相源）
-- 插件**不得**拿到 core 业务数据库的 DSN；core 业务数据一律通过 `HostService` RPC 暴露（详见 [ADR-0001 Decision 1/5](docs/adr/0001-plugin-capability-and-isolation-model.md)）
-
-## 🤝 贡献 / 反馈
-
-- Bug / Feature: [Issues](https://github.com/DouDOU-start/airgate-sdk/issues)
-- 主仓库: [airgate-core](https://github.com/DouDOU-start/airgate-core)
-- 插件参考实现: [airgate-openai](https://github.com/DouDOU-start/airgate-openai) · [airgate-epay](https://github.com/DouDOU-start/airgate-epay) · [airgate-health](https://github.com/DouDOU-start/airgate-health)
-
-## 📜 License
+## License
 
 MIT

@@ -1,0 +1,142 @@
+package grpc
+
+import (
+	"context"
+	"time"
+
+	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
+	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+)
+
+// MiddlewareGRPCServer 把 sdk.MiddlewarePlugin 实现包成 gRPC server。
+//
+// 失败语义：插件代码返回 error 时，server 仍然返回 (response, nil) 给 core。
+// 这样 core 在 transport 层不会看到 error，由 core 自己根据 response 内容判断
+// （或在 core 侧做 deadline 超时控制）。middleware 调用不得阻塞生产流量。
+//
+// 目前 server 端不主动吞 error；client 端会把 transport error 转化为 log warn
+// 然后让 core 跳过这个 middleware。两层都有保护。
+type MiddlewareGRPCServer struct {
+	pb.UnimplementedMiddlewareServiceServer
+	Impl sdk.MiddlewarePlugin
+}
+
+func (s *MiddlewareGRPCServer) OnForwardBegin(ctx context.Context, req *pb.MiddlewareRequest) (*pb.MiddlewareDecision, error) {
+	in := middlewareRequestFromProto(req)
+	decision, err := s.Impl.OnForwardBegin(ctx, in)
+	if err != nil {
+		// 拦截器会打 grpc_server_handle_failed；这里补 middleware 业务上下文。
+		sdk.LoggerFromContext(ctx).Error("middleware_on_forward_begin_failed",
+			sdk.LogFieldRequestID, req.RequestId,
+			sdk.LogFieldUserID, req.UserId,
+			sdk.LogFieldGroupID, req.GroupId,
+			sdk.LogFieldModel, req.Model,
+			sdk.LogFieldError, err,
+		)
+		return nil, err
+	}
+	return middlewareDecisionToProto(decision), nil
+}
+
+func (s *MiddlewareGRPCServer) OnForwardEnd(ctx context.Context, evt *pb.MiddlewareEvent) (*pb.Empty, error) {
+	in := middlewareEventFromProto(evt)
+	if err := s.Impl.OnForwardEnd(ctx, in); err != nil {
+		sdk.LoggerFromContext(ctx).Error("middleware_on_forward_end_failed",
+			sdk.LogFieldRequestID, evt.RequestId,
+			sdk.LogFieldUserID, evt.UserId,
+			sdk.LogFieldGroupID, evt.GroupId,
+			sdk.LogFieldModel, evt.Model,
+			sdk.LogFieldError, err,
+		)
+		return nil, err
+	}
+	return &pb.Empty{}, nil
+}
+
+// ============================================================================
+// pb → sdk
+// ============================================================================
+
+func middlewareRequestFromProto(req *pb.MiddlewareRequest) *sdk.MiddlewareRequest {
+	if req == nil {
+		return nil
+	}
+	out := &sdk.MiddlewareRequest{
+		RequestID:   req.RequestId,
+		UserID:      req.UserId,
+		GroupID:     req.GroupId,
+		AccountID:   req.AccountId,
+		Platform:    req.Platform,
+		Model:       req.Model,
+		Stream:      req.Stream,
+		Estimates:   usageMetricsFromProto(req.Estimates),
+		Metadata:    cloneStringMapMW(req.Metadata),
+		RequestBody: req.RequestBody,
+	}
+	if len(req.RequestHeaders) > 0 {
+		out.RequestHeaders = protoHeadersToHTTP(req.RequestHeaders)
+	}
+	return out
+}
+
+func middlewareEventFromProto(evt *pb.MiddlewareEvent) *sdk.MiddlewareEvent {
+	if evt == nil {
+		return nil
+	}
+	out := &sdk.MiddlewareEvent{
+		RequestID:    evt.RequestId,
+		UserID:       evt.UserId,
+		GroupID:      evt.GroupId,
+		AccountID:    evt.AccountId,
+		Platform:     evt.Platform,
+		Model:        evt.Model,
+		Stream:       evt.Stream,
+		Estimates:    usageMetricsFromProto(evt.Estimates),
+		StatusCode:   int32(evt.StatusCode),
+		Duration:     time.Duration(evt.DurationMs) * time.Millisecond,
+		ErrorKind:    evt.ErrorKind,
+		ErrorMsg:     evt.ErrorMsg,
+		Metadata:     cloneStringMapMW(evt.Metadata),
+		ResponseBody: evt.ResponseBody,
+	}
+	if evt.Usage != nil {
+		u := usageFromProto(evt.Usage)
+		out.Usage = &u
+	}
+	if len(evt.ResponseHeaders) > 0 {
+		out.ResponseHeaders = protoHeadersToHTTP(evt.ResponseHeaders)
+	}
+	return out
+}
+
+// ============================================================================
+// sdk → pb
+// ============================================================================
+
+func middlewareDecisionToProto(d *sdk.MiddlewareDecision) *pb.MiddlewareDecision {
+	if d == nil {
+		// nil decision == ALLOW 不做任何修改
+		return &pb.MiddlewareDecision{Action: pb.MiddlewareDecision_ALLOW}
+	}
+	out := &pb.MiddlewareDecision{
+		Action:         pb.MiddlewareDecision_Action(d.Action),
+		DenyStatusCode: d.DenyStatusCode,
+		DenyMessage:    d.DenyMessage,
+		Metadata:       cloneStringMapMW(d.Metadata),
+	}
+	if len(d.SetHeaders) > 0 {
+		out.SetHeaders = httpHeadersToProto(d.SetHeaders)
+	}
+	return out
+}
+
+func cloneStringMapMW(in map[string]string) map[string]string {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]string, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
+}

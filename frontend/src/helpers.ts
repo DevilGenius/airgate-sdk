@@ -9,7 +9,7 @@ const defaultThemeCssVarMap = createThemeCssVarMap();
 const defaultStaticCssVarMap = createStaticCssVarMap();
 
 /**
- * 获取带 fallback 的 CSS var() 引用。
+ * 获取带默认值的 CSS var() 引用。
  * 同时支持主题 token 和静态 token。
  *
  * @example

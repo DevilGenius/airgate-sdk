@@ -113,10 +113,26 @@ export interface PluginPlatformIconProps {
   style?: CSSProperties;
 }
 
+export interface AccountSurfaceProps {
+  accountId?: string | number;
+  accountType?: string;
+  context?: Record<string, unknown>;
+}
+
+export interface UsageRecordSurfaceProps {
+  recordId?: string | number;
+  context?: Record<string, unknown>;
+}
+
 export interface PluginFrontendModule {
   routes?: PluginRouteDefinition[];
   menuItems?: PluginMenuItemDefinition[];
-  accountForm?: ComponentType<AccountFormProps>;
+  accountIdentity?: ComponentType<AccountSurfaceProps>;
+  accountCreate?: ComponentType<AccountFormProps>;
+  accountEdit?: ComponentType<AccountFormProps>;
+  accountUsageWindow?: ComponentType<AccountSurfaceProps>;
+  usageMetricDetail?: ComponentType<UsageRecordSurfaceProps>;
+  usageCostDetail?: ComponentType<UsageRecordSurfaceProps>;
   platformIcon?: ComponentType<PluginPlatformIconProps>;
 }
 
@@ -562,7 +578,7 @@ export function cn(...values: Array<string | false | null | undefined>): string 
   return values.filter(Boolean).join(' ');
 }
 
-interface FieldProps {
+export interface FieldProps {
   label: ReactNode;
   required?: boolean;
   hint?: ReactNode;
@@ -595,7 +611,7 @@ export function TextArea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
   return <textarea {...props} className={cn('agw-input agw-input-mono agw-textarea', className)} />;
 }
 
-interface PanelHeaderProps {
+export interface PanelHeaderProps {
   title: ReactNode;
   description?: ReactNode;
   eyebrow?: ReactNode;
@@ -612,7 +628,7 @@ export function PanelHeader({ title, description, eyebrow, className }: PanelHea
   );
 }
 
-interface SectionProps extends PanelHeaderProps {
+export interface SectionProps extends PanelHeaderProps {
   children: ReactNode;
   panel?: boolean;
   contentClassName?: string;
@@ -635,7 +651,7 @@ export function Section({
   );
 }
 
-interface CardProps {
+export interface CardProps {
   children: ReactNode;
   className?: string;
 }
@@ -644,7 +660,7 @@ export function Card({ children, className }: CardProps) {
   return <div className={cn('agw-card', className)}>{children}</div>;
 }
 
-interface SelectableCardProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface SelectableCardProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
 }
 
@@ -660,7 +676,7 @@ export function SelectableCard({ active = false, className, children, ...props }
   );
 }
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline';
 
 const buttonClassMap: Record<ButtonVariant, string> = {
   primary: 'agw-button-primary',
@@ -668,7 +684,7 @@ const buttonClassMap: Record<ButtonVariant, string> = {
   outline: 'agw-button-outline',
 };
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
 }
 
@@ -684,7 +700,7 @@ export function Button({ variant = 'secondary', className, children, ...props }:
   );
 }
 
-interface FormActionsProps {
+export interface FormActionsProps {
   children: ReactNode;
   className?: string;
 }
@@ -693,7 +709,7 @@ export function FormActions({ children, className }: FormActionsProps) {
   return <div className={cn('agw-form-actions', className)}>{children}</div>;
 }
 
-interface BadgeProps {
+export interface BadgeProps {
   children: ReactNode;
   tone?: 'neutral' | 'success' | 'violet' | 'info';
   className?: string;
@@ -710,7 +726,7 @@ export function Badge({ children, tone = 'neutral', className }: BadgeProps) {
   return <span className={cn('agw-badge', badgeToneClassMap[tone], className)}>{children}</span>;
 }
 
-interface StatusTextProps {
+export interface StatusTextProps {
   type: PluginStatusKind;
   text: string;
 }
