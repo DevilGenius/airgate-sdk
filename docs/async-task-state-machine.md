@@ -1,6 +1,6 @@
 # 异步任务状态机设计
 
-本文定义 AirGate 在 Core、SDK、插件之间处理长耗时生成任务的统一设计。目标是让客户端无差别使用同步或异步调用，让 Core 无差别承接同步上游、异步上游和流式上游，让插件只负责任务类型的业务编解码。
+本文定义 AirGate 在 Core、SDK、插件之间处理长耗时生成任务的统一设计。目标是让对外业务 API 继续保持原有协议形态，只在响应中追加 AirGate `task_id` 作为追踪字段；Core 内部再把同步上游、异步上游和流式上游统一转换成任务状态机，插件只负责任务类型的业务编解码。
 
 ## 背景
 
@@ -16,12 +16,12 @@
 
 ## 设计目标
 
-1. Core 对客户端提供统一任务能力，不要求客户端知道上游是同步、异步还是流式。
+1. Core 对插件和协议适配层提供统一任务能力；对业务客户端保持原 API 标准，不要求客户端知道上游是同步、异步还是流式。
 2. Core 内部维护唯一的任务状态机，负责创建、排队、执行、重试、取消、查询、列表和权限校验。
 3. SDK 提供稳定任务契约，让插件声明任务类型、输入输出 schema、执行能力和查询展示语义。
 4. 插件只实现任务业务逻辑：如何识别请求、如何构造任务 input、如何调用上游、如何标准化 output。
 5. 图片、视频、音乐、语音、文件处理等长耗时任务都能复用同一套 Core 机制。
-6. 对外响应中的 `task_id` 必须是 AirGate 自己的任务 ID；上游自己的任务 ID 只能作为内部执行细节存储。
+6. 对外兼容响应中追加的 `task_id` 必须是 AirGate 自己的任务 ID；上游自己的任务 ID 只能作为内部执行细节存储。
 7. 支持同步等待模式和后台任务模式，并允许 Core 在等待超时后自动转为后台任务。
 8. 保持现有 OpenAI 兼容 API 可迁移，不要求一次性废弃 `/v1/images/generations` 等现有入口。
 
@@ -32,12 +32,13 @@
 - 不把某个平台的定价、模型规则、轮询接口写进 Core。
 - 不要求所有任务都必须异步执行。短任务仍然可以同步返回。
 - 不要求所有插件都立即实现新任务协议。应支持分阶段迁移。
+- 不把通用 `/v1/tasks` 作为业务客户端的默认新标准。原来是 OpenAI Images、某个平台视频 API 或现有 AirGate 图片查询 API，对外就继续按原协议返回。
 
 ## 核心概念
 
 ### AirGate Task
 
-AirGate Task 是 Core 管理的统一任务实体。它是客户端和 Core 之间的稳定对象。
+AirGate Task 是 Core 管理的统一任务实体。它是 Core、SDK、插件、管理后台之间的内部稳定对象，不是所有业务客户端都必须直接消费的外部响应格式。
 
 任务对象建议如下：
 
@@ -68,7 +69,7 @@ AirGate Task 是 Core 管理的统一任务实体。它是客户端和 Core 之�
 }
 ```
 
-`id` 是 AirGate 任务 ID，不等于上游任务 ID。
+`id` 是 AirGate 任务 ID，不等于上游任务 ID。协议适配层对外返回时通常命名为 `task_id`，并追加到原协议响应中。
 
 Core 固定字段必须保持最小化，只包含任务生命周期、归属和安全边界。模型、平台、分辨率、时长、质量、音色等都不应成为 Core 任务表的硬编码列；它们属于插件声明的 `input`、`attributes`、`execution` 或最终 `Usage`。Core 可以保存、返回、按声明做弱索引，但不理解这些字段的业务含义。
 
@@ -171,13 +172,19 @@ Upstream Task 是某些上游平台返回的任务对象，例如：
 - 上游短暂失败后重试时，需要判断是继续轮询已有上游任务，还是重新创建。
 - 取消任务时，如果上游支持取消，需要拿上游任务 ID 调用取消接口。
 
-客户端永远查询 AirGate Task：
+客户端查询时也不应直接使用上游任务 ID。查询入口由协议适配层决定：
+
+```text
+GET /v1/images/tasks/ag_task_123
+```
+
+或在未来的 Core 管理 API 中查询：
 
 ```text
 GET /v1/tasks/ag_task_123
 ```
 
-而不是直接查询上游：
+但无论入口路径如何，最终查询的都是 AirGate Task，而不是直接查询上游：
 
 ```text
 GET /provider/tasks/img_abc
@@ -235,34 +242,34 @@ const (
 
 Execution Mode 是插件内部执行策略，不直接决定客户端使用同步还是异步接口。
 
-### Client Wait Mode
+### Response Mode
 
-Client Wait Mode 表示客户端希望 Core 如何响应本次请求。
+Response Mode 表示协议适配层希望 Core 如何处理本次请求的等待策略。它可以来自网关配置、插件默认值、Header 或显式 AirGate 扩展参数，但不要求所有业务客户端都感知这个概念。
 
 ```go
-type TaskClientMode string
+type TaskResponseMode string
 
 const (
-	TaskClientModeWait       TaskClientMode = "wait"
-	TaskClientModeBackground TaskClientMode = "background"
-	TaskClientModeAuto       TaskClientMode = "auto"
+	TaskResponseModeWait       TaskResponseMode = "wait"
+	TaskResponseModeBackground TaskResponseMode = "background"
+	TaskResponseModeAuto       TaskResponseMode = "auto"
 )
 ```
 
-| 模式 | 对客户端语义 |
+| 模式 | 协议适配层语义 |
 | --- | --- |
-| `wait` | Core 尽量等待任务完成并返回最终结果 |
-| `background` | Core 创建任务后立即返回 AirGate `task_id` |
-| `auto` | Core 等待一小段时间；超时未完成则返回 `task_id` |
+| `wait` | Core 尽量等待任务完成，适配层返回原协议最终结果并追加 `task_id` |
+| `background` | Core 创建任务后立即返回，适配层返回该协议自己的异步响应并带上 `task_id` |
+| `auto` | Core 等待一小段时间；超时未完成则由适配层返回该协议自己的异步响应并带上 `task_id` |
 
-Client Wait Mode 与 Execution Mode 独立。
+Response Mode 与 Execution Mode 独立。
 
 例如：
 
-- 客户端 `wait` + 上游 `sync_result`：通常直接返回最终结果。
-- 客户端 `wait` + 上游 `upstream_task`：Core 可以轮询一段时间，完成则返回结果，超时则返回 `202 + task_id`。
-- 客户端 `background` + 上游 `sync_result`：Core 仍然立即返回 `task_id`，后台 worker 同步调上游并完成任务。
-- 客户端 `auto` + 上游 `stream_result`：Core 聚合流；超过等待窗口就转后台。
+- `wait` + 上游 `sync_result`：通常直接返回原协议最终结果，并追加 `task_id`。
+- `wait` + 上游 `upstream_task`：Core 可以轮询一段时间，完成则返回原协议最终结果；超时则由适配层返回原协议的异步响应。
+- `background` + 上游 `sync_result`：Core 仍然立即创建后台任务，适配层返回异步响应，后台 worker 同步调上游并完成任务。
+- `auto` + 上游 `stream_result`：Core 聚合流；超过等待窗口就转后台，适配层返回异步响应。
 
 ## 状态机
 
@@ -279,7 +286,7 @@ pending
 
 建议状态定义：
 
-| 状态 | 含义 | 可被客户端查询 |
+| 状态 | 含义 | 可被查询 |
 | --- | --- | --- |
 | `pending` | 已创建，等待调度 | 是 |
 | `processing` | 插件正在执行 | 是 |
@@ -320,186 +327,51 @@ cancelled
 
 Core 应校验状态迁移，插件不能随意把任意状态写入任务。
 
-## 对外 API 设计
+## 对外 API 兼容原则
 
-### 创建任务
+业务客户端看到的 API 应继续保持原平台或当前项目已经定义的标准。Core 内部可以统一成 AirGate Task，但协议适配层对外返回时必须投影回原协议响应，只额外追加 `task_id` 作为 AirGate 追踪 ID。
 
-建议新增通用任务 API：
+核心原则：
 
-```text
-POST /v1/tasks
-```
+1. 创建入口不改。原来调用 `POST /v1/images/generations`，仍然调用这个入口；未来视频、音乐也按各自平台或插件已经定义的入口暴露。
+2. 请求 body 不强制新增通用任务字段。模型、分辨率、时长、质量等仍按原协议传递。
+3. 响应 schema 不替换成通用 Task schema。完成、处理中、失败、查询、列表都由对应协议适配层决定响应结构。
+4. 响应中允许追加 `task_id`。这个字段始终是 AirGate Task ID，不是上游任务 ID。
+5. 上游同步、上游异步、上游流式只影响 Core 内部执行模式，不影响外部 API 标准。
+6. 通用 `/v1/tasks` 可以作为 Core 管理 API、调试 API 或后台管理 API，但不作为业务客户端迁移目标。
 
-请求示例：
+### 创建入口映射
 
-```json
-{
-  "plugin_id": "gateway-openai",
-  "type": "image.generate",
-  "input": {
-    "model": "gpt-image-2",
-    "prompt": "一只柴犬坐在樱花树下",
-    "size": "1024x1024"
-  },
-  "mode": "background"
-}
-```
-
-响应示例：
-
-```json
-{
-  "id": "ag_task_123",
-  "object": "task",
-  "type": "image.generate",
-  "status": "pending",
-  "progress": 0
-}
-```
-
-### 查询任务
-
-```text
-GET /v1/tasks/{task_id}
-```
-
-处理中：
-
-```json
-{
-  "id": "ag_task_123",
-  "object": "task",
-  "type": "image.generate",
-  "status": "processing",
-  "progress": 40,
-  "output": null,
-  "error": null
-}
-```
-
-完成：
-
-```json
-{
-  "id": "ag_task_123",
-  "object": "task",
-  "type": "image.generate",
-  "status": "completed",
-  "progress": 100,
-  "output": {
-    "kind": "image",
-    "images": [
-      {
-        "b64_json": "...",
-        "mime_type": "image/png"
-      }
-    ],
-    "usage": {
-      "input_tokens": 50,
-      "output_tokens": 1056
-    }
-  },
-  "error": null
-}
-```
-
-失败：
-
-```json
-{
-  "id": "ag_task_123",
-  "object": "task",
-  "type": "image.generate",
-  "status": "failed",
-  "progress": 0,
-  "output": null,
-  "error": {
-    "type": "upstream_error",
-    "code": "provider_rejected",
-    "message": "请求暂时无法完成，请稍后重试"
-  }
-}
-```
-
-### 列表任务
-
-```text
-GET /v1/tasks?type=image.generate&status=completed&limit=20&offset=0
-```
-
-响应：
-
-```json
-{
-  "object": "list",
-  "data": [],
-  "total": 0
-}
-```
-
-### 取消任务
-
-```text
-POST /v1/tasks/{task_id}/cancel
-```
-
-取消能力取决于插件声明：
-
-- 如果上游支持取消，插件调用上游取消接口。
-- 如果上游不支持取消，Core 标记 `cancelling` 后尽力中止本地轮询或流消费。
-- 如果任务已完成，取消返回当前终态，不应破坏结果。
-
-## 兼容现有 OpenAI 风格入口
-
-现有资源入口不必立即删除：
+现有 OpenAI 风格入口继续保留：
 
 ```text
 POST /v1/images/generations
 POST /v1/images/edits
 ```
 
-这些入口可以映射到任务系统：
+协议适配层在内部映射到任务类型：
 
 ```text
 /v1/images/generations -> type=image.generate
 /v1/images/edits       -> type=image.edit
 ```
 
-客户端可以通过请求体或 Header 指定模式。
-
-请求体方式：
-
-```json
-{
-  "model": "gpt-image-2",
-  "prompt": "...",
-  "task_mode": "background"
-}
-```
-
-Header 方式：
+流程：
 
 ```text
-Prefer: respond-async
+客户端调用原入口
+协议适配层解析原协议请求
+协议适配层构造 Task input
+Core 创建 AirGate Task
+Core 按状态机调度执行
+插件调用上游并写入 output / error / usage
+协议适配层把 Task 结果投影回原协议响应
+响应中追加 task_id
 ```
 
-或：
+### 完成响应
 
-```text
-Prefer: wait=120
-```
-
-建议优先支持 Header，因为它不污染 OpenAI 兼容 body；但也可以保留 `task_mode` 作为 AirGate 扩展参数。
-
-响应策略：
-
-| 客户端模式 | 任务完成前响应 | 任务完成后响应 |
-| --- | --- | --- |
-| `background` | `202 Accepted + task_id` | 查询任务拿结果 |
-| `wait` | 等待完成；超过最大等待返回 `202 + task_id` | 直接返回原协议结果或任务结果 |
-| `auto` | 短时间内完成就返回结果，否则返回 `202 + task_id` | 查询任务拿结果 |
-
-对于 OpenAI Images 兼容接口，如果任务在等待窗口内完成，可以返回原 Images API schema：
+如果 OpenAI Images 兼容接口在等待窗口内完成，响应仍然是 Images API schema，只追加 `task_id`：
 
 ```json
 {
@@ -509,21 +381,73 @@ Prefer: wait=120
       "b64_json": "..."
     }
   ],
-  "usage": {}
+  "usage": {},
+  "task_id": "ag_task_123"
 }
 ```
 
-如果未完成，返回 AirGate 任务 schema：
+严格兼容模式下，如果某些官方 SDK 对未知字段非常敏感，可以通过网关配置决定是否追加 `task_id`；但 AirGate 自己的默认响应建议追加，便于记录、排查和后续查询。
+
+### 未完成响应
+
+如果调用选择后台执行，或 `wait` / `auto` 等待超时，响应也不应强制改成通用 Task schema，而应使用当前入口已有的异步响应形态。
+
+例如当前项目若已有图片任务响应：
 
 ```json
 {
-  "id": "ag_task_123",
-  "object": "task",
+  "task_id": "ag_task_123",
   "status": "processing"
 }
 ```
 
-这会带来一个客户端解析问题：严格 OpenAI SDK 可能不认识 task schema。因此兼容 OpenAI SDK 的路径默认应保持 `wait` 或 `auto`；只有明确传 `Prefer: respond-async` 或 AirGate 扩展参数时才返回任务对象。
+就继续保持这个响应。未来视频、音乐如果某个平台标准本身有 job / task / generation 对象，也映射成对应平台对象，只把其中的 ID 换成 AirGate `task_id` 或额外追加 AirGate `task_id`。
+
+如果某个同步协议本身没有异步响应标准，默认不应突然返回 AirGate Task 对象。只有在客户端显式选择异步模式，或该插件文档明确声明 AirGate 扩展响应时，才返回该协议适配层定义的异步响应。
+
+### 查询和列表
+
+查询入口也保持原有协议或当前项目已有路径。例如当前图片任务可以继续：
+
+```text
+GET /v1/images/tasks/{task_id}
+GET /v1/images/tasks/list
+```
+
+这些入口内部查询 Core Task，但响应仍由图片协议适配层生成。后续视频、音乐如果需要查询，也按各自协议风格暴露，例如：
+
+```text
+GET /v1/videos/tasks/{task_id}
+GET /v1/music/tasks/{task_id}
+```
+
+是否真的使用这些路径由对应插件协议决定，Core 不要求所有媒体类型共享同一条外部查询路径。
+
+### 取消任务
+
+取消同样由协议适配层决定是否暴露以及如何命名。Core 只提供内部取消能力：
+
+```text
+tasks.cancel
+```
+
+取消能力取决于插件声明：
+
+- 如果上游支持取消，插件调用上游取消接口。
+- 如果上游不支持取消，Core 标记 `cancelling` 后尽力中止本地轮询或流消费。
+- 如果任务已完成，取消返回当前终态，不应破坏结果。
+
+### Core 管理 API
+
+通用任务 API 可以存在，但它的定位是内部管理、后台页面、调试、测试或运维，不是业务客户端的标准协议：
+
+```text
+GET /v1/tasks/{task_id}
+GET /v1/tasks?type=image.generate&status=completed&limit=20&offset=0
+POST /v1/tasks/{task_id}/cancel
+```
+
+这类 API 可以返回 AirGate Task schema，因为调用方明确知道自己在访问 AirGate 管理能力。普通业务 API 不应直接返回这个 schema。
 
 ## Core 职责
 
@@ -594,7 +518,7 @@ type TaskSchema struct {
 
 | 字段 | 含义 |
 | --- | --- |
-| `DefaultMode` | 默认客户端模式，通常是 `auto` 或 `wait` |
+| `DefaultMode` | 默认响应模式，通常是 `auto` 或 `wait` |
 | `MaxAttempts` | 默认最大重试次数 |
 | `Cancellable` | 是否支持取消 |
 | `ProgressMode` | `none`、`percent`、`stage` |
@@ -1129,16 +1053,16 @@ background_poll_interval = 1s
 立即调度
 等待 completed / failed / cancelled
 如果超时：
-  返回 202 + task_id
+  协议适配层返回原协议的异步响应 + task_id
 如果完成：
-  根据 result_protocol 返回兼容响应或 task 响应
+  协议适配层返回原协议最终响应 + task_id
 ```
 
-这使同步上游和异步上游都可以对外表现为同步接口。
+这使同步上游和异步上游都可以对外表现为原同步接口；只有等待超时或显式后台模式时，才返回该协议自己的异步响应。
 
 ## 结果协议
 
-任务 output 应统一，但也要支持兼容原协议返回。
+任务 output 应在 Core 内部统一，但对外必须支持原协议返回。业务客户端不直接消费 `task_output`，而是消费协议适配层生成的响应。
 
 统一任务 output：
 
@@ -1282,53 +1206,58 @@ Idempotency-Key: xxx
 - `airgate-openai` 能声明 `image.generate` / `image.edit`。
 - Core 管理后台能看到插件支持的任务类型。
 
-### 阶段三：Core 通用任务 API
+### 阶段三：Core 通用任务服务
 
-目标：Core 对外提供 `/v1/tasks`。
+目标：Core 提供内部统一任务服务，协议适配层通过它创建、查询、取消和更新任务；业务客户端仍走原 API。
 
 改动：
 
-- Core 新增通用任务创建、查询、列表、取消 API。
+- Core 新增通用任务创建、查询、列表、取消 service。
 - Core 实现 wait/background/auto。
 - Core 实现幂等键。
 - Core worker 支持按 task type 分发给插件。
 - Core 对 task output 做权限过滤。
+- 可选提供受权限保护的 `/v1/tasks` 管理 API，用于后台、调试和运维。
 
 验收：
 
-- 客户端可以不走 `/v1/images/tasks`，直接查 `/v1/tasks/{id}`。
-- 同步上游和异步上游在客户端表现一致。
+- 图片协议适配层可以通过 Core service 查询 `task_id` 对应的内部任务。
+- 同步上游和异步上游在原图片 API 中表现一致。
+- 普通业务客户端不需要迁移到 `/v1/tasks`。
 
-### 阶段四：插件迁移旧入口
+### 阶段四：协议入口接入 Core 任务服务
 
-目标：旧 OpenAI Images 入口复用 Core 任务 API。
+目标：OpenAI Images 等原有入口复用 Core 任务服务，但对外响应保持原协议。
 
 改动：
 
-- `/v1/images/generations` 可根据 `Prefer` 或 `task_mode` 选择 wait/background/auto。
-- `/v1/images/tasks` 标记为兼容别名。
+- `/v1/images/generations` 内部创建 `image.generate` 任务，完成时返回 Images schema 并追加 `task_id`。
+- `/v1/images/edits` 内部创建 `image.edit` 任务，完成时返回 Images schema 并追加 `task_id`。
+- `/v1/images/tasks` 和 `/v1/images/tasks/list` 继续保持当前响应结构，内部改为查询 Core Task。
 - 新增视频/音乐任务时只加 handler 和 schema。
 
 验收：
 
 - OpenAI SDK 默认路径仍可同步拿结果。
-- 显式异步模式返回 AirGate task。
+- 返回中能看到 AirGate `task_id`。
+- 显式异步模式返回当前协议定义的异步响应，而不是通用 AirGate Task schema。
 - 视频/音乐不新增专属状态机。
 
-### 阶段五：删除旧任务专用路由
+### 阶段五：清理内部重复状态机
 
-目标：清理历史兼容代码。
+目标：清理插件内部按图片写死的状态机和轮询代码，保留对外兼容路由。
 
 前提：
 
-- Core 通用任务 API 已稳定。
-- 前端和文档已切换。
-- 旧客户端有迁移窗口。
+- Core 通用任务服务已稳定。
+- 图片入口已通过协议适配层读写 Core Task。
+- 视频、音乐或其他任务类型能复用同一套 runner。
 
 改动：
 
-- 删除 `/v1/images/tasks` 和 `/v1/images/tasks/list`。
-- 删除插件里的图片专用查询函数。
+- 删除插件里的图片专用状态迁移、轮询和重试分支。
+- 保留 `/v1/images/tasks` 和 `/v1/images/tasks/list` 的对外兼容壳。
+- 查询函数只负责协议响应投影，不再自己管理状态机。
 
 ## 当前 `airgate-openai` 应先怎么改
 
@@ -1349,7 +1278,7 @@ backend/internal/gateway/task_image.go
 | --- | --- |
 | `task_registry.go` | 注册和查找 task handler |
 | `task_runner.go` | 通用状态迁移、调用 `forwardViaHost`、错误处理 |
-| `task_http.go` | 从 HTTP 请求解析 task_id、列表参数、写 task 响应 |
+| `task_http.go` | 从 HTTP 请求解析 task_id、列表参数、写当前协议的任务查询响应 |
 | `task_image.go` | OpenAI 图片 input/output 编解码 |
 
 第二步替换点：
@@ -1378,10 +1307,10 @@ registry.Register(OpenAIVideoGenerateTask{})
 
 Core 测试：
 
-- 创建任务返回 task_id。
+- 创建内部任务后能返回 AirGate `task_id` 给协议适配层。
 - wait 模式任务完成时返回最终结果。
-- wait 超时返回 `202 + task_id`。
-- background 模式立即返回 task_id。
+- wait 超时返回待处理状态和 `task_id`，由协议适配层投影成原协议异步响应。
+- background 模式立即返回 `task_id` 给协议适配层。
 - 查询任务权限校验。
 - 状态机非法迁移被拒绝。
 - 幂等键重复请求返回同一任务。
@@ -1399,13 +1328,15 @@ SDK 测试：
 - 图片编辑请求能构造 `image.edit` input。
 - 同步上游响应能完成任务。
 - 上游 `task_id` 响应能进入轮询并完成任务。
+- 完成响应保持 OpenAI Images schema，并额外包含 AirGate `task_id`。
+- 未完成响应保持当前图片任务响应结构，不返回通用 AirGate Task schema。
 - 上游错误能写入标准 error。
 - `ProcessTask` 遇到未知 task type 返回明确错误。
 - 旧 `/v1/images/tasks` 查询仍然兼容。
 
 ## 开放问题
 
-1. 通用 `/v1/tasks` 是否放在所有平台根路径下，还是只在 Core 管理 API 下暴露？
+1. 通用 `/v1/tasks` 是否需要对外暴露为管理 API；如果暴露，权限边界和返回字段需要单独设计。
 2. `task_id` 使用数字 ID 还是字符串 ID？建议对外使用字符串，例如 `ag_task_123`，内部可继续用 bigint。
 3. OpenAI SDK 兼容路径默认应该是 `wait` 还是 `auto`？建议默认 `wait`，显式请求才异步。
 4. task output 是否长期保存完整 base64？图片/视频结果可能很大，后续需要对象存储或结果过期策略。
@@ -1419,6 +1350,7 @@ SDK 测试：
 - Core 管任务生命周期。
 - SDK 管任务契约声明。
 - 插件管任务业务执行。
-- 客户端只看 AirGate Task，不看上游同步/异步差异。
+- 协议适配层把原 API 请求转成内部 Task，再把 Task 结果投影回原 API 响应。
+- 业务客户端继续看原协议响应，只额外拿到 AirGate `task_id`，不看上游同步/异步差异。
 
-当前最稳妥的落地路径是先在 `airgate-openai` 内部抽出任务注册表和 runner，保持现有接口不变；然后补 SDK schema；最后让 Core 接管通用 `/v1/tasks` 对外协议。
+当前最稳妥的落地路径是先在 `airgate-openai` 内部抽出任务注册表和 runner，保持现有接口不变并追加 `task_id`；然后补 SDK schema；最后让 Core 接管统一任务服务。通用 `/v1/tasks` 只作为管理和调试能力考虑，不作为业务客户端的新标准。
