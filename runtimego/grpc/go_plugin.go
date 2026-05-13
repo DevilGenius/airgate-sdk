@@ -37,6 +37,11 @@ func (p *GatewayGRPCPlugin) GRPCServer(broker *goplugin.GRPCBroker, s *grpc.Serv
 	pb.RegisterPluginServiceServer(s, &PluginGRPCServer{Impl: p.Impl, Broker: broker})
 	pb.RegisterGatewayServiceServer(s, &GatewayGRPCServer{Impl: p.Impl})
 	pb.RegisterEventServiceServer(s, &EventGRPCServer{Impl: p.Impl})
+	if tp, ok := p.Impl.(sdk.TaskProcessor); ok {
+		extServer := &ExtensionGRPCServer{Impl: &gatewayTaskAdapter{GatewayPlugin: p.Impl, tp: tp}}
+		extServer.initRouter()
+		pb.RegisterExtensionServiceServer(s, extServer)
+	}
 	return nil
 }
 
@@ -143,9 +148,6 @@ func Serve(impl interface{}) {
 	switch p := impl.(type) {
 	case sdk.GatewayPlugin:
 		pluginMap[PluginKeyGateway] = &GatewayGRPCPlugin{Impl: p}
-		if tp, ok := impl.(sdk.TaskProcessor); ok {
-			pluginMap[PluginKeyExtension] = &ExtensionGRPCPlugin{Impl: &gatewayTaskAdapter{GatewayPlugin: p, tp: tp}}
-		}
 	case sdk.ExtensionPlugin:
 		pluginMap[PluginKeyExtension] = &ExtensionGRPCPlugin{Impl: p}
 	case sdk.MiddlewarePlugin:
