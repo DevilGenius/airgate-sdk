@@ -130,6 +130,13 @@ export interface PluginFrontendModule {
   accountCreate?: ComponentType<AccountFormProps>;
   accountEdit?: ComponentType<AccountFormProps>;
   accountUsageWindow?: ComponentType<AccountSurfaceProps>;
+  /**
+   * 使用记录列表中“模型”列的行级别扩展渲染器。
+   *
+   * 用途：为平台补充展示模型分档信息（例如图像分辨率、推理强度、服务层级等），
+   * Core 只提供表格骨架与回退渲染，不内置平台语义。
+   */
+  usageModelMeta?: ComponentType<UsageRecordSurfaceProps>;
   usageMetricDetail?: ComponentType<UsageRecordSurfaceProps>;
   usageCostDetail?: ComponentType<UsageRecordSurfaceProps>;
   platformIcon?: ComponentType<PluginPlatformIconProps>;

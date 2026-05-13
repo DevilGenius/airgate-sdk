@@ -153,6 +153,9 @@ ensurePluginStyles();
 export default {
   accountCreate: YourComponent,  // 或 accountEdit / accountIdentity / accountUsageWindow / usageMetricDetail / usageCostDetail / routes / menuItems
 };
+
+// 使用记录“模型”列行级别扩展展示（可选）
+// usageModelMeta: (props: UsageRecordSurfaceProps) => ReactNode
 ```
 
 ## 4. 组件根节点 — 作用域绑定
