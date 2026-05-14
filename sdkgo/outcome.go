@@ -19,7 +19,7 @@ const (
 	// OutcomeSuccess 上游返回 2xx，Usage 必填。
 	OutcomeSuccess
 
-	// OutcomeClientError 4xx，错在客户端请求本身（model 不存在、context 过长、参数非法）。
+	// OutcomeClientError 4xx，错在客户端请求本身（context 过长、参数非法等）。
 	// 换账号救不回来，Core 会把 Upstream 原样透传给客户端，不罚账号。
 	OutcomeClientError
 
@@ -38,6 +38,10 @@ const (
 	// OutcomeStreamAborted 流式响应已经开始写入客户端，中途断开。
 	// 不能 failover（字节已经发出去了），也不能把账号直接标死。
 	OutcomeStreamAborted
+
+	// Deprecated: OutcomeAccountModelUnsupported 已归入 OutcomeClientError。
+	// 保留常量避免编译失败，运行时等同于 ClientError。
+	OutcomeAccountModelUnsupported
 )
 
 // String 返回人类可读名称，用于日志。
@@ -55,6 +59,8 @@ func (k OutcomeKind) String() string {
 		return "upstream_transient"
 	case OutcomeStreamAborted:
 		return "stream_aborted"
+	case OutcomeAccountModelUnsupported:
+		return "client_error"
 	default:
 		return "unknown"
 	}
@@ -82,8 +88,8 @@ func (k OutcomeKind) ShouldFailover() bool {
 
 // UpstreamResponse 上游返回的原始 HTTP 快照。
 //
-// 语义：Success / ClientError 时 Core 会把 Body + Headers 原样透传给客户端。
-// 其他 Kind 下 Upstream 仅作为诊断信息保留，不透传。
+// 语义：插件应尽量保存上游实际响应。Core 会先基于 Kind 组织调度 / failover；
+// 最终不再重试时，若 Upstream 有可返回响应，则优先原样返回给客户端。
 // StreamAborted 场景 Body 通常为空（字节已经流给客户端）。
 type UpstreamResponse struct {
 	StatusCode int

@@ -127,6 +127,8 @@ func outcomeKindToProto(k sdk.OutcomeKind) pb.OutcomeKind {
 		return pb.OutcomeKind_OUTCOME_UPSTREAM_TRANSIENT
 	case sdk.OutcomeStreamAborted:
 		return pb.OutcomeKind_OUTCOME_STREAM_ABORTED
+	case sdk.OutcomeAccountModelUnsupported: //nolint:staticcheck // 兼容旧插件
+		return pb.OutcomeKind_OUTCOME_CLIENT_ERROR
 	default:
 		return pb.OutcomeKind_OUTCOME_UNKNOWN
 	}
@@ -146,6 +148,8 @@ func outcomeKindFromProto(k pb.OutcomeKind) sdk.OutcomeKind {
 		return sdk.OutcomeUpstreamTransient
 	case pb.OutcomeKind_OUTCOME_STREAM_ABORTED:
 		return sdk.OutcomeStreamAborted
+	case pb.OutcomeKind_OUTCOME_ACCOUNT_MODEL_UNSUPPORTED:
+		return sdk.OutcomeClientError
 	default:
 		return sdk.OutcomeUnknown
 	}
@@ -441,12 +445,14 @@ func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.Gate
 		outcome.Duration = time.Since(startTime)
 	}
 
-	if err := sw.flushMeta(); err != nil {
-		sdk.LoggerFromContext(ctx).Error("gateway_forward_stream_meta_flush_failed",
-			sdk.LogFieldModel, req.Model,
-			sdk.LogFieldError, err,
-		)
-		return err
+	if sw.sent || sw.wroteHeader {
+		if err := sw.flushMeta(); err != nil {
+			sdk.LoggerFromContext(ctx).Error("gateway_forward_stream_meta_flush_failed",
+				sdk.LogFieldModel, req.Model,
+				sdk.LogFieldError, err,
+			)
+			return err
+		}
 	}
 	if err := stream.Send(&pb.ForwardChunk{
 		Done:         true,
@@ -470,10 +476,11 @@ func (s *GatewayGRPCServer) ValidateAccount(ctx context.Context, req *pb.Credent
 
 // streamWriter 把 gRPC 流包装成 http.ResponseWriter。
 type streamWriter struct {
-	stream  pb.GatewayService_ForwardStreamServer
-	headers http.Header
-	code    int
-	sent    bool
+	stream      pb.GatewayService_ForwardStreamServer
+	headers     http.Header
+	code        int
+	wroteHeader bool
+	sent        bool
 }
 
 func (w *streamWriter) Header() http.Header {
@@ -510,7 +517,13 @@ func (w *streamWriter) Write(data []byte) (int, error) {
 	return total, nil
 }
 
-func (w *streamWriter) WriteHeader(statusCode int) { w.code = statusCode }
+func (w *streamWriter) WriteHeader(statusCode int) {
+	if w.sent || w.wroteHeader {
+		return
+	}
+	w.code = statusCode
+	w.wroteHeader = true
+}
 
 func (w *streamWriter) flushMeta() error {
 	if w.sent {

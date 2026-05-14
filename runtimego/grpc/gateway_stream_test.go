@@ -93,6 +93,25 @@ func (c *stubGatewayServiceClient) HandleWebSocket(context.Context, ...grpc.Call
 	return nil, nil
 }
 
+type stubGatewayPlugin struct {
+	forward func(context.Context, *sdk.ForwardRequest) (sdk.ForwardOutcome, error)
+}
+
+func (p stubGatewayPlugin) Info() sdk.PluginInfo                                     { return sdk.PluginInfo{} }
+func (p stubGatewayPlugin) Init(sdk.PluginContext) error                             { return nil }
+func (p stubGatewayPlugin) Start(context.Context) error                              { return nil }
+func (p stubGatewayPlugin) Stop(context.Context) error                               { return nil }
+func (p stubGatewayPlugin) Platform() string                                         { return "test" }
+func (p stubGatewayPlugin) Models() []sdk.ModelInfo                                  { return nil }
+func (p stubGatewayPlugin) Routes() []sdk.RouteDefinition                            { return nil }
+func (p stubGatewayPlugin) ValidateAccount(context.Context, map[string]string) error { return nil }
+func (p stubGatewayPlugin) HandleWebSocket(context.Context, sdk.WebSocketConn) (sdk.ForwardOutcome, error) {
+	return sdk.ForwardOutcome{}, sdk.ErrNotSupported
+}
+func (p stubGatewayPlugin) Forward(ctx context.Context, req *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
+	return p.forward(ctx, req)
+}
+
 type captureWriter struct {
 	header http.Header
 	status int
@@ -145,6 +164,36 @@ func TestStreamWriterFlushMetaBeforeBody(t *testing.T) {
 	}
 	if string(stream.chunks[1].Data) != "data: hello\n\n" {
 		t.Fatalf("body chunk = %q", stream.chunks[1].Data)
+	}
+}
+
+func TestGatewayGRPCServerForwardStreamDoesNotFlushMetaWithoutCommittedResponse(t *testing.T) {
+	server := &GatewayGRPCServer{
+		Impl: stubGatewayPlugin{
+			forward: func(_ context.Context, req *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
+				req.Writer.Header().Set("Content-Type", "text/event-stream")
+				return sdk.ForwardOutcome{
+					Kind:     sdk.OutcomeUpstreamTransient,
+					Upstream: sdk.UpstreamResponse{StatusCode: http.StatusBadGateway},
+					Reason:   "空流",
+				}, nil
+			},
+		},
+	}
+	stream := &stubForwardStreamServer{}
+
+	if err := server.ForwardStream(&pb.ForwardRequest{}, stream); err != nil {
+		t.Fatalf("ForwardStream() error = %v", err)
+	}
+	if len(stream.chunks) != 1 {
+		t.Fatalf("expected only final outcome chunk, got %d chunks: %+v", len(stream.chunks), stream.chunks)
+	}
+	final := stream.chunks[0]
+	if !final.Done || final.FinalOutcome == nil {
+		t.Fatalf("expected final outcome chunk, got %+v", final)
+	}
+	if final.StatusCode != 0 || len(final.Headers) != 0 || len(final.Data) != 0 {
+		t.Fatalf("final chunk should not commit HTTP response, got %+v", final)
 	}
 }
 
