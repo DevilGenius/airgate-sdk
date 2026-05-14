@@ -1,0 +1,41 @@
+name: 发布 npm 公共包
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: 发布 @doudou-start/airgate-theme
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: theme/package-lock.json
+
+      - name: 安装依赖
+        working-directory: theme
+        run: npm ci
+
+      - name: 构建包
+        working-directory: theme
+        run: npm run build
+
+      - name: 检查包内容
+        working-directory: theme
+        run: npm pack --dry-run
+
+      - name: 发布包
+        working-directory: theme
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -4,6 +4,5 @@ coverage.out
 # 本地工具链
 .tools/
 
-# 前端依赖和构建产物
-frontend/node_modules/
-frontend/dist/
+# 主题包依赖
+theme/node_modules/

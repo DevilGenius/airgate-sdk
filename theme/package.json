@@ -1,0 +1,57 @@
+{
+  "name": "@doudou-start/airgate-theme",
+  "version": "1.0.0",
+  "description": "AirGate 插件前端主题、样式隔离和公共组件包",
+  "type": "module",
+  "packageManager": "npm@11.6.2",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DouDOU-start/airgate-sdk.git",
+    "directory": "theme"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./css": {
+      "import": "./dist/css.js",
+      "default": "./dist/css.js",
+      "types": "./dist/css.d.ts"
+    },
+    "./tailwind": {
+      "import": "./dist/tailwind.js",
+      "default": "./dist/tailwind.js",
+      "types": "./dist/tailwind.d.ts"
+    },
+    "./plugin": {
+      "import": "./dist/plugin.js",
+      "default": "./dist/plugin.js",
+      "types": "./dist/plugin.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "npm run build",
+    "dev": "tsc --watch"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

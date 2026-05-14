@@ -27,6 +27,8 @@ your-plugin/
 
 ## 2. 依赖配置
 
+插件前端 SDK 的正式包名是 `@doudou-start/airgate-theme`。插件业务代码优先使用 `@doudou-start/airgate-theme/plugin`，该入口提供主题初始化、样式作用域、Tailwind bridge、插件前端类型和公共 UI 组件。
+
 ### package.json
 
 ```json
@@ -37,7 +39,7 @@ your-plugin/
     "dev": "vite build --watch"
   },
   "dependencies": {
-    "@airgate/theme": "file:../../airgate-sdk/frontend",
+    "@doudou-start/airgate-theme": "^1.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -53,7 +55,7 @@ your-plugin/
 }
 ```
 
-> **注意**：`react` 和 `react-dom` 仅用于类型，运行时由 Core 通过 `window.__airgate_shared` 提供。
+> **注意**：`react` 和 `react-dom` 不打包进插件产物；运行时由 Core 或 devserver 通过 import map 或等价模块别名提供。
 
 ### vite.config.ts
 
@@ -72,7 +74,7 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       // React 由 Core 提供，不要打包
-      external: ['react', 'react-dom', 'react/jsx-runtime'],
+      external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
     },
   },
 });
@@ -82,7 +84,7 @@ export default defineConfig({
 
 ```ts
 import type { Config } from 'tailwindcss';
-import { createPluginTailwindConfig } from '@airgate/theme/plugin';
+import { createPluginTailwindConfig } from '@doudou-start/airgate-theme/plugin';
 
 const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
@@ -116,7 +118,7 @@ module.exports = {
 ### theme/runtime.ts
 
 ```ts
-import { ensurePluginStyleFoundation } from '@airgate/theme/plugin';
+import { ensurePluginStyleFoundation } from '@doudou-start/airgate-theme/plugin';
 import tailwindCssText from '../styles/tailwind.css?inline';
 
 export const THEME_SCOPE_SELECTOR = '[data-ag-YOUR_PLUGIN-root]';
@@ -124,13 +126,11 @@ export const THEME_ATTRIBUTE = 'data-theme';
 export const STYLE_ID = 'ag-YOUR_PLUGIN-theme-vars';
 export const FOUNDATION_STYLE_ID = 'ag-YOUR_PLUGIN-plugin-foundation';
 export const TAILWIND_STYLE_ID = 'ag-YOUR_PLUGIN-tailwind';
-export const STORAGE_KEY = 'ag-YOUR_PLUGIN-theme';
 
 export function ensurePluginStyles(): void {
   ensurePluginStyleFoundation({
     scopeSelector: THEME_SCOPE_SELECTOR,
     themeAttribute: THEME_ATTRIBUTE,
-    storageKey: STORAGE_KEY,
     themeStyleId: STYLE_ID,
     foundationStyleId: FOUNDATION_STYLE_ID,
     extraCssText: tailwindCssText,     // 注入编译好的 Tailwind CSS
@@ -151,8 +151,11 @@ import { ensurePluginStyles } from './theme/runtime';
 ensurePluginStyles();
 
 export default {
-  accountForm: YourComponent,  // 或 routes / menuItems
+  accountCreate: YourComponent,  // 或 accountEdit / accountIdentity / accountUsageWindow / usageMetricDetail / usageCostDetail / routes / menuItems
 };
+
+// 使用记录“模型”列行级别扩展展示（可选）
+// usageModelMeta: (props: UsageRecordSurfaceProps) => ReactNode
 ```
 
 ## 4. 组件根节点 — 作用域绑定
@@ -162,7 +165,7 @@ export default {
 2. 使用 `useScopedPluginTheme` 跟随 Core 的明暗切换
 
 ```tsx
-import { useScopedPluginTheme } from '@airgate/theme/plugin';
+import { useScopedPluginTheme } from '@doudou-start/airgate-theme/plugin';
 
 const THEME_ATTRIBUTE = 'data-theme';
 const STORAGE_KEY = 'ag-YOUR_PLUGIN-theme';
@@ -187,42 +190,42 @@ export function YourComponent(props) {
 
 ## 5. 设计 Token 参考
 
-所有插件样式通过 CSS 变量 `--ag-*` 引用，Tailwind 工具类已映射好（带 `agw-` 前缀）。
+所有插件样式通过 CSS 变量 `--ag-*` 引用，Tailwind 工具类已映射好（带 `agw-` 前缀）。具体 token 值由 `theme/src/tokens.ts` 生成，文档只说明语义，避免样式值漂移。
 
 ### 颜色
 
-| Token | Tailwind 类 | 暗色值 | 用途 |
-|---|---|---|---|
-| `--ag-primary` | `agw-text-primary` / `agw-bg-primary` | `#2dd4a8` | 主操作、链接、选中态 |
-| `--ag-primary-hover` | `agw-bg-primary-hover` | `#5de8c2` | 主色悬停 |
-| `--ag-primary-subtle` | `agw-bg-primary-subtle` | `rgba(45,212,168,0.10)` | 主色背景/高亮 |
-| `--ag-primary-glow` | — | `rgba(45,212,168,0.18)` | 发光阴影 |
-| `--ag-success` | `agw-text-success` | `#22c55e` | 成功状态 |
-| `--ag-warning` | `agw-text-warning` | `#f59e0b` | 警告状态 |
-| `--ag-danger` | `agw-text-danger` | `#ef4444` | 错误/删除 |
-| `--ag-info` | `agw-text-info` | `#60a5fa` | 信息/辅助色 |
+| Token | Tailwind 类 | 用途 |
+|---|---|---|
+| `--ag-primary` | `agw-text-primary` / `agw-bg-primary` | 主操作、链接、选中态 |
+| `--ag-primary-hover` | `agw-bg-primary-hover` | 主色悬停 |
+| `--ag-primary-subtle` | `agw-bg-primary-subtle` | 主色背景/高亮 |
+| `--ag-primary-glow` | — | 发光阴影 |
+| `--ag-success` | `agw-text-success` | 成功状态 |
+| `--ag-warning` | `agw-text-warning` | 警告状态 |
+| `--ag-danger` | `agw-text-danger` | 错误/删除 |
+| `--ag-info` | `agw-text-info` | 信息/辅助色 |
 
 ### 背景层级
 
 从深到浅，形成空间层次：
 
-| Token | Tailwind 类 | 暗色值 | 用途 |
-|---|---|---|---|
-| `--ag-bg-deep` | `agw-bg-bg-deep` | `#0a0a0c` | 页面最底层 |
-| `--ag-bg` | `agw-bg-bg` | `#111113` | 侧边栏/主面板 |
-| `--ag-bg-elevated` | `agw-bg-bg-elevated` | `#18181b` | 卡片/弹窗/下拉 |
-| `--ag-bg-surface` | `agw-bg-surface` | `#1e1e21` | 输入框/表单区域 |
-| `--ag-bg-hover` | `agw-bg-bg-hover` | `#27272a` | 悬停态背景 |
-| `--ag-bg-active` | `agw-bg-bg-active` | `#303033` | 按下/激活态 |
+| Token | Tailwind 类 | 用途 |
+|---|---|---|
+| `--ag-bg-deep` | `agw-bg-bg-deep` | 页面最底层 |
+| `--ag-bg` | `agw-bg-bg` | 侧边栏/主面板 |
+| `--ag-bg-elevated` | `agw-bg-bg-elevated` | 卡片/弹窗/下拉 |
+| `--ag-bg-surface` | `agw-bg-surface` | 输入框/表单区域 |
+| `--ag-bg-hover` | `agw-bg-bg-hover` | 悬停态背景 |
+| `--ag-bg-active` | `agw-bg-bg-active` | 按下/激活态 |
 
 ### 文字
 
-| Token | Tailwind 类 | 暗色值 | 用途 |
-|---|---|---|---|
-| `--ag-text` | `agw-text-text` | `#ececf0` | 主文字 |
-| `--ag-text-secondary` | `agw-text-text-secondary` | `#a1a1aa` | 次要文字/标签 |
-| `--ag-text-tertiary` | `agw-text-text-tertiary` | `#63636e` | 提示文字/占位符 |
-| `--ag-text-inverse` | `agw-text-text-inverse` | `#0a0a0c` | 反色（主色按钮文字） |
+| Token | Tailwind 类 | 用途 |
+|---|---|---|
+| `--ag-text` | `agw-text-text` | 主文字 |
+| `--ag-text-secondary` | `agw-text-text-secondary` | 次要文字/标签 |
+| `--ag-text-tertiary` | `agw-text-text-tertiary` | 提示文字/占位符 |
+| `--ag-text-inverse` | `agw-text-text-inverse` | 反色（主色按钮文字） |
 
 ### 边框
 
@@ -235,17 +238,18 @@ export function YourComponent(props) {
 
 ### 其他
 
-| Token | Tailwind 类 | 值 |
+| Token | Tailwind 类 | 用途 |
 |---|---|---|
-| `--ag-radius-sm` | `agw-rounded-sm` | `6px` |
-| `--ag-radius-md` | `agw-rounded-md` | `10px` |
-| `--ag-radius-lg` | `agw-rounded-lg` | `14px` |
-| `--ag-font-sans` | `agw-font-sans` | Inter |
-| `--ag-font-mono` | `agw-font-mono` | JetBrains Mono |
+| `--ag-radius-sm` | `agw-rounded-sm` | 小圆角 |
+| `--ag-radius-md` | `agw-rounded-md` | 中圆角 |
+| `--ag-radius-lg` | `agw-rounded-lg` | 大圆角 |
+| `--ag-field-radius` | `agw-rounded-field` | 表单控件圆角 |
+| `--ag-font-sans` | `agw-font-sans` | 正文字体 |
+| `--ag-font-mono` | `agw-font-mono` | 等宽字体 |
 
 ## 6. SDK 提供的 UI 组件
 
-SDK 提供了一套预制组件（`@airgate/theme/plugin`），样式与 Core 保持一致，**优先使用这些组件**：
+SDK 提供了一套预制组件（`@doudou-start/airgate-theme/plugin`），样式与 Core 保持一致，属于插件前端稳定公共契约。插件业务 UI **优先使用这些组件**：
 
 ```tsx
 import {
@@ -261,7 +265,7 @@ import {
   FormActions,     // 表单操作区（flex wrap）
   Badge,           // 标签徽章（neutral / success / violet / info）
   StatusText,      // 内联状态文字（info / success / error）
-} from '@airgate/theme/plugin';
+} from '@doudou-start/airgate-theme/plugin';
 ```
 
 ### 使用示例
@@ -376,7 +380,7 @@ npm run build
 
 修改 SDK token 后的刷新流程：
 ```bash
-cd airgate-sdk/frontend && npm run build     # 1. 编译 SDK
+cd airgate-sdk/theme && npm run build        # 1. 编译 SDK
 cd your-plugin/web && npm run build          # 2. 重建插件（打包新 token）
 # 3. 刷新浏览器
 ```
