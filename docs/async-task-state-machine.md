@@ -667,6 +667,34 @@ tasks.get_cancellation
 
 如果暂时不做 event 表，也可以把 execution 信息存进任务 output 的内部字段，但不建议长期这么做。
 
+### 资产存储
+
+Core 提供统一的资产存储能力，插件不应自行实现文件下载和持久化。
+
+已有 Host method：
+
+```text
+assets.store        存储原始字节（插件已有数据在内存中）
+assets.store_url    从外部 URL 下载并存储（Core 负责 HTTP 下载、大小限制、Content-Type 检测）
+assets.get_url      获取已存储资产的可访问 URL
+assets.get_bytes    获取已存储资产的原始字节
+```
+
+职责边界：
+
+| 层级 | 职责 | 示例 |
+| --- | --- | --- |
+| Core 资产存储 | HTTP 下载、大小限制、Content-Type 检测、持久化（本地 / S3）、URL 签发 | `assets.store_url` 下载 50MB 以内的外部图片 |
+| 插件 | 识别 output 中哪些字段含可下载媒体、调用对应 Host method、注册到自己的资产跟踪表 | 遍历 Images API 响应的 `data[]`，对 `b64_json` 调 `assets.store`，对外部 `url` 调 `assets.store_url` |
+| Core 任务系统 | 持久化 output JSON、状态机、权限 | 不解析 output 中的 URL 或 base64 字段 |
+
+设计原则：
+
+- Core 不理解任务 output 的结构，不自动扫描或处理 output 中的媒体字段。
+- 插件在执行任务时主动调用 `assets.store` 或 `assets.store_url`，把外部 URL 或 base64 转为 Core 管理的本地 URL，再写入 output。
+- 任务完成后 output 中应只包含稳定的本地 URL，不应包含可能过期的外部签名 URL。
+- 后续新增视频、音乐等媒体类型时，插件只需调用同一组 Host method，不需要各自实现下载逻辑。
+
 ## 插件职责
 
 插件实现任务定义，不实现通用状态机。
