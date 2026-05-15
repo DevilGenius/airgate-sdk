@@ -374,7 +374,7 @@ import {
 make ci                            # 运行 Go、proto、前端和主题漂移检查
 make proto                         # 重新生成 protocol/proto
 make theme                         # 重新生成 DevServer 主题 CSS
-cd theme && npm run build          # 构建 @doudou-start/airgate-theme
+cd theme && pnpm build          # 构建 @doudou-start/airgate-theme
 ```
 
 ## License

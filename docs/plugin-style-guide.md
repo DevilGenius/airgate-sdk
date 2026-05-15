@@ -369,19 +369,19 @@ import {
 
 ```bash
 # 首次安装
-cd your-plugin/web && npm install
+cd your-plugin/web && pnpm install
 
 # 开发（watch 构建，改代码自动重建 dist/index.js）
-npm run dev
+pnpm dev
 
 # 一次性构建
-npm run build
+pnpm build
 ```
 
 修改 SDK token 后的刷新流程：
 ```bash
-cd airgate-sdk/theme && npm run build        # 1. 编译 SDK
-cd your-plugin/web && npm run build          # 2. 重建插件（打包新 token）
+cd airgate-sdk/theme && pnpm build        # 1. 编译 SDK
+cd your-plugin/web && pnpm build          # 2. 重建插件（打包新 token）
 # 3. 刷新浏览器
 ```
 
