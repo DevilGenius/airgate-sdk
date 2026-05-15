@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "AirGate 插件前端主题、样式隔离和公共组件包",
   "type": "module",
-  "packageManager": "npm@11.6.2",
+  "packageManager": "pnpm@11.1.1",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -43,7 +43,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepack": "npm run build",
+    "prepack": "pnpm run build",
     "dev": "tsc --watch"
   },
   "peerDependencies": {

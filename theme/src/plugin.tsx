@@ -123,6 +123,14 @@ export interface UsageRecordSurfaceProps {
   context?: Record<string, unknown>;
 }
 
+/**
+ * 平台插件自行判断某条 usage 的 service_tier 是否应展示为 fast。
+ *
+ * 不同上游平台可能使用不同字段值表达 fast/priority/flex 等服务层级，
+ * Core 只负责调用该函数并套用统一 fast 样式，不内置平台语义。
+ */
+export type UsageServiceTierFastResolver = (context?: Record<string, unknown>) => boolean;
+
 export interface PluginFrontendModule {
   routes?: PluginRouteDefinition[];
   menuItems?: PluginMenuItemDefinition[];
@@ -137,6 +145,7 @@ export interface PluginFrontendModule {
    * Core 只提供表格骨架与回退渲染，不内置平台语义。
    */
   usageModelMeta?: ComponentType<UsageRecordSurfaceProps>;
+  isUsageServiceTierFast?: UsageServiceTierFastResolver;
   usageMetricDetail?: ComponentType<UsageRecordSurfaceProps>;
   usageCostDetail?: ComponentType<UsageRecordSurfaceProps>;
   platformIcon?: ComponentType<PluginPlatformIconProps>;

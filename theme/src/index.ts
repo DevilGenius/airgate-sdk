@@ -76,6 +76,7 @@ export type {
   SelectableCardProps,
   StatusTextProps,
   UsageRecordSurfaceProps,
+  UsageServiceTierFastResolver,
 } from './plugin.js';
 
 // 插件前端 SDK：样式注入、主题同步、Tailwind bridge 和公共组件
