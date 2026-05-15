@@ -63,6 +63,7 @@ type HostTask struct {
 	UserID       int64
 	Input        map[string]interface{}
 	Output       map[string]interface{}
+	Execution    map[string]interface{} // plugin internal state, survives retries
 	ErrorMessage string
 	Progress     int // 0-100
 	Attempts     int
