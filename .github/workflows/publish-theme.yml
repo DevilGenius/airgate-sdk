@@ -1,4 +1,4 @@
-name: 发布 npm 公共包
+name: 发布主题包
 
 on:
   release:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -38,8 +38,26 @@ jobs:
         working-directory: theme
         run: pnpm pack --dry-run
 
-      - name: 发布包
+      - name: 打包 Release 资产
         working-directory: theme
-        run: pnpm publish --access public --no-git-checks
+        run: |
+          mkdir -p ../dist
+          pnpm pack --pack-destination ../dist
+          mv ../dist/doudou-start-airgate-theme-*.tgz "../dist/airgate-theme-${GITHUB_REF_NAME}.tgz"
+
+      - name: 上传 GitHub Release 资产
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${GITHUB_REF_NAME}" "dist/airgate-theme-${GITHUB_REF_NAME}.tgz" --clobber
+
+      - name: 发布 npm 包
+        working-directory: theme
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN 未配置，跳过 npm publish"
+            exit 0
+          fi
+          pnpm publish --access public --no-git-checks
