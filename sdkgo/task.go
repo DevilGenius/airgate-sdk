@@ -57,7 +57,7 @@ type TaskProcessor interface {
 // HostTask 任务完整信息。
 type HostTask struct {
 	ID           int64
-	PublicID     string
+	PublicTaskID string
 	PluginID     string
 	TaskType     string
 	Status       TaskStatus // pending, processing, completed, failed, cancelled
