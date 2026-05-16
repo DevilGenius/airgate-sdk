@@ -43,7 +43,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepack": "pnpm run build",
+    "prepack": "pnpm build",
     "dev": "tsc --watch"
   },
   "peerDependencies": {

@@ -52,7 +52,7 @@ build: ## 编译检查
 # ===================== 主题包 =====================
 
 theme-package-build: ## 构建 AirGate 主题包
-	cd theme && npm run build
+	cd theme && pnpm build
 
 theme-package-check: theme-package-build ## 校验 AirGate 主题包构建产物无漂移
 	@git diff --exit-code -- theme/dist
