@@ -42,7 +42,7 @@ import (
 ```json
 {
   "dependencies": {
-    "@doudou-start/airgate-theme": "^0.2.0"
+    "@doudou-start/airgate-theme": "^0.2.1"
   }
 }
 ```
