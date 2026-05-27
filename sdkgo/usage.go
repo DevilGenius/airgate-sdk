@@ -3,7 +3,7 @@ package sdk
 // UsageAttribute 是一次调用的通用审计维度。
 //
 // 适合存储模型、思考层级、分辨率、质量档、服务档位等非数值或枚举型信息。
-// Core 可统一入库和检索，但不根据这些字段推导平台计费规则。
+// Deprecated: Core 不再持久化或依赖该结构；新增标准维度应优先使用 Usage 上的标量字段或 Metadata。
 type UsageAttribute struct {
 	Key      string            `json:"key,omitempty"`
 	Label    string            `json:"label"`
@@ -14,8 +14,7 @@ type UsageAttribute struct {
 
 // UsageMetric 是一次调用的通用计量结果。
 //
-// 插件负责根据平台标准计费规则计算 Value 和 AccountCost。SDK 不提供价格字段、倍率规则或 token
-// 公式，Core 不应基于 Key 推导平台计费语义。
+// Deprecated: Core 不再持久化或依赖该结构；token、图片数量和成本应写入 Usage 上的标准标量字段。
 type UsageMetric struct {
 	Key         string            `json:"key,omitempty"`
 	Label       string            `json:"label"`
@@ -29,8 +28,7 @@ type UsageMetric struct {
 
 // UsageCostDetail 是一次调用的通用费用明细。
 //
-// 插件负责把平台价格、套餐规则和折扣计算成 AccountCost。Core 可统一入库，
-// 再按用户、分组、模型等倍率写入 UserCost / BillingMultiplier。
+// Deprecated: Core 不再持久化或依赖该结构；计费应写入 Usage 上的标准成本和单价字段。
 type UsageCostDetail struct {
 	Key               string            `json:"key,omitempty"`
 	Label             string            `json:"label"`

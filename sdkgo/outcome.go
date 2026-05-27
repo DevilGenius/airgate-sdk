@@ -109,20 +109,44 @@ type UpstreamResponse struct {
 // 后仍计 token）可填；其他 Kind 下应为 nil。
 //
 // 平台价格、token 拆分、图片分档等标准计费规则全部由网关插件自己实现。
-// 插件填 AccountCost / Currency；Core 统一入库后按用户、分组、模型等倍率
-// 写入 UserCost / BillingMultiplier。
+// 插件填标准 token、单价和账号成本字段；Core 只读取这些标量字段并按用户、
+// 分组、模型等倍率写入自己的 usage_log 标准列。
 type Usage struct {
-	Model             string            `json:"model,omitempty"`
-	AccountCost       float64           `json:"account_cost,omitempty"`
-	UserCost          float64           `json:"user_cost,omitempty"`
-	BillingMultiplier float64           `json:"billing_multiplier,omitempty"`
-	Currency          string            `json:"currency,omitempty"`
-	Summary           string            `json:"summary,omitempty"`
-	FirstTokenMs      int64             `json:"first_token_ms,omitempty"`
-	Attributes        []UsageAttribute  `json:"attributes,omitempty"`
-	Metrics           []UsageMetric     `json:"metrics,omitempty"`
-	CostDetails       []UsageCostDetail `json:"cost_details,omitempty"`
-	Metadata          map[string]string `json:"metadata,omitempty"`
+	Model                 string            `json:"model,omitempty"`
+	AccountCost           float64           `json:"account_cost,omitempty"`
+	UserCost              float64           `json:"user_cost,omitempty"`
+	BillingMultiplier     float64           `json:"billing_multiplier,omitempty"`
+	Currency              string            `json:"currency,omitempty"`
+	Summary               string            `json:"summary,omitempty"`
+	FirstTokenMs          int64             `json:"first_token_ms,omitempty"`
+	InputTokens           int               `json:"input_tokens,omitempty"`
+	OutputTokens          int               `json:"output_tokens,omitempty"`
+	CachedInputTokens     int               `json:"cached_input_tokens,omitempty"`
+	CacheCreationTokens   int               `json:"cache_creation_tokens,omitempty"`
+	CacheCreation5mTokens int               `json:"cache_creation_5m_tokens,omitempty"`
+	CacheCreation1hTokens int               `json:"cache_creation_1h_tokens,omitempty"`
+	ReasoningOutputTokens int               `json:"reasoning_output_tokens,omitempty"`
+	TextInputTokens       int               `json:"input_text_tokens,omitempty"`
+	ImageInputTokens      int               `json:"input_image_tokens,omitempty"`
+	ImageCount            int               `json:"images,omitempty"`
+	InputPrice            float64           `json:"input_price,omitempty"`
+	OutputPrice           float64           `json:"output_price,omitempty"`
+	CachedInputPrice      float64           `json:"cached_input_price,omitempty"`
+	CacheCreationPrice    float64           `json:"cache_creation_price,omitempty"`
+	CacheCreation1hPrice  float64           `json:"cache_creation_1h_price,omitempty"`
+	InputCost             float64           `json:"input_cost,omitempty"`
+	OutputCost            float64           `json:"output_cost,omitempty"`
+	CachedInputCost       float64           `json:"cached_input_cost,omitempty"`
+	CacheCreationCost     float64           `json:"cache_creation_cost,omitempty"`
+	ServiceTier           string            `json:"service_tier,omitempty"`
+	ReasoningEffort       string            `json:"reasoning_effort,omitempty"`
+	ImageSize             string            `json:"image_size,omitempty"`
+	ImageUnitPrice        float64           `json:"image_unit_price,omitempty"`
+	ImageUnit             string            `json:"image_unit,omitempty"`
+	Attributes            []UsageAttribute  `json:"attributes,omitempty"`
+	Metrics               []UsageMetric     `json:"metrics,omitempty"`
+	CostDetails           []UsageCostDetail `json:"cost_details,omitempty"`
+	Metadata              map[string]string `json:"metadata,omitempty"`
 }
 
 // ForwardOutcome 是插件对一次 Forward 的完整判决结果。

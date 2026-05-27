@@ -1667,20 +1667,44 @@ func (x *UsageCostDetail) GetMetadata() map[string]string {
 
 // Usage 单次调用的用量与费用结果。非 Success 判决下应为空。
 type Usage struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Model             string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
-	AccountCost       float64                `protobuf:"fixed64,2,opt,name=account_cost,json=accountCost,proto3" json:"account_cost,omitempty"`
-	UserCost          float64                `protobuf:"fixed64,3,opt,name=user_cost,json=userCost,proto3" json:"user_cost,omitempty"`
-	BillingMultiplier float64                `protobuf:"fixed64,4,opt,name=billing_multiplier,json=billingMultiplier,proto3" json:"billing_multiplier,omitempty"`
-	Currency          string                 `protobuf:"bytes,5,opt,name=currency,proto3" json:"currency,omitempty"`
-	Summary           string                 `protobuf:"bytes,6,opt,name=summary,proto3" json:"summary,omitempty"`
-	FirstTokenMs      int64                  `protobuf:"varint,7,opt,name=first_token_ms,json=firstTokenMs,proto3" json:"first_token_ms,omitempty"`
-	Metrics           []*UsageMetric         `protobuf:"bytes,8,rep,name=metrics,proto3" json:"metrics,omitempty"`
-	Attributes        []*UsageAttribute      `protobuf:"bytes,9,rep,name=attributes,proto3" json:"attributes,omitempty"`
-	CostDetails       []*UsageCostDetail     `protobuf:"bytes,10,rep,name=cost_details,json=costDetails,proto3" json:"cost_details,omitempty"`
-	Metadata          map[string]string      `protobuf:"bytes,11,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	Model                  string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
+	AccountCost            float64                `protobuf:"fixed64,2,opt,name=account_cost,json=accountCost,proto3" json:"account_cost,omitempty"`
+	UserCost               float64                `protobuf:"fixed64,3,opt,name=user_cost,json=userCost,proto3" json:"user_cost,omitempty"`
+	BillingMultiplier      float64                `protobuf:"fixed64,4,opt,name=billing_multiplier,json=billingMultiplier,proto3" json:"billing_multiplier,omitempty"`
+	Currency               string                 `protobuf:"bytes,5,opt,name=currency,proto3" json:"currency,omitempty"`
+	Summary                string                 `protobuf:"bytes,6,opt,name=summary,proto3" json:"summary,omitempty"`
+	FirstTokenMs           int64                  `protobuf:"varint,7,opt,name=first_token_ms,json=firstTokenMs,proto3" json:"first_token_ms,omitempty"`
+	Metrics                []*UsageMetric         `protobuf:"bytes,8,rep,name=metrics,proto3" json:"metrics,omitempty"`
+	Attributes             []*UsageAttribute      `protobuf:"bytes,9,rep,name=attributes,proto3" json:"attributes,omitempty"`
+	CostDetails            []*UsageCostDetail     `protobuf:"bytes,10,rep,name=cost_details,json=costDetails,proto3" json:"cost_details,omitempty"`
+	Metadata               map[string]string      `protobuf:"bytes,11,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	InputTokens            int64                  `protobuf:"varint,12,opt,name=input_tokens,json=inputTokens,proto3" json:"input_tokens,omitempty"`
+	OutputTokens           int64                  `protobuf:"varint,13,opt,name=output_tokens,json=outputTokens,proto3" json:"output_tokens,omitempty"`
+	CachedInputTokens      int64                  `protobuf:"varint,14,opt,name=cached_input_tokens,json=cachedInputTokens,proto3" json:"cached_input_tokens,omitempty"`
+	CacheCreationTokens    int64                  `protobuf:"varint,15,opt,name=cache_creation_tokens,json=cacheCreationTokens,proto3" json:"cache_creation_tokens,omitempty"`
+	CacheCreation_5MTokens int64                  `protobuf:"varint,16,opt,name=cache_creation_5m_tokens,json=cacheCreation5mTokens,proto3" json:"cache_creation_5m_tokens,omitempty"`
+	CacheCreation_1HTokens int64                  `protobuf:"varint,17,opt,name=cache_creation_1h_tokens,json=cacheCreation1hTokens,proto3" json:"cache_creation_1h_tokens,omitempty"`
+	ReasoningOutputTokens  int64                  `protobuf:"varint,18,opt,name=reasoning_output_tokens,json=reasoningOutputTokens,proto3" json:"reasoning_output_tokens,omitempty"`
+	InputTextTokens        int64                  `protobuf:"varint,19,opt,name=input_text_tokens,json=inputTextTokens,proto3" json:"input_text_tokens,omitempty"`
+	InputImageTokens       int64                  `protobuf:"varint,20,opt,name=input_image_tokens,json=inputImageTokens,proto3" json:"input_image_tokens,omitempty"`
+	ImageCount             int64                  `protobuf:"varint,21,opt,name=image_count,json=imageCount,proto3" json:"image_count,omitempty"`
+	InputPrice             float64                `protobuf:"fixed64,22,opt,name=input_price,json=inputPrice,proto3" json:"input_price,omitempty"`
+	OutputPrice            float64                `protobuf:"fixed64,23,opt,name=output_price,json=outputPrice,proto3" json:"output_price,omitempty"`
+	CachedInputPrice       float64                `protobuf:"fixed64,24,opt,name=cached_input_price,json=cachedInputPrice,proto3" json:"cached_input_price,omitempty"`
+	CacheCreationPrice     float64                `protobuf:"fixed64,25,opt,name=cache_creation_price,json=cacheCreationPrice,proto3" json:"cache_creation_price,omitempty"`
+	CacheCreation_1HPrice  float64                `protobuf:"fixed64,26,opt,name=cache_creation_1h_price,json=cacheCreation1hPrice,proto3" json:"cache_creation_1h_price,omitempty"`
+	InputCost              float64                `protobuf:"fixed64,27,opt,name=input_cost,json=inputCost,proto3" json:"input_cost,omitempty"`
+	OutputCost             float64                `protobuf:"fixed64,28,opt,name=output_cost,json=outputCost,proto3" json:"output_cost,omitempty"`
+	CachedInputCost        float64                `protobuf:"fixed64,29,opt,name=cached_input_cost,json=cachedInputCost,proto3" json:"cached_input_cost,omitempty"`
+	CacheCreationCost      float64                `protobuf:"fixed64,30,opt,name=cache_creation_cost,json=cacheCreationCost,proto3" json:"cache_creation_cost,omitempty"`
+	ServiceTier            string                 `protobuf:"bytes,31,opt,name=service_tier,json=serviceTier,proto3" json:"service_tier,omitempty"`
+	ImageSize              string                 `protobuf:"bytes,32,opt,name=image_size,json=imageSize,proto3" json:"image_size,omitempty"`
+	ImageUnitPrice         float64                `protobuf:"fixed64,33,opt,name=image_unit_price,json=imageUnitPrice,proto3" json:"image_unit_price,omitempty"`
+	ImageUnit              string                 `protobuf:"bytes,34,opt,name=image_unit,json=imageUnit,proto3" json:"image_unit,omitempty"`
+	ReasoningEffort        string                 `protobuf:"bytes,35,opt,name=reasoning_effort,json=reasoningEffort,proto3" json:"reasoning_effort,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *Usage) Reset() {
@@ -1788,6 +1812,174 @@ func (x *Usage) GetMetadata() map[string]string {
 		return x.Metadata
 	}
 	return nil
+}
+
+func (x *Usage) GetInputTokens() int64 {
+	if x != nil {
+		return x.InputTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetOutputTokens() int64 {
+	if x != nil {
+		return x.OutputTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetCachedInputTokens() int64 {
+	if x != nil {
+		return x.CachedInputTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetCacheCreationTokens() int64 {
+	if x != nil {
+		return x.CacheCreationTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetCacheCreation_5MTokens() int64 {
+	if x != nil {
+		return x.CacheCreation_5MTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetCacheCreation_1HTokens() int64 {
+	if x != nil {
+		return x.CacheCreation_1HTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetReasoningOutputTokens() int64 {
+	if x != nil {
+		return x.ReasoningOutputTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetInputTextTokens() int64 {
+	if x != nil {
+		return x.InputTextTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetInputImageTokens() int64 {
+	if x != nil {
+		return x.InputImageTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetImageCount() int64 {
+	if x != nil {
+		return x.ImageCount
+	}
+	return 0
+}
+
+func (x *Usage) GetInputPrice() float64 {
+	if x != nil {
+		return x.InputPrice
+	}
+	return 0
+}
+
+func (x *Usage) GetOutputPrice() float64 {
+	if x != nil {
+		return x.OutputPrice
+	}
+	return 0
+}
+
+func (x *Usage) GetCachedInputPrice() float64 {
+	if x != nil {
+		return x.CachedInputPrice
+	}
+	return 0
+}
+
+func (x *Usage) GetCacheCreationPrice() float64 {
+	if x != nil {
+		return x.CacheCreationPrice
+	}
+	return 0
+}
+
+func (x *Usage) GetCacheCreation_1HPrice() float64 {
+	if x != nil {
+		return x.CacheCreation_1HPrice
+	}
+	return 0
+}
+
+func (x *Usage) GetInputCost() float64 {
+	if x != nil {
+		return x.InputCost
+	}
+	return 0
+}
+
+func (x *Usage) GetOutputCost() float64 {
+	if x != nil {
+		return x.OutputCost
+	}
+	return 0
+}
+
+func (x *Usage) GetCachedInputCost() float64 {
+	if x != nil {
+		return x.CachedInputCost
+	}
+	return 0
+}
+
+func (x *Usage) GetCacheCreationCost() float64 {
+	if x != nil {
+		return x.CacheCreationCost
+	}
+	return 0
+}
+
+func (x *Usage) GetServiceTier() string {
+	if x != nil {
+		return x.ServiceTier
+	}
+	return ""
+}
+
+func (x *Usage) GetImageSize() string {
+	if x != nil {
+		return x.ImageSize
+	}
+	return ""
+}
+
+func (x *Usage) GetImageUnitPrice() float64 {
+	if x != nil {
+		return x.ImageUnitPrice
+	}
+	return 0
+}
+
+func (x *Usage) GetImageUnit() string {
+	if x != nil {
+		return x.ImageUnit
+	}
+	return ""
+}
+
+func (x *Usage) GetReasoningEffort() string {
+	if x != nil {
+		return x.ReasoningEffort
+	}
+	return ""
 }
 
 // ForwardOutcome 插件对一次 Forward 的完整判决结果。
@@ -4293,7 +4485,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\bmetadata\x18\a \x03(\v20.airgate.plugin.v1.UsageCostDetail.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xad\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xab\f\n" +
 	"\x05Usage\x12\x14\n" +
 	"\x05model\x18\x01 \x01(\tR\x05model\x12!\n" +
 	"\faccount_cost\x18\x02 \x01(\x01R\vaccountCost\x12\x1b\n" +
@@ -4308,7 +4500,37 @@ const file_plugin_proto_rawDesc = "" +
 	"attributes\x12E\n" +
 	"\fcost_details\x18\n" +
 	" \x03(\v2\".airgate.plugin.v1.UsageCostDetailR\vcostDetails\x12B\n" +
-	"\bmetadata\x18\v \x03(\v2&.airgate.plugin.v1.Usage.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\v \x03(\v2&.airgate.plugin.v1.Usage.MetadataEntryR\bmetadata\x12!\n" +
+	"\finput_tokens\x18\f \x01(\x03R\vinputTokens\x12#\n" +
+	"\routput_tokens\x18\r \x01(\x03R\foutputTokens\x12.\n" +
+	"\x13cached_input_tokens\x18\x0e \x01(\x03R\x11cachedInputTokens\x122\n" +
+	"\x15cache_creation_tokens\x18\x0f \x01(\x03R\x13cacheCreationTokens\x127\n" +
+	"\x18cache_creation_5m_tokens\x18\x10 \x01(\x03R\x15cacheCreation5mTokens\x127\n" +
+	"\x18cache_creation_1h_tokens\x18\x11 \x01(\x03R\x15cacheCreation1hTokens\x126\n" +
+	"\x17reasoning_output_tokens\x18\x12 \x01(\x03R\x15reasoningOutputTokens\x12*\n" +
+	"\x11input_text_tokens\x18\x13 \x01(\x03R\x0finputTextTokens\x12,\n" +
+	"\x12input_image_tokens\x18\x14 \x01(\x03R\x10inputImageTokens\x12\x1f\n" +
+	"\vimage_count\x18\x15 \x01(\x03R\n" +
+	"imageCount\x12\x1f\n" +
+	"\vinput_price\x18\x16 \x01(\x01R\n" +
+	"inputPrice\x12!\n" +
+	"\foutput_price\x18\x17 \x01(\x01R\voutputPrice\x12,\n" +
+	"\x12cached_input_price\x18\x18 \x01(\x01R\x10cachedInputPrice\x120\n" +
+	"\x14cache_creation_price\x18\x19 \x01(\x01R\x12cacheCreationPrice\x125\n" +
+	"\x17cache_creation_1h_price\x18\x1a \x01(\x01R\x14cacheCreation1hPrice\x12\x1d\n" +
+	"\n" +
+	"input_cost\x18\x1b \x01(\x01R\tinputCost\x12\x1f\n" +
+	"\voutput_cost\x18\x1c \x01(\x01R\n" +
+	"outputCost\x12*\n" +
+	"\x11cached_input_cost\x18\x1d \x01(\x01R\x0fcachedInputCost\x12.\n" +
+	"\x13cache_creation_cost\x18\x1e \x01(\x01R\x11cacheCreationCost\x12!\n" +
+	"\fservice_tier\x18\x1f \x01(\tR\vserviceTier\x12\x1d\n" +
+	"\n" +
+	"image_size\x18  \x01(\tR\timageSize\x12(\n" +
+	"\x10image_unit_price\x18! \x01(\x01R\x0eimageUnitPrice\x12\x1d\n" +
+	"\n" +
+	"image_unit\x18\" \x01(\tR\timageUnit\x12)\n" +
+	"\x10reasoning_effort\x18# \x01(\tR\x0freasoningEffort\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc7\x03\n" +

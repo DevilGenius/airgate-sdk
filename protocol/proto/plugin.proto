@@ -289,6 +289,30 @@ message Usage {
     repeated UsageAttribute attributes = 9;
     repeated UsageCostDetail cost_details = 10;
     map<string, string> metadata = 11;
+    int64  input_tokens = 12;
+    int64  output_tokens = 13;
+    int64  cached_input_tokens = 14;
+    int64  cache_creation_tokens = 15;
+    int64  cache_creation_5m_tokens = 16;
+    int64  cache_creation_1h_tokens = 17;
+    int64  reasoning_output_tokens = 18;
+    int64  input_text_tokens = 19;
+    int64  input_image_tokens = 20;
+    int64  image_count = 21;
+    double input_price = 22;
+    double output_price = 23;
+    double cached_input_price = 24;
+    double cache_creation_price = 25;
+    double cache_creation_1h_price = 26;
+    double input_cost = 27;
+    double output_cost = 28;
+    double cached_input_cost = 29;
+    double cache_creation_cost = 30;
+    string service_tier = 31;
+    string image_size = 32;
+    double image_unit_price = 33;
+    string image_unit = 34;
+    string reasoning_effort = 35;
 }
 
 // ForwardOutcome 插件对一次 Forward 的完整判决结果。
