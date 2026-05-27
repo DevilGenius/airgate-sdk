@@ -244,38 +244,6 @@ message UpstreamResponse {
     bytes body = 3;
 }
 
-// UsageAttribute 是插件计算后的通用审计维度。
-message UsageAttribute {
-    string key = 1;
-    string label = 2;
-    string kind = 3;
-    string value = 4;
-    map<string, string> metadata = 5;
-}
-
-// UsageMetric 是插件计算后的通用计量结果。
-message UsageMetric {
-    string key = 1;
-    string label = 2;
-    string kind = 3;
-    string unit = 4;
-    double value = 5;
-    double account_cost = 6;
-    string currency = 7;
-    map<string, string> metadata = 8;
-}
-
-// UsageCostDetail 是通用费用明细。
-message UsageCostDetail {
-    string key = 1;
-    string label = 2;
-    double account_cost = 3;
-    double user_cost = 4;
-    double billing_multiplier = 5;
-    string currency = 6;
-    map<string, string> metadata = 7;
-}
-
 // Usage 单次调用的用量与费用结果。非 Success 判决下应为空。
 message Usage {
     string model = 1;
@@ -285,34 +253,22 @@ message Usage {
     string currency = 5;
     string summary = 6;
     int64  first_token_ms = 7;
-    repeated UsageMetric metrics = 8;
-    repeated UsageAttribute attributes = 9;
-    repeated UsageCostDetail cost_details = 10;
     map<string, string> metadata = 11;
     int64  input_tokens = 12;
     int64  output_tokens = 13;
     int64  cached_input_tokens = 14;
     int64  cache_creation_tokens = 15;
-    int64  cache_creation_5m_tokens = 16;
-    int64  cache_creation_1h_tokens = 17;
     int64  reasoning_output_tokens = 18;
-    int64  input_text_tokens = 19;
-    int64  input_image_tokens = 20;
-    int64  image_count = 21;
     double input_price = 22;
     double output_price = 23;
     double cached_input_price = 24;
     double cache_creation_price = 25;
-    double cache_creation_1h_price = 26;
     double input_cost = 27;
     double output_cost = 28;
     double cached_input_cost = 29;
     double cache_creation_cost = 30;
-    string service_tier = 31;
-    string image_size = 32;
-    double image_unit_price = 33;
-    string image_unit = 34;
     string reasoning_effort = 35;
+    reserved 8, 9, 10, 16, 17, 19, 20, 21, 26, 31, 32, 33, 34;
 }
 
 // ForwardOutcome 插件对一次 Forward 的完整判决结果。
@@ -491,7 +447,7 @@ message MiddlewareRequest {
     string platform         = 5;
     string model            = 6;
     bool   stream           = 7;
-    repeated UsageMetric estimates = 8; // Core 或插件提供的通用预估值，仅用于早期决策
+    reserved 8;
 
     // metadata KV bag：供多个 middleware 之间传递上下文。
     // 命名空间规则由 Core 管理，插件不应依赖未声明的敏感字段。
@@ -512,7 +468,7 @@ message MiddlewareEvent {
     string platform    = 5;
     string model       = 6;
     bool   stream      = 7;
-    repeated UsageMetric estimates = 8; // 与 MiddlewareRequest 字段对齐，便于 estimate vs actual 比对。
+    reserved 8;
 
     // === 响应结果 ===
     int64  status_code    = 20;

@@ -56,7 +56,6 @@ func middlewareRequestToProto(req *sdk.MiddlewareRequest) *pb.MiddlewareRequest 
 		Platform:    req.Platform,
 		Model:       req.Model,
 		Stream:      req.Stream,
-		Estimates:   usageMetricsToProto(req.Estimates),
 		Metadata:    cloneStringMapMW(req.Metadata),
 		RequestBody: req.RequestBody,
 	}
@@ -78,7 +77,6 @@ func middlewareEventToProto(evt *sdk.MiddlewareEvent) *pb.MiddlewareEvent {
 		Platform:     evt.Platform,
 		Model:        evt.Model,
 		Stream:       evt.Stream,
-		Estimates:    usageMetricsToProto(evt.Estimates),
 		StatusCode:   int64(evt.StatusCode),
 		DurationMs:   int64(evt.Duration / time.Millisecond),
 		ErrorKind:    evt.ErrorKind,

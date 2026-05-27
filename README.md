@@ -169,17 +169,15 @@ func (g *Gateway) Forward(ctx context.Context, req *sdk.ForwardRequest) (sdk.For
             AccountCost: 0.000035,
             Currency: "USD",
             Summary:  "输入 10 token，输出 5 token",
-            Attributes: []sdk.UsageAttribute{
-                {Key: "reasoning_effort", Label: "思考层级", Kind: "reasoning", Value: "high"},
-                {Key: "resolution", Label: "分辨率", Kind: "resolution", Value: "1024x1024"},
-            },
-            Metrics: []sdk.UsageMetric{
-                {Key: "input_tokens", Label: "输入 token", Kind: "token", Unit: "token", Value: 10},
-                {Key: "output_tokens", Label: "输出 token", Kind: "token", Unit: "token", Value: 5},
-            },
-            CostDetails: []sdk.UsageCostDetail{
-                {Key: "input", Label: "输入费用", AccountCost: 0.00001, Currency: "USD"},
-                {Key: "output", Label: "输出费用", AccountCost: 0.000025, Currency: "USD"},
+            InputTokens: 10,
+            OutputTokens: 5,
+            InputPrice: 1,
+            OutputPrice: 5,
+            InputCost: 0.00001,
+            OutputCost: 0.000025,
+            ReasoningEffort: "high",
+            Metadata: map[string]string{
+                "openai.image.size": "1024x1024",
             },
         },
     }, nil
@@ -229,7 +227,7 @@ Core 启动插件子进程
 
 - Core 默认只管理插件生命周期、页面入口、静态资源、schema、健康检查和 API 代理。
 - Gateway 插件是主请求链路，Core 会主动调用 `Forward`、账号验证和 WebSocket 处理。
-- SDK 不内置平台计费规则；网关插件计算标准账号成本并填入 `Usage.AccountCost`、`Usage.Attributes`、`Usage.Metrics`、`Usage.CostDetails`。
+- SDK 不内置平台计费规则；网关插件计算标准 token、单价、成本字段并填入 `Usage`，插件专属展示数据放入 `Usage.Metadata`。
 - Core 统一入库后，根据用户、分组、模型等倍率写入 `UserCost` / `BillingMultiplier`；倍率规则不进入 SDK。
 - 账号管理和使用记录 UI 由插件提供静态资源，Core 只加载页面、插槽和插件 API 代理，不解释平台字段。
 - Middleware、扩展路由、后台任务、事件订阅、异步任务处理都属于插件显式暴露的能力；没有暴露就不会被 Core 调度。

@@ -43,20 +43,18 @@
 
 ## 弱契约扩展点
 
-SDK 提供少量弱契约扩展点，用来承接展示、分类和通用计量等变化，避免为每个插件需求新增强类型字段：
+SDK 提供少量弱契约扩展点，用来承接展示、分类和插件专属数据等变化，避免为每个插件需求新增强类型字段：
 
 - `PluginInfo.Metadata`：插件市场分类、标签、展示提示等。
 - `ModelInfo.Metadata`：模型家族、展示分组、供应商标签等。
 - `RouteDefinition.Metadata`：路由文档链接、展示分组、调试提示等。
-- `Usage.Attributes`：模型、思考层级、分辨率、质量档、服务档位等非数值审计维度。
-- `Usage.Metrics`：图片张数、视频秒数、音频分钟数、工具调用次数、token 等插件计算后的通用计量结果。
-- `Usage.CostDetails`：费用明细；插件填账号成本，Core 填用户扣费和倍率。
-- `Usage.Metadata`：单次调用的展示或审计辅助信息。
+- `Usage` 标准标量字段：模型、token、单价、账号成本、首 token 耗时、思考强度等跨插件通用事实。
+- `Usage.Metadata`：单次调用的插件专属展示或审计辅助信息，使用插件命名空间 key。
 - `EventHandler`：Core 向插件推送标准事件。
 - `Host.Invoke` / `Host.InvokeStream`：插件用 `method + payload` 调用 Core 开放的方法，必须由 `host.invoke` 或 `host.invoke.<method>` capability 门控。
 - `SchemaProvider`：插件声明 routes、tasks、events、invokes 的 payload schema；流式 Host method 用 `InvokeSchema.Transport`、`ClientFrame`、`ServerFrame` 描述传输模式和帧结构。
 
-这些字段不能用于权限、调度、账号状态机或敏感数据传递。平台计费规则不得进入 SDK；网关插件负责计算标准账号成本 `Usage.AccountCost` / `Currency` 和审计明细。Core 统一入库、索引、汇总，并写入 `UserCost` / `BillingMultiplier`。
+这些字段不能用于权限、调度、账号状态机或敏感数据传递。平台计费规则不得进入 SDK；网关插件负责计算标准账号成本 `Usage.AccountCost` / `Currency` 和标准计费字段。Core 统一入库、索引、汇总，并写入 `UserCost` / `BillingMultiplier`。
 
 ## 用量与计费边界
 
@@ -65,9 +63,9 @@ SDK 不提供 `CalculateCost`、价格档位、token 拆分公式或平台套餐
 - 模型声明只包含 `ID`、`Name`、上下文窗口、最大输出和能力标签。
 - 单次调用的标准账号成本由网关插件写入 `Usage.AccountCost` / `Usage.Currency`。
 - Core 根据用户、分组、模型等倍率计算用户侧扣费，写入 `Usage.UserCost` / `Usage.BillingMultiplier`。
-- 模型、思考层级、分辨率、质量档等非数值维度统一放入 `Usage.Attributes`。
-- token、图片、音频、视频、请求数等数值明细统一放入 `Usage.Metrics`。
-- 标准账号成本和用户扣费拆分统一放入 `Usage.CostDetails`：插件填 `AccountCost`，Core 填 `UserCost` / `BillingMultiplier`。
+- 跨插件通用维度优先使用 `Usage` 标准字段，例如 `Model`、token 字段、单价、成本和 `ReasoningEffort`。
+- 插件专属维度放入 `Usage.Metadata`，例如 `openai.image.size` 或 `claude.cache_creation_1h_tokens`。
+- 费用拆分由前端从标准成本、单价、倍率字段和 metadata 计算展示，不再通过 SDK 传输明细数组。
 - 使用记录和账号管理页面由插件前端与插件私有 API 实现，SDK 不定义账号用量查询 RPC。
 - Core 不应把平台规则写入 SDK 或 Core 公共逻辑；Core 统一入库 `Usage`，需要页面时加载插件的静态资源和 API 代理。
 

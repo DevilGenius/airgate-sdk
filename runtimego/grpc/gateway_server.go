@@ -180,42 +180,29 @@ func upstreamFromProto(p *pb.UpstreamResponse) sdk.UpstreamResponse {
 
 func usageToProto(u sdk.Usage) *pb.Usage {
 	out := &pb.Usage{
-		Model:                  u.Model,
-		AccountCost:            u.AccountCost,
-		UserCost:               u.UserCost,
-		BillingMultiplier:      u.BillingMultiplier,
-		Currency:               u.Currency,
-		Summary:                u.Summary,
-		FirstTokenMs:           u.FirstTokenMs,
-		Metadata:               u.Metadata,
-		InputTokens:            int64(u.InputTokens),
-		OutputTokens:           int64(u.OutputTokens),
-		CachedInputTokens:      int64(u.CachedInputTokens),
-		CacheCreationTokens:    int64(u.CacheCreationTokens),
-		CacheCreation_5MTokens: int64(u.CacheCreation5mTokens),
-		CacheCreation_1HTokens: int64(u.CacheCreation1hTokens),
-		ReasoningOutputTokens:  int64(u.ReasoningOutputTokens),
-		InputTextTokens:        int64(u.TextInputTokens),
-		InputImageTokens:       int64(u.ImageInputTokens),
-		ImageCount:             int64(u.ImageCount),
-		InputPrice:             u.InputPrice,
-		OutputPrice:            u.OutputPrice,
-		CachedInputPrice:       u.CachedInputPrice,
-		CacheCreationPrice:     u.CacheCreationPrice,
-		CacheCreation_1HPrice:  u.CacheCreation1hPrice,
-		InputCost:              u.InputCost,
-		OutputCost:             u.OutputCost,
-		CachedInputCost:        u.CachedInputCost,
-		CacheCreationCost:      u.CacheCreationCost,
-		ServiceTier:            u.ServiceTier,
-		ReasoningEffort:        u.ReasoningEffort,
-		ImageSize:              u.ImageSize,
-		ImageUnitPrice:         u.ImageUnitPrice,
-		ImageUnit:              u.ImageUnit,
+		Model:                 u.Model,
+		AccountCost:           u.AccountCost,
+		UserCost:              u.UserCost,
+		BillingMultiplier:     u.BillingMultiplier,
+		Currency:              u.Currency,
+		Summary:               u.Summary,
+		FirstTokenMs:          u.FirstTokenMs,
+		Metadata:              u.Metadata,
+		InputTokens:           int64(u.InputTokens),
+		OutputTokens:          int64(u.OutputTokens),
+		CachedInputTokens:     int64(u.CachedInputTokens),
+		CacheCreationTokens:   int64(u.CacheCreationTokens),
+		ReasoningOutputTokens: int64(u.ReasoningOutputTokens),
+		ReasoningEffort:       u.ReasoningEffort,
+		InputPrice:            u.InputPrice,
+		OutputPrice:           u.OutputPrice,
+		CachedInputPrice:      u.CachedInputPrice,
+		CacheCreationPrice:    u.CacheCreationPrice,
+		InputCost:             u.InputCost,
+		OutputCost:            u.OutputCost,
+		CachedInputCost:       u.CachedInputCost,
+		CacheCreationCost:     u.CacheCreationCost,
 	}
-	out.Attributes = usageAttributesToProto(u.Attributes)
-	out.Metrics = usageMetricsToProto(u.Metrics)
-	out.CostDetails = usageCostDetailsToProto(u.CostDetails)
 	return out
 }
 
@@ -233,176 +220,18 @@ func usageFromProto(p *pb.Usage) sdk.Usage {
 		OutputTokens:          int(p.OutputTokens),
 		CachedInputTokens:     int(p.CachedInputTokens),
 		CacheCreationTokens:   int(p.CacheCreationTokens),
-		CacheCreation5mTokens: int(p.CacheCreation_5MTokens),
-		CacheCreation1hTokens: int(p.CacheCreation_1HTokens),
 		ReasoningOutputTokens: int(p.ReasoningOutputTokens),
-		TextInputTokens:       int(p.InputTextTokens),
-		ImageInputTokens:      int(p.InputImageTokens),
-		ImageCount:            int(p.ImageCount),
+		ReasoningEffort:       p.ReasoningEffort,
 		InputPrice:            p.InputPrice,
 		OutputPrice:           p.OutputPrice,
 		CachedInputPrice:      p.CachedInputPrice,
 		CacheCreationPrice:    p.CacheCreationPrice,
-		CacheCreation1hPrice:  p.CacheCreation_1HPrice,
 		InputCost:             p.InputCost,
 		OutputCost:            p.OutputCost,
 		CachedInputCost:       p.CachedInputCost,
 		CacheCreationCost:     p.CacheCreationCost,
-		ServiceTier:           p.ServiceTier,
-		ReasoningEffort:       p.ReasoningEffort,
-		ImageSize:             p.ImageSize,
-		ImageUnitPrice:        p.ImageUnitPrice,
-		ImageUnit:             p.ImageUnit,
-	}
-	out.Attributes = usageAttributesFromProto(p.Attributes)
-	out.Metrics = usageMetricsFromProto(p.Metrics)
-	out.CostDetails = usageCostDetailsFromProto(p.CostDetails)
-	return out
-}
-
-func usageAttributesToProto(attrs []sdk.UsageAttribute) []*pb.UsageAttribute {
-	if len(attrs) == 0 {
-		return nil
-	}
-	out := make([]*pb.UsageAttribute, 0, len(attrs))
-	for _, a := range attrs {
-		out = append(out, usageAttributeToProto(a))
 	}
 	return out
-}
-
-func usageAttributesFromProto(attrs []*pb.UsageAttribute) []sdk.UsageAttribute {
-	if len(attrs) == 0 {
-		return nil
-	}
-	out := make([]sdk.UsageAttribute, 0, len(attrs))
-	for _, a := range attrs {
-		out = append(out, usageAttributeFromProto(a))
-	}
-	return out
-}
-
-func usageAttributeToProto(a sdk.UsageAttribute) *pb.UsageAttribute {
-	return &pb.UsageAttribute{
-		Key:      a.Key,
-		Label:    a.Label,
-		Kind:     a.Kind,
-		Value:    a.Value,
-		Metadata: a.Metadata,
-	}
-}
-
-func usageAttributeFromProto(p *pb.UsageAttribute) sdk.UsageAttribute {
-	if p == nil {
-		return sdk.UsageAttribute{}
-	}
-	return sdk.UsageAttribute{
-		Key:      p.Key,
-		Label:    p.Label,
-		Kind:     p.Kind,
-		Value:    p.Value,
-		Metadata: p.Metadata,
-	}
-}
-
-func usageMetricsToProto(metrics []sdk.UsageMetric) []*pb.UsageMetric {
-	if len(metrics) == 0 {
-		return nil
-	}
-	out := make([]*pb.UsageMetric, 0, len(metrics))
-	for _, m := range metrics {
-		out = append(out, usageMetricToProto(m))
-	}
-	return out
-}
-
-func usageMetricsFromProto(metrics []*pb.UsageMetric) []sdk.UsageMetric {
-	if len(metrics) == 0 {
-		return nil
-	}
-	out := make([]sdk.UsageMetric, 0, len(metrics))
-	for _, m := range metrics {
-		out = append(out, usageMetricFromProto(m))
-	}
-	return out
-}
-
-func usageMetricToProto(m sdk.UsageMetric) *pb.UsageMetric {
-	return &pb.UsageMetric{
-		Key:         m.Key,
-		Label:       m.Label,
-		Kind:        m.Kind,
-		Unit:        m.Unit,
-		Value:       m.Value,
-		AccountCost: m.AccountCost,
-		Currency:    m.Currency,
-		Metadata:    m.Metadata,
-	}
-}
-
-func usageMetricFromProto(p *pb.UsageMetric) sdk.UsageMetric {
-	if p == nil {
-		return sdk.UsageMetric{}
-	}
-	return sdk.UsageMetric{
-		Key:         p.Key,
-		Label:       p.Label,
-		Kind:        p.Kind,
-		Unit:        p.Unit,
-		Value:       p.Value,
-		AccountCost: p.AccountCost,
-		Currency:    p.Currency,
-		Metadata:    p.Metadata,
-	}
-}
-
-func usageCostDetailsToProto(details []sdk.UsageCostDetail) []*pb.UsageCostDetail {
-	if len(details) == 0 {
-		return nil
-	}
-	out := make([]*pb.UsageCostDetail, 0, len(details))
-	for _, c := range details {
-		out = append(out, usageCostDetailToProto(c))
-	}
-	return out
-}
-
-func usageCostDetailsFromProto(details []*pb.UsageCostDetail) []sdk.UsageCostDetail {
-	if len(details) == 0 {
-		return nil
-	}
-	out := make([]sdk.UsageCostDetail, 0, len(details))
-	for _, c := range details {
-		out = append(out, usageCostDetailFromProto(c))
-	}
-	return out
-}
-
-func usageCostDetailToProto(c sdk.UsageCostDetail) *pb.UsageCostDetail {
-	return &pb.UsageCostDetail{
-		Key:               c.Key,
-		Label:             c.Label,
-		AccountCost:       c.AccountCost,
-		UserCost:          c.UserCost,
-		BillingMultiplier: c.BillingMultiplier,
-		Currency:          c.Currency,
-		Metadata:          c.Metadata,
-	}
-}
-
-func usageCostDetailFromProto(p *pb.UsageCostDetail) sdk.UsageCostDetail {
-	if p == nil {
-		return sdk.UsageCostDetail{}
-	}
-	return sdk.UsageCostDetail{
-		Key:               p.Key,
-		Label:             p.Label,
-		AccountCost:       p.AccountCost,
-		UserCost:          p.UserCost,
-		BillingMultiplier: p.BillingMultiplier,
-		Currency:          p.Currency,
-		Metadata:          p.Metadata,
-	}
 }
 
 func protoHeadersToHTTP(ph map[string]*pb.HeaderValues) http.Header {

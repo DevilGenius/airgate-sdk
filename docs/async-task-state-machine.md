@@ -82,7 +82,7 @@ Core 固定字段必须保持最小化，只包含任务生命周期、归属和
 | `input.model` | 任务请求里的模型，用于任务复现 | `gpt-image-2` |
 | `attributes.model` | 未完成任务列表里的展示/粗筛选 | `gpt-image-2` |
 | `execution.*` | 插件内部工具链细节，不作为用户侧模型维度 | `tool_model=gpt-5.4` |
-| `usage.Model` / `usage.Attributes.model` | 完成后的审计、计费、统计事实 | `gpt-5.4` |
+| `usage.Model` / `usage.Metadata` | 完成后的审计、计费、统计事实 | `gpt-5.4` |
 
 `Usage` 是最终事实来源。任务完成前可以用 `attributes` 暂存展示值；任务完成后应以关联的使用记录为准。
 
@@ -853,16 +853,16 @@ SDK 已经提供通用用量结构：
 
 ```go
 type Usage struct {
-	Model       string
-	Summary     string
-	Attributes  []UsageAttribute
-	Metrics     []UsageMetric
-	CostDetails []UsageCostDetail
-	Metadata    map[string]string
+	Model        string
+	Summary      string
+	InputTokens  int
+	OutputTokens int
+	AccountCost  float64
+	Metadata     map[string]string
 }
 ```
 
-模型和扩展参数应进入 Usage，而不是 Core 任务固定列。对话类调用也使用同一个 Usage 结构，但不经过 Task。
+模型和跨插件通用计费事实应进入 Usage 标准字段，插件专属参数进入 `Metadata`，而不是 Core 任务固定列。对话类调用也使用同一个 Usage 结构，但不经过 Task。
 
 图片生成示例：
 
@@ -870,16 +870,15 @@ type Usage struct {
 {
   "model": "gpt-image-2",
   "summary": "图片生成 · gpt-image-2 · 1024x1024",
-  "attributes": [
-    { "key": "modality", "kind": "custom", "label": "类型", "value": "image" },
-    { "key": "model", "kind": "model", "label": "模型", "value": "gpt-image-2" },
-    { "key": "resolution", "kind": "resolution", "label": "分辨率", "value": "1024x1024" },
-    { "key": "quality", "kind": "quality", "label": "质量", "value": "high" }
-  ],
-  "metrics": [
-    { "key": "image_count", "kind": "image", "label": "图片张数", "unit": "image", "value": 1 },
-    { "key": "output_tokens", "kind": "token", "label": "图像输出 Token", "unit": "token", "value": 4160 }
-  ]
+  "output_tokens": 4160,
+  "output_cost": 0.1,
+  "account_cost": 0.1,
+  "metadata": {
+    "openai.image.size": "1024x1024",
+    "openai.image.count": "1",
+    "openai.image.unit_price": "0.1",
+    "openai.image.unit": "USD/image"
+  }
 }
 ```
 
@@ -889,15 +888,12 @@ type Usage struct {
 {
   "model": "video-model",
   "summary": "视频生成 · 8s · 1080p",
-  "attributes": [
-    { "key": "modality", "kind": "custom", "label": "类型", "value": "video" },
-    { "key": "model", "kind": "model", "label": "模型", "value": "video-model" },
-    { "key": "resolution", "kind": "resolution", "label": "分辨率", "value": "1080p" },
-    { "key": "quality", "kind": "quality", "label": "质量", "value": "standard" }
-  ],
-  "metrics": [
-    { "key": "video_seconds", "kind": "video", "label": "视频时长", "unit": "second", "value": 8 }
-  ]
+  "account_cost": 0.02,
+  "metadata": {
+    "video.resolution": "1080p",
+    "video.seconds": "8",
+    "video.quality": "standard"
+  }
 }
 ```
 
@@ -907,15 +903,12 @@ type Usage struct {
 {
   "model": "music-model",
   "summary": "音乐生成 · 30s · high",
-  "attributes": [
-    { "key": "modality", "kind": "custom", "label": "类型", "value": "music" },
-    { "key": "model", "kind": "model", "label": "模型", "value": "music-model" },
-    { "key": "quality", "kind": "quality", "label": "质量", "value": "high" },
-    { "key": "format", "kind": "custom", "label": "格式", "value": "mp3" }
-  ],
-  "metrics": [
-    { "key": "audio_seconds", "kind": "audio", "label": "音频时长", "unit": "second", "value": 30 }
-  ]
+  "account_cost": 0.01,
+  "metadata": {
+    "audio.seconds": "30",
+    "audio.quality": "high",
+    "audio.format": "mp3"
+  }
 }
 ```
 
@@ -924,12 +917,12 @@ type Usage struct {
 | 信息 | Task 中的位置 | Usage 中的位置 | 说明 |
 | --- | --- | --- | --- |
 | 生命周期状态 | `status`、`progress`、`stage` | 不存 | Task 独有 |
-| 客户端请求参数 | `input` | 可按需复制到 `Attributes` | 完整参数以 Task input 为准 |
+| 客户端请求参数 | `input` | 可按需复制到 `Metadata` | 完整参数以 Task input 为准 |
 | 上游执行细节 | `execution` | 可脱敏后进入 `Metadata` | 普通用户默认不看 execution |
-| 模型 | `input.model` / `attributes.model` 临时展示 | `Model` / `Attributes` | 计费与审计以 Usage 为准 |
-| 分辨率、时长、质量 | `input` / `attributes` 临时展示 | `Attributes` / `Metrics` | 统计以 Usage 为准 |
-| token、图片张数、视频秒数 | 不建议存 Task 固定列 | `Metrics` | 统一统计入口 |
-| 成本 | 不建议存 Task 固定列 | `AccountCost` / `CostDetails` | 统一扣费入口 |
+| 模型 | `input.model` / `attributes.model` 临时展示 | `Model` | 计费与审计以 Usage 为准 |
+| 分辨率、时长、质量 | `input` / `attributes` 临时展示 | `Metadata` | 统计以 Usage 为准 |
+| token、图片张数、视频秒数 | 不建议存 Task 固定列 | 标准 token 字段 / `Metadata` | 统一统计入口 |
+| 成本 | 不建议存 Task 固定列 | `AccountCost` / 标准成本字段 | 统一扣费入口 |
 | 使用记录关联 | `usage_id` | `id` | Task 完成后关联 |
 
 列表页如果要展示未完成任务，可以读取 Task 的 `attributes`，或按插件声明的 schema 组合展示文案。完成后的历史账单、统计图、成本明细必须读取 Usage。

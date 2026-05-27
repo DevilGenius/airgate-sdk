@@ -48,7 +48,6 @@ type MiddlewareRequest struct {
 	Platform  string
 	Model     string
 	Stream    bool
-	Estimates []UsageMetric
 
 	// Metadata 贯穿 Begin/End 的 KV bag，多个 middleware 之间共享。
 	Metadata map[string]string
@@ -67,7 +66,6 @@ type MiddlewareEvent struct {
 	Platform  string
 	Model     string
 	Stream    bool
-	Estimates []UsageMetric
 
 	StatusCode int32
 	Duration   time.Duration
