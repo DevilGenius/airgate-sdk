@@ -18,6 +18,7 @@ func TestOutcomeKind_String(t *testing.T) {
 		{sdk.OutcomeAccountDead, "account_dead"},
 		{sdk.OutcomeUpstreamTransient, "upstream_transient"},
 		{sdk.OutcomeStreamAborted, "stream_aborted"},
+		{sdk.OutcomeAccountUnavailable, "account_unavailable"},
 		{sdk.OutcomeAccountModelUnsupported, "client_error"},
 		{sdk.OutcomeKind(99), "unknown"}, // 非枚举值回退到 unknown
 	}
@@ -52,6 +53,7 @@ func TestOutcomeKind_IsAccountFault(t *testing.T) {
 	accountFaults := []sdk.OutcomeKind{
 		sdk.OutcomeAccountRateLimited,
 		sdk.OutcomeAccountDead,
+		sdk.OutcomeAccountUnavailable,
 	}
 	for _, k := range accountFaults {
 		if !k.IsAccountFault() {
@@ -78,6 +80,7 @@ func TestOutcomeKind_ShouldFailover(t *testing.T) {
 		sdk.OutcomeAccountRateLimited,
 		sdk.OutcomeAccountDead,
 		sdk.OutcomeUpstreamTransient,
+		sdk.OutcomeAccountUnavailable,
 	}
 	for _, k := range failover {
 		if !k.ShouldFailover() {

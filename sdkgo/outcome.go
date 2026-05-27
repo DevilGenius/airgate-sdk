@@ -42,6 +42,10 @@ const (
 	// Deprecated: OutcomeAccountModelUnsupported 已归入 OutcomeClientError。
 	// 保留常量避免编译失败，运行时等同于 ClientError。
 	OutcomeAccountModelUnsupported
+
+	// OutcomeAccountUnavailable 账号暂时不可用（例如 OpenAI 账号临时 403）。
+	// Core 会短暂降级并累计次数，连续达到阈值后再升级为 AccountDead。
+	OutcomeAccountUnavailable
 )
 
 // String 返回人类可读名称，用于日志。
@@ -59,6 +63,8 @@ func (k OutcomeKind) String() string {
 		return "upstream_transient"
 	case OutcomeStreamAborted:
 		return "stream_aborted"
+	case OutcomeAccountUnavailable:
+		return "account_unavailable"
 	case OutcomeAccountModelUnsupported:
 		return "client_error"
 	default:
@@ -72,7 +78,7 @@ func (k OutcomeKind) IsSuccess() bool { return k == OutcomeSuccess }
 // IsAccountFault 本次判决是否归咎于账号自身（RateLimited / Dead）。
 // Core 据此决定是否推进账号状态机。
 func (k OutcomeKind) IsAccountFault() bool {
-	return k == OutcomeAccountRateLimited || k == OutcomeAccountDead
+	return k == OutcomeAccountRateLimited || k == OutcomeAccountDead || k == OutcomeAccountUnavailable
 }
 
 // ShouldFailover 是否允许换账号重试。
@@ -80,7 +86,7 @@ func (k OutcomeKind) IsAccountFault() bool {
 // Success / Unknown 显然不该 failover。
 func (k OutcomeKind) ShouldFailover() bool {
 	switch k {
-	case OutcomeAccountRateLimited, OutcomeAccountDead, OutcomeUpstreamTransient:
+	case OutcomeAccountRateLimited, OutcomeAccountDead, OutcomeUpstreamTransient, OutcomeAccountUnavailable:
 		return true
 	}
 	return false

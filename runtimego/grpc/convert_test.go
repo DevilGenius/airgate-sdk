@@ -183,6 +183,7 @@ func TestForwardOutcome_KindPreserved(t *testing.T) {
 		sdk.OutcomeAccountDead,
 		sdk.OutcomeUpstreamTransient,
 		sdk.OutcomeStreamAborted,
+		sdk.OutcomeAccountUnavailable,
 	}
 	for _, k := range kinds {
 		original := sdk.ForwardOutcome{Kind: k}

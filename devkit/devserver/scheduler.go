@@ -123,6 +123,10 @@ func (s *Scheduler) ReportResult(accountID int64, outcome sdk.ForwardOutcome) {
 		s.cooldown[accountID] = time.Now().Add(5 * time.Minute)
 		log.Printf("[调度] 账号 %d 凭证失效，冷却 5 分钟", accountID)
 
+	case sdk.OutcomeAccountUnavailable:
+		s.cooldown[accountID] = time.Now().Add(60 * time.Second)
+		log.Printf("[调度] 账号 %d 暂时 403，冷却 60 秒", accountID)
+
 	default:
 		delete(s.cooldown, accountID)
 	}

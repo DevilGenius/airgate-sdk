@@ -34,6 +34,7 @@ const (
 	OutcomeKind_OUTCOME_UPSTREAM_TRANSIENT        OutcomeKind = 5
 	OutcomeKind_OUTCOME_STREAM_ABORTED            OutcomeKind = 6
 	OutcomeKind_OUTCOME_ACCOUNT_MODEL_UNSUPPORTED OutcomeKind = 7
+	OutcomeKind_OUTCOME_ACCOUNT_UNAVAILABLE       OutcomeKind = 8
 )
 
 // Enum value maps for OutcomeKind.
@@ -47,6 +48,7 @@ var (
 		5: "OUTCOME_UPSTREAM_TRANSIENT",
 		6: "OUTCOME_STREAM_ABORTED",
 		7: "OUTCOME_ACCOUNT_MODEL_UNSUPPORTED",
+		8: "OUTCOME_ACCOUNT_UNAVAILABLE",
 	}
 	OutcomeKind_value = map[string]int32{
 		"OUTCOME_UNKNOWN":                   0,
@@ -57,6 +59,7 @@ var (
 		"OUTCOME_UPSTREAM_TRANSIENT":        5,
 		"OUTCOME_STREAM_ABORTED":            6,
 		"OUTCOME_ACCOUNT_MODEL_UNSUPPORTED": 7,
+		"OUTCOME_ACCOUNT_UNAVAILABLE":       8,
 	}
 )
 
@@ -4597,7 +4600,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12#\n" +
 	"\rerror_message\x18\x02 \x01(\tR\ferrorMessage\")\n" +
 	"\x11TaskTypesResponse\x12\x14\n" +
-	"\x05types\x18\x01 \x03(\tR\x05types*\xf0\x01\n" +
+	"\x05types\x18\x01 \x03(\tR\x05types*\x91\x02\n" +
 	"\vOutcomeKind\x12\x13\n" +
 	"\x0fOUTCOME_UNKNOWN\x10\x00\x12\x13\n" +
 	"\x0fOUTCOME_SUCCESS\x10\x01\x12\x18\n" +
@@ -4606,7 +4609,8 @@ const file_plugin_proto_rawDesc = "" +
 	"\x14OUTCOME_ACCOUNT_DEAD\x10\x04\x12\x1e\n" +
 	"\x1aOUTCOME_UPSTREAM_TRANSIENT\x10\x05\x12\x1a\n" +
 	"\x16OUTCOME_STREAM_ABORTED\x10\x06\x12%\n" +
-	"!OUTCOME_ACCOUNT_MODEL_UNSUPPORTED\x10\a2\xcb\x04\n" +
+	"!OUTCOME_ACCOUNT_MODEL_UNSUPPORTED\x10\a\x12\x1f\n" +
+	"\x1bOUTCOME_ACCOUNT_UNAVAILABLE\x10\b2\xcb\x04\n" +
 	"\rPluginService\x12J\n" +
 	"\aGetInfo\x12\x18.airgate.plugin.v1.Empty\x1a%.airgate.plugin.v1.PluginInfoResponse\x12@\n" +
 	"\x04Init\x12\x1e.airgate.plugin.v1.InitRequest\x1a\x18.airgate.plugin.v1.Empty\x12;\n" +
