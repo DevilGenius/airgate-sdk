@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // GatewayGRPCServer 将 GatewayPlugin 包装为 gRPC 服务端。

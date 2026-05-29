@@ -101,9 +101,9 @@ SDK 只提供传输契约和自检 helper，不承载 Core 方法枚举。这样
 
 ## 当前导入路径
 
-- 插件业务代码使用 `github.com/DouDOU-start/airgate-sdk/sdkgo`。
-- 插件运行入口使用 `github.com/DouDOU-start/airgate-sdk/runtimego/grpc`。
-- 本地开发工具使用 `github.com/DouDOU-start/airgate-sdk/devkit/devserver`。
+- 插件业务代码使用 `github.com/DevilGenius/airgate-sdk/sdkgo`。
+- 插件运行入口使用 `github.com/DevilGenius/airgate-sdk/runtimego/grpc`。
+- 本地开发工具使用 `github.com/DevilGenius/airgate-sdk/devkit/devserver`。
 - 普通插件业务代码不直接导入 `protocol/proto`。
-- 插件前端使用 `@doudou-start/airgate-theme/plugin` 引用样式隔离、主题同步、Tailwind helper 和公共 UI 组件。
-- 宿主前端或工具代码可使用 `@doudou-start/airgate-theme`、`@doudou-start/airgate-theme/css`、`@doudou-start/airgate-theme/tailwind` 引用 token 与主题桥接能力。
+- 插件前端使用 `@devilgenius/airgate-theme/plugin` 引用样式隔离、主题同步、Tailwind helper 和公共 UI 组件。
+- 宿主前端或工具代码可使用 `@devilgenius/airgate-theme`、`@devilgenius/airgate-theme/css`、`@devilgenius/airgate-theme/tailwind` 引用 token 与主题桥接能力。

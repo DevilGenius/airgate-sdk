@@ -27,7 +27,7 @@ your-plugin/
 
 ## 2. 依赖配置
 
-插件前端 SDK 的正式包名是 `@doudou-start/airgate-theme`。插件业务代码优先使用 `@doudou-start/airgate-theme/plugin`，该入口提供主题初始化、样式作用域、Tailwind bridge、插件前端类型和公共 UI 组件。
+插件前端 SDK 的正式包名是 `@devilgenius/airgate-theme`。插件业务代码优先使用 `@devilgenius/airgate-theme/plugin`，该入口提供主题初始化、样式作用域、Tailwind bridge、插件前端类型和公共 UI 组件。
 
 ### package.json
 
@@ -39,7 +39,7 @@ your-plugin/
     "dev": "vite build --watch"
   },
   "dependencies": {
-    "@doudou-start/airgate-theme": "^1.0.0",
+    "@devilgenius/airgate-theme": "^1.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -84,7 +84,7 @@ export default defineConfig({
 
 ```ts
 import type { Config } from 'tailwindcss';
-import { createPluginTailwindConfig } from '@doudou-start/airgate-theme/plugin';
+import { createPluginTailwindConfig } from '@devilgenius/airgate-theme/plugin';
 
 const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
@@ -118,7 +118,7 @@ module.exports = {
 ### theme/runtime.ts
 
 ```ts
-import { ensurePluginStyleFoundation } from '@doudou-start/airgate-theme/plugin';
+import { ensurePluginStyleFoundation } from '@devilgenius/airgate-theme/plugin';
 import tailwindCssText from '../styles/tailwind.css?inline';
 
 export const THEME_SCOPE_SELECTOR = '[data-ag-YOUR_PLUGIN-root]';
@@ -165,7 +165,7 @@ export default {
 2. 使用 `useScopedPluginTheme` 跟随 Core 的明暗切换
 
 ```tsx
-import { useScopedPluginTheme } from '@doudou-start/airgate-theme/plugin';
+import { useScopedPluginTheme } from '@devilgenius/airgate-theme/plugin';
 
 const THEME_ATTRIBUTE = 'data-theme';
 const STORAGE_KEY = 'ag-YOUR_PLUGIN-theme';
@@ -249,7 +249,7 @@ export function YourComponent(props) {
 
 ## 6. SDK 提供的 UI 组件
 
-SDK 提供了一套预制组件（`@doudou-start/airgate-theme/plugin`），样式与 Core 保持一致，属于插件前端稳定公共契约。插件业务 UI **优先使用这些组件**：
+SDK 提供了一套预制组件（`@devilgenius/airgate-theme/plugin`），样式与 Core 保持一致，属于插件前端稳定公共契约。插件业务 UI **优先使用这些组件**：
 
 ```tsx
 import {
@@ -265,7 +265,7 @@ import {
   FormActions,     // 表单操作区（flex wrap）
   Badge,           // 标签徽章（neutral / success / violet / info）
   StatusText,      // 内联状态文字（info / success / error）
-} from '@doudou-start/airgate-theme/plugin';
+} from '@devilgenius/airgate-theme/plugin';
 ```
 
 ### 使用示例

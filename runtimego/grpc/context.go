@@ -9,8 +9,8 @@ import (
 
 	goplugin "github.com/hashicorp/go-plugin"
 
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // grpcPluginContext 通过 gRPC 传入的插件上下文（插件进程侧）。

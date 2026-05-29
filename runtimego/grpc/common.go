@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // defaultGRPCTimeout gRPC 内部调用的默认超时时间

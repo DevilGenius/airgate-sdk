@@ -3,7 +3,7 @@ package sdk_test
 import (
 	"testing"
 
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 func TestOutcomeKind_String(t *testing.T) {

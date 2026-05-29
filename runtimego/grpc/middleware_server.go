@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // MiddlewareGRPCServer 把 sdk.MiddlewarePlugin 实现包成 gRPC server。

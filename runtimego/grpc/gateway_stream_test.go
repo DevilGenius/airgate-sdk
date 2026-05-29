@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 type stubForwardStreamServer struct {

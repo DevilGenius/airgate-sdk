@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // devPluginContext 开发模式的 PluginContext 实现

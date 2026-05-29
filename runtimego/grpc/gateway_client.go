@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"sync"
 
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // GatewayGRPCClient 把 gRPC 客户端包装成 GatewayPlugin 接口，供 Core 消费。

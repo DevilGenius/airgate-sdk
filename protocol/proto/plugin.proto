@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package airgate.plugin.v1;
 
-option go_package = "github.com/DouDOU-start/airgate-sdk/protocol/proto";
+option go_package = "github.com/DevilGenius/airgate-sdk/protocol/proto";
 
 // ==================== 插件基础服务 ====================
 

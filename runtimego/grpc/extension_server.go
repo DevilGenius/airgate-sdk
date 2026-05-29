@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // streamResponseWriter 把每次 Write 调用转为 gRPC HttpResponseChunk 发送。

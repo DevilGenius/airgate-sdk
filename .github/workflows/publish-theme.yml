@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   publish:
-    name: 发布 @doudou-start/airgate-theme
+    name: 发布 @devilgenius/airgate-theme
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -44,7 +44,7 @@ jobs:
         run: |
           mkdir -p ../dist
           pnpm pack --pack-destination ../dist
-          mv ../dist/doudou-start-airgate-theme-*.tgz "../dist/airgate-theme-${GITHUB_REF_NAME}.tgz"
+          mv ../dist/devilgenius-airgate-theme-*.tgz "../dist/airgate-theme-${GITHUB_REF_NAME}.tgz"
 
       - name: 创建/更新 GitHub Release 并上传资产
         if: github.event_name == 'push'

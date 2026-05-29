@@ -4,9 +4,9 @@
   <p><strong>AirGate 插件生态的公共契约与开发工具包</strong></p>
 
   <p>
-    <a href="https://github.com/DouDOU-start/airgate-sdk/releases"><img src="https://img.shields.io/github/v/release/DouDOU-start/airgate-sdk?style=flat-square" alt="发布版本" /></a>
-    <a href="https://pkg.go.dev/github.com/DouDOU-start/airgate-sdk"><img src="https://img.shields.io/badge/pkg.go.dev-reference-007d9c?style=flat-square&logo=go" alt="Go 文档" /></a>
-    <a href="https://github.com/DouDOU-start/airgate-sdk/blob/master/LICENSE"><img src="https://img.shields.io/github/license/DouDOU-start/airgate-sdk?style=flat-square" alt="许可证" /></a>
+    <a href="https://github.com/DevilGenius/airgate-sdk/releases"><img src="https://img.shields.io/github/v/release/DevilGenius/airgate-sdk?style=flat-square" alt="发布版本" /></a>
+    <a href="https://pkg.go.dev/github.com/DevilGenius/airgate-sdk"><img src="https://img.shields.io/badge/pkg.go.dev-reference-007d9c?style=flat-square&logo=go" alt="Go 文档" /></a>
+    <a href="https://github.com/DevilGenius/airgate-sdk/blob/apex/LICENSE"><img src="https://img.shields.io/github/license/DevilGenius/airgate-sdk?style=flat-square" alt="许可证" /></a>
     <img src="https://img.shields.io/badge/Go-1.25-00ADD8?style=flat-square&logo=go" alt="Go 版本" />
     <img src="https://img.shields.io/badge/gRPC-go--plugin-4c1?style=flat-square" alt="gRPC 插件协议" />
   </p>
@@ -14,7 +14,7 @@
 
 ---
 
-AirGate SDK 是 [AirGate Core](https://github.com/DouDOU-start/airgate-core) 和插件之间的公共契约。它定义插件要实现什么接口、Core 如何启动插件进程、双方如何通过 gRPC 通信，以及插件前端如何复用统一主题和公共组件。
+AirGate SDK 是 [AirGate Core](https://github.com/DevilGenius/airgate-core) 和插件之间的公共契约。它定义插件要实现什么接口、Core 如何启动插件进程、双方如何通过 gRPC 通信，以及插件前端如何复用统一主题和公共组件。
 
 简单理解：
 
@@ -25,15 +25,15 @@ AirGate SDK 是 [AirGate Core](https://github.com/DouDOU-start/airgate-core) 和
 ## 安装
 
 ```bash
-go get github.com/DouDOU-start/airgate-sdk@latest
+go get github.com/DevilGenius/airgate-sdk@latest
 ```
 
 Go 插件通常只需要两个包：
 
 ```go
 import (
-    sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
-    runtime "github.com/DouDOU-start/airgate-sdk/runtimego/grpc"
+    sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
+    runtime "github.com/DevilGenius/airgate-sdk/runtimego/grpc"
 )
 ```
 
@@ -42,7 +42,7 @@ import (
 ```json
 {
   "dependencies": {
-    "@doudou-start/airgate-theme": "^0.2.1"
+    "@devilgenius/airgate-theme": "^0.2.1"
   }
 }
 ```
@@ -52,7 +52,7 @@ import (
 ```json
 {
   "dependencies": {
-    "@doudou-start/airgate-theme": "file:../../airgate-sdk/theme"
+    "@devilgenius/airgate-theme": "file:../../airgate-sdk/theme"
   }
 }
 ```
@@ -65,7 +65,7 @@ import (
 | `protocol/proto/` | `airgate.plugin.v1` protobuf 协议和生成代码 | Core / runtime |
 | `runtimego/grpc/` | hashicorp/go-plugin、gRPC bridge、proto 转换、Core 反向调用通道 | 插件入口 / Core 加载器 |
 | `devkit/devserver/` | 本地开发服务器，无需启动完整 Core 即可调试插件 | 插件作者 |
-| `theme/` | `@doudou-start/airgate-theme`：主题 token、样式隔离、Tailwind helper、公共组件 | 插件前端 |
+| `theme/` | `@devilgenius/airgate-theme`：主题 token、样式隔离、Tailwind helper、公共组件 | 插件前端 |
 | `docs/` | 设计边界和前端样式规范 | 维护者 |
 
 普通插件业务代码不直接依赖 `protocol/proto`。
@@ -96,8 +96,8 @@ Gateway 插件的核心工作只有三件事：
 package main
 
 import (
-    sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
-    runtime "github.com/DouDOU-start/airgate-sdk/runtimego/grpc"
+    sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
+    runtime "github.com/DevilGenius/airgate-sdk/runtimego/grpc"
 )
 
 type Gateway struct{}
@@ -197,7 +197,7 @@ func (g *Gateway) Forward(ctx context.Context, req *sdk.ForwardRequest) (sdk.For
 ```go
 package main
 
-import "github.com/DouDOU-start/airgate-sdk/devkit/devserver"
+import "github.com/DevilGenius/airgate-sdk/devkit/devserver"
 
 func main() {
     if err := devserver.Run(devserver.Config{Plugin: &Gateway{}}); err != nil {
@@ -329,14 +329,14 @@ func (p *Plugin) Init(ctx sdk.PluginContext) error {
 
 ## 前端插件 SDK
 
-`theme/` 发布为 npm 公共包 `@doudou-start/airgate-theme`，用于插件前端复用 AirGate 的主题和公共组件。
+`theme/` 发布为 npm 公共包 `@devilgenius/airgate-theme`，用于插件前端复用 AirGate 的主题和公共组件。
 
 | 入口 | 用途 |
 |---|---|
-| `@doudou-start/airgate-theme` | token、CSS 工具、Tailwind bridge、插件前端类型和公共组件统一出口 |
-| `@doudou-start/airgate-theme/plugin` | 插件样式隔离、主题同步、Tailwind helper、公共 UI 组件 |
-| `@doudou-start/airgate-theme/css` | CSS 变量生成和运行时主题注入 |
-| `@doudou-start/airgate-theme/tailwind` | Tailwind 主题桥接 |
+| `@devilgenius/airgate-theme` | token、CSS 工具、Tailwind bridge、插件前端类型和公共组件统一出口 |
+| `@devilgenius/airgate-theme/plugin` | 插件样式隔离、主题同步、Tailwind helper、公共 UI 组件 |
+| `@devilgenius/airgate-theme/css` | CSS 变量生成和运行时主题注入 |
+| `@devilgenius/airgate-theme/tailwind` | Tailwind 主题桥接 |
 
 推荐插件前端使用：
 
@@ -348,7 +348,7 @@ import {
     createPluginTailwindConfig,
     ensurePluginStyleFoundation,
     useScopedPluginTheme,
-} from "@doudou-start/airgate-theme/plugin";
+} from "@devilgenius/airgate-theme/plugin";
 ```
 
 完整样式规则见 [插件前端样式规范](docs/plugin-style-guide.md)。
@@ -372,7 +372,7 @@ import {
 make ci                            # 运行 Go、proto、前端和主题漂移检查
 make proto                         # 重新生成 protocol/proto
 make theme                         # 重新生成 DevServer 主题 CSS
-cd theme && pnpm build          # 构建 @doudou-start/airgate-theme
+cd theme && pnpm build          # 构建 @devilgenius/airgate-theme
 ```
 
 ## License

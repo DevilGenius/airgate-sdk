@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // hostClient 把 pb.CoreInvokeServiceClient 包装成 sdk.Host 接口。

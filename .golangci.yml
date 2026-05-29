@@ -22,7 +22,7 @@ formatters:
 
   settings:
     goimports:
-      local-prefixes: github.com/DouDOU-start
+      local-prefixes: github.com/DevilGenius
 
 issues:
   max-issues-per-linter: 0

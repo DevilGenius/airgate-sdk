@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // extensionRouter 实现 sdk.RouteRegistrar，用于在 gRPC 模式下将 HTTP 请求分发到注册的处理函数

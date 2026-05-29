@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // ProxyHandler 将请求代理给插件

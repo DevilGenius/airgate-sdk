@@ -1,5 +1,5 @@
 {
-  "name": "@doudou-start/airgate-theme",
+  "name": "@devilgenius/airgate-theme",
   "version": "0.2.1",
   "description": "AirGate 插件前端主题、样式隔离和公共组件包",
   "type": "module",
@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DouDOU-start/airgate-sdk.git",
+    "url": "git+https://github.com/DevilGenius/airgate-sdk.git",
     "directory": "theme"
   },
   "publishConfig": {

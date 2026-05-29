@@ -1,4 +1,4 @@
-module github.com/DouDOU-start/airgate-sdk
+module github.com/DevilGenius/airgate-sdk
 
 go 1.25.7
 

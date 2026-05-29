@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 func TestRoutePrefixesDeduplicates(t *testing.T) {

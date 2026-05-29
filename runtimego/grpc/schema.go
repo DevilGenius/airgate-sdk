@@ -1,8 +1,8 @@
 package grpc
 
 import (
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 func payloadSchemaToProto(s sdk.PayloadSchema) *pb.PayloadSchemaProto {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // migrateTimeout 数据库迁移的超时时间（迁移可能涉及大量数据，需要较长时间）

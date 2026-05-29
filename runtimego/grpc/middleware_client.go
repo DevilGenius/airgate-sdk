@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	pb "github.com/DouDOU-start/airgate-sdk/protocol/proto"
-	sdk "github.com/DouDOU-start/airgate-sdk/sdkgo"
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // MiddlewareGRPCClient 把 pb.MiddlewareServiceClient 包装成给 core 用的 plain Go API。
