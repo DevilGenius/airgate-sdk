@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -279,6 +280,9 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 	if err != nil && outcome.Reason == "" {
 		outcome.Reason = err.Error()
 	}
+	if bw.err != nil {
+		return nil, bw.err
+	}
 
 	pbOutcome := outcomeToProto(outcome)
 	if len(bw.body) > 0 && (pbOutcome.Upstream == nil || len(pbOutcome.Upstream.Body) == 0) {
@@ -426,6 +430,7 @@ type bufferWriter struct {
 	headers http.Header
 	code    int
 	body    []byte
+	err     error
 }
 
 func (w *bufferWriter) Header() http.Header {
@@ -436,6 +441,13 @@ func (w *bufferWriter) Header() http.Header {
 }
 
 func (w *bufferWriter) Write(data []byte) (int, error) {
+	if w.err != nil {
+		return 0, w.err
+	}
+	if len(w.body)+len(data) > PluginGRPCMaxMessageBytes {
+		w.err = fmt.Errorf("buffered gateway response exceeds %d bytes", PluginGRPCMaxMessageBytes)
+		return 0, w.err
+	}
 	w.body = append(w.body, data...)
 	return len(data), nil
 }

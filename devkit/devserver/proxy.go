@@ -1,7 +1,6 @@
 package devserver
 
 import (
-	"context"
 	"io"
 	"log"
 	"log/slog"
@@ -176,7 +175,7 @@ func (p *ProxyHandler) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("WebSocket 连接建立: %s, account=%d", r.URL.Path, account.ID)
 
-	if _, err := p.plugin.HandleWebSocket(context.Background(), conn); err != nil {
+	if _, err := p.plugin.HandleWebSocket(r.Context(), conn); err != nil {
 		log.Printf("WebSocket 处理结束: %v", err)
 	}
 }

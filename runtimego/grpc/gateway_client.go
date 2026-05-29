@@ -31,7 +31,7 @@ func (c *GatewayGRPCClient) InvalidateCache() {
 	c.cachedPlatform = ""
 	c.cachedModels = nil
 	c.cachedRoutes = nil
-	c.cachedInfo = nil
+	c.invalidateInfoCache()
 }
 
 func (c *GatewayGRPCClient) Platform() string {
@@ -228,7 +228,6 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 	clientConn := &grpcClientWebSocketConn{stream: stream, info: info}
 
 	readerCtx, readerCancel := context.WithCancel(ctx)
-	defer readerCancel()
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
@@ -254,29 +253,47 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 			}
 		}
 	}()
+	stopReader := func(code int, reason string) {
+		readerCancel()
+		_ = conn.Close(code, reason)
+		_ = stream.CloseSend()
+		<-errCh
+	}
 
 	var outcome sdk.ForwardOutcome
 	haveOutcome := false
+	closeCode := 1000
+	closeReason := "grpc websocket closing"
 	for {
 		frame, recvErr := stream.Recv()
 		if recvErr == io.EOF {
 			break
 		}
 		if recvErr != nil {
+			stopReader(1000, "grpc websocket closing")
 			return sdk.ForwardOutcome{}, fmt.Errorf("gRPC WebSocket 流接收失败: %w", recvErr)
 		}
 
 		switch frame.Type {
 		case pb.WebSocketFrame_TEXT:
 			if writeErr := conn.WriteMessage(sdk.WSMessageText, frame.Data); writeErr != nil {
+				stopReader(1000, "grpc websocket closing")
 				return sdk.ForwardOutcome{}, writeErr
 			}
 		case pb.WebSocketFrame_BINARY:
 			if writeErr := conn.WriteMessage(sdk.WSMessageBinary, frame.Data); writeErr != nil {
+				stopReader(1000, "grpc websocket closing")
 				return sdk.ForwardOutcome{}, writeErr
 			}
 		case pb.WebSocketFrame_CLOSE:
-			_ = conn.Close(int(frame.CloseCode), frame.CloseReason)
+			closeCode = int(frame.CloseCode)
+			if closeCode == 0 {
+				closeCode = 1000
+			}
+			closeReason = frame.CloseReason
+			if closeReason == "" {
+				closeReason = "grpc websocket closing"
+			}
 			goto done
 		case pb.WebSocketFrame_RESULT:
 			if frame.Outcome != nil {
@@ -289,8 +306,7 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 
 done:
 	_ = clientConn
-	readerCancel()
-	<-errCh
+	stopReader(closeCode, closeReason)
 
 	if !haveOutcome {
 		return sdk.ForwardOutcome{}, nil

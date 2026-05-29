@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 
 	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
@@ -31,6 +32,7 @@ func withTimeout() (context.Context, context.CancelFunc) {
 type pluginBase struct {
 	plugin             pb.PluginServiceClient
 	event              pb.EventServiceClient
+	infoMu             sync.RWMutex
 	cachedInfo         *sdk.PluginInfo
 	coreInvokeBrokerID uint32
 }
@@ -38,6 +40,8 @@ type pluginBase struct {
 // pluginIDForLog 取 cached 的插件 ID 给日志用；若还没缓存则返回空串。
 // 不主动触发 GetInfo 以免引入循环。
 func (b *pluginBase) pluginIDForLog() string {
+	b.infoMu.RLock()
+	defer b.infoMu.RUnlock()
 	if b.cachedInfo != nil {
 		return b.cachedInfo.ID
 	}
@@ -58,9 +62,14 @@ func (b *pluginBase) rpcLogger(ctx context.Context, method string) (*slog.Logger
 
 // Info 获取插件信息（带缓存）
 func (b *pluginBase) Info() sdk.PluginInfo {
+	b.infoMu.RLock()
 	if b.cachedInfo != nil {
-		return *b.cachedInfo
+		info := *b.cachedInfo
+		b.infoMu.RUnlock()
+		return info
 	}
+	b.infoMu.RUnlock()
+
 	ctx, cancel := withTimeout()
 	defer cancel()
 
@@ -157,11 +166,19 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 	}
 	info.Priority = resp.Priority
 
+	b.infoMu.Lock()
 	b.cachedInfo = &info
+	b.infoMu.Unlock()
 	logger.Debug("plugin_call_get_info_completed",
 		sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
 	)
 	return info
+}
+
+func (b *pluginBase) invalidateInfoCache() {
+	b.infoMu.Lock()
+	b.cachedInfo = nil
+	b.infoMu.Unlock()
 }
 
 // Init 初始化插件

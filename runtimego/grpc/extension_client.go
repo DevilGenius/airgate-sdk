@@ -57,7 +57,7 @@ func (c *ExtensionGRPCClient) RunBackgroundTask(ctx context.Context, name string
 
 // InvalidateCache 清除缓存的插件信息，下次调用时重新获取
 func (c *ExtensionGRPCClient) InvalidateCache() {
-	c.cachedInfo = nil
+	c.invalidateInfoCache()
 }
 
 // HandleHTTPRequest 代理 HTTP 请求到插件（核心内部调用）
