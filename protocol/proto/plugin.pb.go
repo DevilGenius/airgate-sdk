@@ -4424,7 +4424,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\vHandleEvent\x12\x1e.airgate.plugin.v1.PluginEvent\x1a&.airgate.plugin.v1.EventHandleResponse2\xc6\x01\n" +
 	"\x11CoreInvokeService\x12U\n" +
 	"\x06Invoke\x12$.airgate.plugin.v1.HostInvokeRequest\x1a%.airgate.plugin.v1.HostInvokeResponse\x12Z\n" +
-	"\fInvokeStream\x12\".airgate.plugin.v1.HostStreamFrame\x1a\".airgate.plugin.v1.HostStreamFrame(\x010\x01B4Z2github.com/DevilGenius/airgate-sdk/protocol/protob\x06proto3"
+	"\fInvokeStream\x12\".airgate.plugin.v1.HostStreamFrame\x1a\".airgate.plugin.v1.HostStreamFrame(\x010\x01B3Z1github.com/DevilGenius/airgate-sdk/protocol/protob\x06proto3"
 
 var (
 	file_plugin_proto_rawDescOnce sync.Once
