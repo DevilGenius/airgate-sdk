@@ -6,7 +6,7 @@
   <p>
     <a href="https://github.com/DevilGenius/airgate-sdk/releases"><img src="https://img.shields.io/github/v/release/DevilGenius/airgate-sdk?style=flat-square" alt="发布版本" /></a>
     <a href="https://pkg.go.dev/github.com/DevilGenius/airgate-sdk"><img src="https://img.shields.io/badge/pkg.go.dev-reference-007d9c?style=flat-square&logo=go" alt="Go 文档" /></a>
-    <a href="https://github.com/DevilGenius/airgate-sdk/blob/apex/LICENSE"><img src="https://img.shields.io/github/license/DevilGenius/airgate-sdk?style=flat-square" alt="许可证" /></a>
+    <a href="https://github.com/DevilGenius/airgate-sdk/blob/master/LICENSE"><img src="https://img.shields.io/github/license/DevilGenius/airgate-sdk?style=flat-square" alt="许可证" /></a>
     <img src="https://img.shields.io/badge/Go-1.25-00ADD8?style=flat-square&logo=go" alt="Go 版本" />
     <img src="https://img.shields.io/badge/gRPC-go--plugin-4c1?style=flat-square" alt="gRPC 插件协议" />
   </p>
