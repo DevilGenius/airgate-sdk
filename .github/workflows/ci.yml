@@ -1,6 +1,7 @@
 name: 持续集成
 
 on:
+  workflow_dispatch:
   push:
     branches: [master]
   pull_request:
