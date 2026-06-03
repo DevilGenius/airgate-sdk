@@ -141,8 +141,8 @@ export const foundationTokens: FoundationTokens = {
   radiusLg: '0.25rem',
   radiusXl: '0.25rem',
   fieldRadius: '0.5rem',
-  fontSans: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-  fontMono: "'Geist Mono', 'SF Mono', 'Cascadia Code', monospace",
+  fontSans: "'AirGate CJK Punctuation', 'Fira Code', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  fontMono: "'Fira Code', ui-monospace, 'SFMono-Regular', 'SF Mono', 'Cascadia Code', Consolas, 'Liberation Mono', Menlo, Monaco, 'Courier New', monospace",
   transition: '200ms cubic-bezier(0.4, 0, 0.2, 1)',
   transitionSlow: '400ms cubic-bezier(0.4, 0, 0.2, 1)',
 };
