@@ -43,6 +43,22 @@ function varsBlock(
     .join('\n');
 }
 
+const cjkPunctuationFontFace = `@font-face {
+  font-family: "AirGate CJK Punctuation";
+  src:
+    local("PingFang SC"),
+    local("Microsoft YaHei UI"),
+    local("Microsoft YaHei"),
+    local("Noto Sans CJK SC"),
+    local("Source Han Sans SC"),
+    local("Hiragino Sans GB"),
+    local("WenQuanYi Micro Hei");
+  unicode-range: U+00B7, U+2018-201F, U+2026, U+3000-303F, U+FF00-FFEF;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}`;
+
 /** 主题 token → CSS 变量名映射 */
 export const tokenToCssVar = Object.keys(themes.dark).reduce(
   (acc, key) => {
@@ -120,6 +136,7 @@ export function generateThemeCSS(options: ThemeCSSOptions = {}): string {
   const themeAttribute = options.themeAttribute || 'data-theme';
 
   const blocks = [
+    cjkPunctuationFontFace,
     `${selectorForScope(scopeSelector)} {\n${varsBlock(staticTokens, prefix)}\n}`,
     `${selectorForScope(scopeSelector, themeAttribute, 'dark')} {\n${varsBlock(themes.dark, prefix)}\n}`,
     `${selectorForScope(scopeSelector, themeAttribute, 'light')} {\n${varsBlock(themes.light, prefix)}\n}`,
