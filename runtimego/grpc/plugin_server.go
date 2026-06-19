@@ -33,6 +33,7 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 		Type:         string(info.Type),
 		SdkVersion:   info.SDKVersion,
 		Dependencies: info.Dependencies,
+		DispatchDsl:  dispatchDSLToProto(info.DispatchDSL),
 		Metadata:     info.Metadata,
 	}
 

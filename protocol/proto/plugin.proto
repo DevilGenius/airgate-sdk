@@ -127,6 +127,48 @@ message PluginInfoResponse {
     // metadata 保存插件声明层面的弱契约扩展信息，例如分类、市场标签、展示提示。
     // 需要 Core 授权或参与调度的数据必须进入显式字段或 capability。
     map<string, string> metadata = 16;
+    // dispatch_dsl 是插件默认的请求调度规则。Core 可在 group 级覆盖或追加。
+    DispatchDSLProto dispatch_dsl = 17;
+}
+
+message DispatchDSLProto {
+    repeated DispatchRuleProto rules = 1;
+}
+
+message DispatchRuleProto {
+    string id = 1;
+    DispatchWhenProto when = 2;
+    DispatchModelProto model = 3;
+    string operation = 4;
+    string timeout_profile = 5;
+    DispatchGateProto gate = 6;
+    repeated DispatchCandidateProto candidates = 7;
+}
+
+message DispatchWhenProto {
+    repeated string methods = 1;
+    repeated string paths = 2;
+    repeated string path_prefixes = 3;
+    repeated string models = 4;
+    repeated string model_prefixes = 5;
+    repeated string model_suffixes = 6;
+}
+
+message DispatchModelProto {
+    string strip_suffix = 1;
+}
+
+message DispatchGateProto {
+    string required_operation = 1;
+    int32 status = 2;
+    string error_type = 3;
+    string code = 4;
+    string message = 5;
+}
+
+message DispatchCandidateProto {
+    string scheduling = 1;
+    string wire = 2;
 }
 
 message ConfigFieldProto {
@@ -221,6 +263,17 @@ message ForwardRequest {
     string model = 9;
     bool   stream = 10;
     AccountProto account = 11;
+    DispatchPlanProto dispatch_plan = 12;
+}
+
+message DispatchPlanProto {
+    string client_model = 1;
+    string scheduling_model = 2;
+    string wire_model = 3;
+    string rule_id = 4;
+    string operation = 5;
+    string timeout_profile = 6;
+    DispatchGateProto gate = 7;
 }
 
 // OutcomeKind 插件对一次 Forward 的判决。

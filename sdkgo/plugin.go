@@ -47,6 +47,9 @@ type PluginInfo struct {
 	FrontendWidgets    []FrontendWidget `json:"frontend_widgets"`
 	InstructionPresets []string         `json:"instruction_presets"`
 	Capabilities       []Capability     `json:"capabilities"`
+	// DispatchDSL 声明插件默认的请求调度规则。Core 可在 group 级覆盖或追加，
+	// 并把最终选中的 DispatchPlan 回传给插件。
+	DispatchDSL DispatchDSL `json:"dispatch_dsl,omitempty"`
 	// Metadata 保存插件声明层面的非核心扩展信息。
 	// 只放展示、分类、市场索引等弱契约字段；需要 Core 授权或参与调度的字段必须进入显式 SDK 契约。
 	Metadata map[string]string `json:"metadata,omitempty"`

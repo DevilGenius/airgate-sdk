@@ -92,6 +92,7 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 		Author:       resp.Author,
 		Type:         sdk.PluginType(resp.Type),
 		Dependencies: resp.Dependencies,
+		DispatchDSL:  dispatchDSLFromProto(resp.DispatchDsl),
 		Metadata:     resp.Metadata,
 	}
 
@@ -351,4 +352,165 @@ func convertModels(pbModels []*pb.ModelInfoProto) []sdk.ModelInfo {
 		}
 	}
 	return models
+}
+
+func dispatchDSLFromProto(protoDSL *pb.DispatchDSLProto) sdk.DispatchDSL {
+	if protoDSL == nil || len(protoDSL.Rules) == 0 {
+		return sdk.DispatchDSL{}
+	}
+	dsl := sdk.DispatchDSL{Rules: make([]sdk.DispatchRule, 0, len(protoDSL.Rules))}
+	for _, rule := range protoDSL.Rules {
+		if rule == nil {
+			continue
+		}
+		dsl.Rules = append(dsl.Rules, sdk.DispatchRule{
+			ID:             rule.Id,
+			When:           dispatchWhenFromProto(rule.When),
+			Model:          dispatchModelFromProto(rule.Model),
+			Operation:      rule.Operation,
+			TimeoutProfile: rule.TimeoutProfile,
+			Gate:           dispatchGateFromProto(rule.Gate),
+			Candidates:     dispatchCandidatesFromProto(rule.Candidates),
+		})
+	}
+	return dsl
+}
+
+func dispatchDSLToProto(dsl sdk.DispatchDSL) *pb.DispatchDSLProto {
+	if len(dsl.Rules) == 0 {
+		return nil
+	}
+	protoDSL := &pb.DispatchDSLProto{Rules: make([]*pb.DispatchRuleProto, 0, len(dsl.Rules))}
+	for _, rule := range dsl.Rules {
+		protoDSL.Rules = append(protoDSL.Rules, &pb.DispatchRuleProto{
+			Id:             rule.ID,
+			When:           dispatchWhenToProto(rule.When),
+			Model:          dispatchModelToProto(rule.Model),
+			Operation:      rule.Operation,
+			TimeoutProfile: rule.TimeoutProfile,
+			Gate:           dispatchGateToProto(rule.Gate),
+			Candidates:     dispatchCandidatesToProto(rule.Candidates),
+		})
+	}
+	return protoDSL
+}
+
+func dispatchWhenFromProto(protoWhen *pb.DispatchWhenProto) sdk.DispatchWhen {
+	if protoWhen == nil {
+		return sdk.DispatchWhen{}
+	}
+	return sdk.DispatchWhen{
+		Methods:       append([]string(nil), protoWhen.Methods...),
+		Paths:         append([]string(nil), protoWhen.Paths...),
+		PathPrefixes:  append([]string(nil), protoWhen.PathPrefixes...),
+		Models:        append([]string(nil), protoWhen.Models...),
+		ModelPrefixes: append([]string(nil), protoWhen.ModelPrefixes...),
+		ModelSuffixes: append([]string(nil), protoWhen.ModelSuffixes...),
+	}
+}
+
+func dispatchWhenToProto(when sdk.DispatchWhen) *pb.DispatchWhenProto {
+	return &pb.DispatchWhenProto{
+		Methods:       append([]string(nil), when.Methods...),
+		Paths:         append([]string(nil), when.Paths...),
+		PathPrefixes:  append([]string(nil), when.PathPrefixes...),
+		Models:        append([]string(nil), when.Models...),
+		ModelPrefixes: append([]string(nil), when.ModelPrefixes...),
+		ModelSuffixes: append([]string(nil), when.ModelSuffixes...),
+	}
+}
+
+func dispatchModelFromProto(protoModel *pb.DispatchModelProto) sdk.DispatchModel {
+	if protoModel == nil {
+		return sdk.DispatchModel{}
+	}
+	return sdk.DispatchModel{StripSuffix: protoModel.StripSuffix}
+}
+
+func dispatchModelToProto(model sdk.DispatchModel) *pb.DispatchModelProto {
+	return &pb.DispatchModelProto{StripSuffix: model.StripSuffix}
+}
+
+func dispatchGateFromProto(protoGate *pb.DispatchGateProto) sdk.DispatchGate {
+	if protoGate == nil {
+		return sdk.DispatchGate{}
+	}
+	return sdk.DispatchGate{
+		RequiredOperation: protoGate.RequiredOperation,
+		Status:            int(protoGate.Status),
+		ErrorType:         protoGate.ErrorType,
+		Code:              protoGate.Code,
+		Message:           protoGate.Message,
+	}
+}
+
+func dispatchGateToProto(gate sdk.DispatchGate) *pb.DispatchGateProto {
+	return &pb.DispatchGateProto{
+		RequiredOperation: gate.RequiredOperation,
+		Status:            int32(gate.Status),
+		ErrorType:         gate.ErrorType,
+		Code:              gate.Code,
+		Message:           gate.Message,
+	}
+}
+
+func dispatchCandidatesFromProto(items []*pb.DispatchCandidateProto) []sdk.DispatchCandidate {
+	if len(items) == 0 {
+		return nil
+	}
+	out := make([]sdk.DispatchCandidate, 0, len(items))
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
+		out = append(out, sdk.DispatchCandidate{
+			Scheduling: item.Scheduling,
+			Wire:       item.Wire,
+		})
+	}
+	return out
+}
+
+func dispatchCandidatesToProto(items []sdk.DispatchCandidate) []*pb.DispatchCandidateProto {
+	if len(items) == 0 {
+		return nil
+	}
+	out := make([]*pb.DispatchCandidateProto, 0, len(items))
+	for _, item := range items {
+		out = append(out, &pb.DispatchCandidateProto{
+			Scheduling: item.Scheduling,
+			Wire:       item.Wire,
+		})
+	}
+	return out
+}
+
+func dispatchPlanFromProto(protoPlan *pb.DispatchPlanProto) sdk.DispatchPlan {
+	if protoPlan == nil {
+		return sdk.DispatchPlan{}
+	}
+	return sdk.DispatchPlan{
+		ClientModel:     protoPlan.ClientModel,
+		SchedulingModel: protoPlan.SchedulingModel,
+		WireModel:       protoPlan.WireModel,
+		RuleID:          protoPlan.RuleId,
+		Operation:       protoPlan.Operation,
+		TimeoutProfile:  protoPlan.TimeoutProfile,
+		Gate:            dispatchGateFromProto(protoPlan.Gate),
+	}
+}
+
+func dispatchPlanToProto(plan sdk.DispatchPlan) *pb.DispatchPlanProto {
+	if plan == (sdk.DispatchPlan{}) {
+		return nil
+	}
+	return &pb.DispatchPlanProto{
+		ClientModel:     plan.ClientModel,
+		SchedulingModel: plan.SchedulingModel,
+		WireModel:       plan.WireModel,
+		RuleId:          plan.RuleID,
+		Operation:       plan.Operation,
+		TimeoutProfile:  plan.TimeoutProfile,
+		Gate:            dispatchGateToProto(plan.Gate),
+	}
 }

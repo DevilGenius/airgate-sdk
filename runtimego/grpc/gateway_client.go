@@ -115,10 +115,11 @@ func buildProtoRequest(req *sdk.ForwardRequest) *pb.ForwardRequest {
 			CredentialsJson: credsJSON,
 			ProxyUrl:        req.Account.ProxyURL,
 		},
-		Body:    req.Body,
-		Headers: httpHeadersToProto(req.Headers),
-		Model:   req.Model,
-		Stream:  req.Stream,
+		Body:         req.Body,
+		Headers:      httpHeadersToProto(req.Headers),
+		Model:        req.Model,
+		DispatchPlan: dispatchPlanToProto(req.DispatchPlan),
+		Stream:       req.Stream,
 	}
 }
 

@@ -61,8 +61,10 @@ type ForwardRequest struct {
 	Account *Account
 	Body    []byte
 	Headers http.Header
-	Model   string
-	Stream  bool
+	// Model 是客户端请求的原始模型；调度和上游模型由 DispatchPlan 表达。
+	Model        string
+	DispatchPlan DispatchPlan
+	Stream       bool
 
 	// Writer 流式响应写入目标。
 	// Core 负责把写入内容转发给用户，并在调用结束后根据 ForwardOutcome 写记录和更新账号状态。

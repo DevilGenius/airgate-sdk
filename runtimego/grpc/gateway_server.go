@@ -257,12 +257,13 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 	// 非流式：用 bufferWriter 兜底捕获插件可能意外写入 Writer 的内容。
 	bw := &bufferWriter{}
 	fwdReq := &sdk.ForwardRequest{
-		Account: buildAccount(req),
-		Body:    req.Body,
-		Headers: protoHeadersToHTTP(req.Headers),
-		Model:   req.Model,
-		Stream:  req.Stream,
-		Writer:  bw,
+		Account:      buildAccount(req),
+		Body:         req.Body,
+		Headers:      protoHeadersToHTTP(req.Headers),
+		Model:        req.Model,
+		DispatchPlan: dispatchPlanFromProto(req.DispatchPlan),
+		Stream:       req.Stream,
+		Writer:       bw,
 	}
 
 	outcome, err := s.Impl.Forward(ctx, fwdReq)
@@ -303,12 +304,13 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.GatewayService_ForwardStreamServer) error {
 	sw := &streamWriter{stream: stream}
 	fwdReq := &sdk.ForwardRequest{
-		Account: buildAccount(req),
-		Body:    req.Body,
-		Headers: protoHeadersToHTTP(req.Headers),
-		Model:   req.Model,
-		Stream:  true,
-		Writer:  sw,
+		Account:      buildAccount(req),
+		Body:         req.Body,
+		Headers:      protoHeadersToHTTP(req.Headers),
+		Model:        req.Model,
+		DispatchPlan: dispatchPlanFromProto(req.DispatchPlan),
+		Stream:       true,
+		Writer:       sw,
 	}
 
 	startTime := time.Now()
