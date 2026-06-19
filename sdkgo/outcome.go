@@ -92,6 +92,21 @@ func (k OutcomeKind) ShouldFailover() bool {
 	return false
 }
 
+// FailoverScope 声明一次 ForwardOutcome 允许 Core 重试的边界。
+//
+// 零值表示不覆盖 OutcomeKind 自身语义。插件只有在能精确判断某类失败应该切换
+// Core 下发的 DispatchPlan 候选时，才应填写 DispatchCandidate。
+type FailoverScope string
+
+const (
+	// FailoverScopeNone 表示不请求额外 failover。
+	FailoverScopeNone FailoverScope = ""
+
+	// FailoverScopeDispatchCandidate 表示当前 DispatchPlan 候选不可用，Core 可前进
+	// 到下一候选重试；若没有下一候选，则按原 OutcomeKind 处理。
+	FailoverScopeDispatchCandidate FailoverScope = "dispatch_candidate"
+)
+
 // UpstreamResponse 上游返回的原始 HTTP 快照。
 //
 // 语义：插件应尽量保存上游实际响应。Core 会先基于 Kind 组织调度 / failover；
@@ -148,8 +163,11 @@ type Usage struct {
 //	Duration          插件测得的耗时，Core 仅用于日志
 //	Reason            人类可读原因，Core 仅落日志，不做任何判断
 //	UpdatedCredentials 插件若在 Forward 中刷新了凭证（OAuth 轮转等）通过此字段带回
+//	FailoverScope     可选，声明 OutcomeKind 之外的重试边界
 type ForwardOutcome struct {
 	Kind OutcomeKind
+
+	FailoverScope FailoverScope
 
 	Upstream UpstreamResponse
 

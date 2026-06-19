@@ -84,7 +84,8 @@ func TestProtoHeadersToHTTP_NilValues(t *testing.T) {
 
 func TestForwardOutcome_RoundTrip(t *testing.T) {
 	original := sdk.ForwardOutcome{
-		Kind: sdk.OutcomeSuccess,
+		Kind:          sdk.OutcomeSuccess,
+		FailoverScope: sdk.FailoverScopeDispatchCandidate,
 		Upstream: sdk.UpstreamResponse{
 			StatusCode: 200,
 			Headers:    http.Header{"Content-Type": {"application/json"}},

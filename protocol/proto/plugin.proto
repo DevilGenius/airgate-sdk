@@ -333,6 +333,7 @@ message ForwardOutcome {
     int64 retry_after_ms = 5;
     string reason = 6;
     map<string, string> updated_credentials = 7;
+    string failover_scope = 8;
 }
 
 message ForwardChunk {

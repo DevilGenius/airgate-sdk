@@ -82,6 +82,7 @@ func buildAccount(req *pb.ForwardRequest) *sdk.Account {
 func outcomeToProto(o sdk.ForwardOutcome) *pb.ForwardOutcome {
 	out := &pb.ForwardOutcome{
 		Kind:               outcomeKindToProto(o.Kind),
+		FailoverScope:      string(o.FailoverScope),
 		Upstream:           upstreamToProto(o.Upstream),
 		DurationMs:         o.Duration.Milliseconds(),
 		RetryAfterMs:       o.RetryAfter.Milliseconds(),
@@ -101,6 +102,7 @@ func outcomeFromProto(p *pb.ForwardOutcome) sdk.ForwardOutcome {
 	}
 	out := sdk.ForwardOutcome{
 		Kind:               outcomeKindFromProto(p.Kind),
+		FailoverScope:      sdk.FailoverScope(p.FailoverScope),
 		Upstream:           upstreamFromProto(p.Upstream),
 		Duration:           time.Duration(p.DurationMs) * time.Millisecond,
 		RetryAfter:         time.Duration(p.RetryAfterMs) * time.Millisecond,

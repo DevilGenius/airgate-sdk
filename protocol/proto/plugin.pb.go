@@ -2118,6 +2118,7 @@ type ForwardOutcome struct {
 	RetryAfterMs       int64                  `protobuf:"varint,5,opt,name=retry_after_ms,json=retryAfterMs,proto3" json:"retry_after_ms,omitempty"`
 	Reason             string                 `protobuf:"bytes,6,opt,name=reason,proto3" json:"reason,omitempty"`
 	UpdatedCredentials map[string]string      `protobuf:"bytes,7,rep,name=updated_credentials,json=updatedCredentials,proto3" json:"updated_credentials,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	FailoverScope      string                 `protobuf:"bytes,8,opt,name=failover_scope,json=failoverScope,proto3" json:"failover_scope,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -2199,6 +2200,13 @@ func (x *ForwardOutcome) GetUpdatedCredentials() map[string]string {
 		return x.UpdatedCredentials
 	}
 	return nil
+}
+
+func (x *ForwardOutcome) GetFailoverScope() string {
+	if x != nil {
+		return x.FailoverScope
+	}
+	return ""
 }
 
 type ForwardChunk struct {
@@ -4638,7 +4646,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01J\x04\b\b\x10\tJ\x04\b\t\x10\n" +
 	"J\x04\b\n" +
-	"\x10\vJ\x04\b\x10\x10\x11J\x04\b\x11\x10\x12J\x04\b\x13\x10\x14J\x04\b\x14\x10\x15J\x04\b\x15\x10\x16J\x04\b\x1a\x10\x1bJ\x04\b\x1f\x10 J\x04\b \x10!J\x04\b!\x10\"J\x04\b\"\x10#\"\xc7\x03\n" +
+	"\x10\vJ\x04\b\x10\x10\x11J\x04\b\x11\x10\x12J\x04\b\x13\x10\x14J\x04\b\x14\x10\x15J\x04\b\x15\x10\x16J\x04\b\x1a\x10\x1bJ\x04\b\x1f\x10 J\x04\b \x10!J\x04\b!\x10\"J\x04\b\"\x10#\"\xee\x03\n" +
 	"\x0eForwardOutcome\x122\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x1e.airgate.plugin.v1.OutcomeKindR\x04kind\x12?\n" +
 	"\bupstream\x18\x02 \x01(\v2#.airgate.plugin.v1.UpstreamResponseR\bupstream\x12.\n" +
@@ -4647,7 +4655,8 @@ const file_plugin_proto_rawDesc = "" +
 	"durationMs\x12$\n" +
 	"\x0eretry_after_ms\x18\x05 \x01(\x03R\fretryAfterMs\x12\x16\n" +
 	"\x06reason\x18\x06 \x01(\tR\x06reason\x12j\n" +
-	"\x13updated_credentials\x18\a \x03(\v29.airgate.plugin.v1.ForwardOutcome.UpdatedCredentialsEntryR\x12updatedCredentials\x1aE\n" +
+	"\x13updated_credentials\x18\a \x03(\v29.airgate.plugin.v1.ForwardOutcome.UpdatedCredentialsEntryR\x12updatedCredentials\x12%\n" +
+	"\x0efailover_scope\x18\b \x01(\tR\rfailoverScope\x1aE\n" +
 	"\x17UpdatedCredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc4\x02\n" +
