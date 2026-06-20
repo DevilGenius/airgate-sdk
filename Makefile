@@ -11,7 +11,7 @@ PROTOC_GEN_GRPC_VER := v1.6.0
 TOOLS_DIR   := $(CURDIR)/.tools
 PROTOC_BIN  := $(TOOLS_DIR)/bin/protoc
 
-.PHONY: help ci pre-commit lint fmt test vet build theme-package-build theme-package-check theme theme-check proto proto-check proto-tools clean setup-hooks
+.PHONY: help ci pre-commit lint fmt test test-cover vet build theme-package-build theme-package-check theme theme-check proto proto-check proto-tools clean setup-hooks
 
 help: ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -42,6 +42,11 @@ test: ## 运行测试（race 检测 + 覆盖率）
 	$(GO) test -race -coverprofile=coverage.out ./...
 	$(GO) tool cover -func=coverage.out
 	@echo "测试完成"
+
+test-cover: ## 运行覆盖率测试（不启用 race，适合无 gcc/cgo 环境）
+	CGO_ENABLED=0 $(GO) test -coverprofile=coverage.out ./...
+	$(GO) tool cover -func=coverage.out
+	@echo "覆盖率测试完成"
 
 vet: ## 静态分析
 	$(GO) vet ./...

@@ -3,6 +3,7 @@ package grpc
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -15,11 +16,18 @@ import (
 )
 
 type stubForwardStreamServer struct {
-	ctx    context.Context
-	chunks []*pb.ForwardChunk
+	ctx       context.Context
+	chunks    []*pb.ForwardChunk
+	sendErr   error
+	errAtSend int
+	sendCalls int
 }
 
 func (s *stubForwardStreamServer) Send(chunk *pb.ForwardChunk) error {
+	s.sendCalls++
+	if s.sendErr != nil && (s.errAtSend == 0 || s.errAtSend == s.sendCalls) {
+		return s.sendErr
+	}
 	s.chunks = append(s.chunks, chunk)
 	return nil
 }
@@ -40,9 +48,13 @@ type stubForwardStreamClient struct {
 	ctx    context.Context
 	chunks []*pb.ForwardChunk
 	index  int
+	err    error
 }
 
 func (c *stubForwardStreamClient) Recv() (*pb.ForwardChunk, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	if c.index >= len(c.chunks) {
 		return nil, io.EOF
 	}
@@ -197,6 +209,60 @@ func TestGatewayGRPCServerForwardStreamDoesNotFlushMetaWithoutCommittedResponse(
 	}
 }
 
+func TestGatewayGRPCServerForwardStreamErrorBranches(t *testing.T) {
+	transportErr := io.ErrUnexpectedEOF
+	server := &GatewayGRPCServer{
+		Impl: stubGatewayPlugin{
+			forward: func(context.Context, *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
+				return sdk.ForwardOutcome{}, transportErr
+			},
+		},
+	}
+	if err := server.ForwardStream(&pb.ForwardRequest{Model: "gpt-5"}, &stubForwardStreamServer{}); !errors.Is(err, transportErr) {
+		t.Fatalf("unknown outcome error = %v", err)
+	}
+
+	businessErr := errors.New("upstream rejected")
+	server = &GatewayGRPCServer{
+		Impl: stubGatewayPlugin{
+			forward: func(context.Context, *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
+				return sdk.ForwardOutcome{Kind: sdk.OutcomeClientError}, businessErr
+			},
+		},
+	}
+	stream := &stubForwardStreamServer{}
+	if err := server.ForwardStream(&pb.ForwardRequest{}, stream); err != nil {
+		t.Fatalf("business outcome error = %v", err)
+	}
+	if len(stream.chunks) != 1 || stream.chunks[0].FinalOutcome.GetReason() != businessErr.Error() {
+		t.Fatalf("business final chunks = %+v", stream.chunks)
+	}
+
+	sendErr := errors.New("send failed")
+	server = &GatewayGRPCServer{
+		Impl: stubGatewayPlugin{
+			forward: func(context.Context, *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
+				return sdk.ForwardOutcome{Kind: sdk.OutcomeSuccess}, nil
+			},
+		},
+	}
+	if err := server.ForwardStream(&pb.ForwardRequest{Model: "gpt-5"}, &stubForwardStreamServer{sendErr: sendErr}); !errors.Is(err, sendErr) {
+		t.Fatalf("final send error = %v", err)
+	}
+
+	server = &GatewayGRPCServer{
+		Impl: stubGatewayPlugin{
+			forward: func(_ context.Context, req *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
+				req.Writer.WriteHeader(http.StatusCreated)
+				return sdk.ForwardOutcome{Kind: sdk.OutcomeSuccess}, nil
+			},
+		},
+	}
+	if err := server.ForwardStream(&pb.ForwardRequest{Model: "gpt-5"}, &stubForwardStreamServer{sendErr: sendErr}); !errors.Is(err, sendErr) {
+		t.Fatalf("meta flush error = %v", err)
+	}
+}
+
 func TestGatewayGRPCClientForwardStreamAppliesStatusAndHeaders(t *testing.T) {
 	client := &GatewayGRPCClient{
 		gateway: &stubGatewayServiceClient{
@@ -296,3 +362,52 @@ func TestGatewayGRPCClientForwardStreamDefaultsTo200OnFirstDataChunk(t *testing.
 		t.Fatalf("writer status = %d, want %d", writer.status, http.StatusOK)
 	}
 }
+
+func TestGatewayGRPCClientForwardStreamErrorBranches(t *testing.T) {
+	wantErr := errors.New("open failed")
+	client := &GatewayGRPCClient{gateway: &testGatewayServiceClient{err: wantErr}}
+	if _, err := client.Forward(context.Background(), &sdk.ForwardRequest{Account: &sdk.Account{}, Writer: &captureWriter{}}); !errors.Is(err, wantErr) {
+		t.Fatalf("ForwardStream open error = %v", err)
+	}
+
+	wantErr = errors.New("recv failed")
+	client = &GatewayGRPCClient{
+		gateway: &stubGatewayServiceClient{
+			stream: &stubForwardStreamClient{err: wantErr},
+		},
+	}
+	if _, err := client.forwardStream(context.Background(), &pb.ForwardRequest{}, &sdk.ForwardRequest{Writer: &captureWriter{}}); !errors.Is(err, wantErr) {
+		t.Fatalf("ForwardStream recv error = %v", err)
+	}
+
+	wantErr = errors.New("write failed")
+	client = &GatewayGRPCClient{
+		gateway: &stubGatewayServiceClient{
+			stream: &stubForwardStreamClient{chunks: []*pb.ForwardChunk{
+				{Data: []byte("data")},
+				{Done: true, FinalOutcome: &pb.ForwardOutcome{Kind: pb.OutcomeKind_OUTCOME_SUCCESS}},
+			}},
+		},
+	}
+	if _, err := client.forwardStream(context.Background(), &pb.ForwardRequest{}, &sdk.ForwardRequest{Writer: &errorHTTPWriter{err: wantErr}}); !errors.Is(err, wantErr) {
+		t.Fatalf("ForwardStream writer error = %v", err)
+	}
+}
+
+type errorHTTPWriter struct {
+	header http.Header
+	err    error
+}
+
+func (w *errorHTTPWriter) Header() http.Header {
+	if w.header == nil {
+		w.header = make(http.Header)
+	}
+	return w.header
+}
+
+func (w *errorHTTPWriter) Write([]byte) (int, error) {
+	return 0, w.err
+}
+
+func (w *errorHTTPWriter) WriteHeader(int) {}

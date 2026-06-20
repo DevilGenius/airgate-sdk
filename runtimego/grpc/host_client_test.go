@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -17,10 +18,15 @@ type stubCoreInvokeClient struct {
 	stream     *stubHostStreamClient
 	invokeReq  *pb.HostInvokeRequest
 	invokeResp *pb.HostInvokeResponse
+	invokeErr  error
+	streamErr  error
 }
 
 func (c *stubCoreInvokeClient) Invoke(_ context.Context, req *pb.HostInvokeRequest, _ ...grpc.CallOption) (*pb.HostInvokeResponse, error) {
 	c.invokeReq = req
+	if c.invokeErr != nil {
+		return nil, c.invokeErr
+	}
 	if c.invokeResp != nil {
 		return c.invokeResp, nil
 	}
@@ -28,6 +34,9 @@ func (c *stubCoreInvokeClient) Invoke(_ context.Context, req *pb.HostInvokeReque
 }
 
 func (c *stubCoreInvokeClient) InvokeStream(context.Context, ...grpc.CallOption) (grpc.BidiStreamingClient[pb.HostStreamFrame, pb.HostStreamFrame], error) {
+	if c.streamErr != nil {
+		return nil, c.streamErr
+	}
 	return c.stream, nil
 }
 
@@ -37,14 +46,23 @@ type stubHostStreamClient struct {
 	recvFrames []*pb.HostStreamFrame
 	recvIndex  int
 	closed     bool
+	sendErr    error
+	recvErr    error
+	closeErr   error
 }
 
 func (s *stubHostStreamClient) Send(frame *pb.HostStreamFrame) error {
+	if s.sendErr != nil {
+		return s.sendErr
+	}
 	s.sentFrames = append(s.sentFrames, frame)
 	return nil
 }
 
 func (s *stubHostStreamClient) Recv() (*pb.HostStreamFrame, error) {
+	if s.recvErr != nil {
+		return nil, s.recvErr
+	}
 	if s.recvIndex >= len(s.recvFrames) {
 		return nil, io.EOF
 	}
@@ -57,7 +75,7 @@ func (s *stubHostStreamClient) Header() (metadata.MD, error) { return metadata.M
 func (s *stubHostStreamClient) Trailer() metadata.MD         { return metadata.MD{} }
 func (s *stubHostStreamClient) CloseSend() error {
 	s.closed = true
-	return nil
+	return s.closeErr
 }
 func (s *stubHostStreamClient) Context() context.Context {
 	if s.ctx != nil {
@@ -169,6 +187,39 @@ func TestHostClientInvokeStreamRoundTrip(t *testing.T) {
 	}
 }
 
+func TestHostClientInvokeSuccessAndTransportError(t *testing.T) {
+	client := &stubCoreInvokeClient{
+		invokeResp: &pb.HostInvokeResponse{
+			Status:   "ok",
+			Payload:  mustJSONPayload(t, map[string]interface{}{"id": "task_1"}),
+			Metadata: map[string]string{"trace": "abc"},
+		},
+	}
+	host := NewHostClient(client)
+
+	resp, err := host.Invoke(context.Background(), sdk.HostInvokeRequest{
+		Method:         "tasks.get",
+		Payload:        map[string]interface{}{"id": "task_1"},
+		IdempotencyKey: "idem_1",
+		Metadata:       map[string]string{"caller": "plugin"},
+	})
+	if err != nil {
+		t.Fatalf("Invoke() error = %v", err)
+	}
+	if resp.Status != "ok" || !reflect.DeepEqual(resp.Payload, map[string]interface{}{"id": "task_1"}) || resp.Metadata["trace"] != "abc" {
+		t.Fatalf("Invoke() response = %+v", resp)
+	}
+	if client.invokeReq.Method != "tasks.get" || client.invokeReq.IdempotencyKey != "idem_1" || client.invokeReq.Metadata["caller"] != "plugin" {
+		t.Fatalf("Invoke request = %+v", client.invokeReq)
+	}
+
+	wantErr := errors.New("core down")
+	host = NewHostClient(&stubCoreInvokeClient{invokeErr: wantErr})
+	if _, err := host.Invoke(context.Background(), sdk.HostInvokeRequest{Method: "tasks.get"}); !errors.Is(err, wantErr) {
+		t.Fatalf("Invoke transport error = %v", err)
+	}
+}
+
 func TestHostClientInvokeRejectsInvalidPayload(t *testing.T) {
 	client := &stubCoreInvokeClient{}
 	host := NewHostClient(client)
@@ -215,6 +266,23 @@ func TestHostClientInvokeStreamRejectsInvalidInitialPayload(t *testing.T) {
 	}
 }
 
+func TestHostClientInvokeStreamOpenAndStartErrors(t *testing.T) {
+	wantErr := errors.New("stream open failed")
+	host := NewHostClient(&stubCoreInvokeClient{streamErr: wantErr})
+	if _, err := host.InvokeStream(context.Background(), sdk.HostStreamRequest{Method: "chat.stream"}); !errors.Is(err, wantErr) {
+		t.Fatalf("InvokeStream open error = %v", err)
+	}
+
+	grpcStream := &stubHostStreamClient{sendErr: errors.New("send failed")}
+	host = NewHostClient(&stubCoreInvokeClient{stream: grpcStream})
+	if _, err := host.InvokeStream(context.Background(), sdk.HostStreamRequest{Method: "chat.stream"}); err == nil || err.Error() != "send failed" {
+		t.Fatalf("InvokeStream send error = %v", err)
+	}
+	if !grpcStream.closed {
+		t.Fatal("stream should close send side after initial send failure")
+	}
+}
+
 func TestHostStreamSendRejectsInvalidPayload(t *testing.T) {
 	grpcStream := &stubHostStreamClient{}
 	stream := &hostStream{stream: grpcStream}
@@ -239,5 +307,19 @@ func TestHostStreamRecvRejectsMalformedPayload(t *testing.T) {
 	_, err := stream.Recv()
 	if err == nil {
 		t.Fatal("Recv() 应拒绝 Core 返回的非法 JSON payload")
+	}
+}
+
+func TestHostStreamRecvAndCloseSendErrors(t *testing.T) {
+	wantErr := errors.New("recv failed")
+	stream := &hostStream{stream: &stubHostStreamClient{recvErr: wantErr}}
+	if _, err := stream.Recv(); !errors.Is(err, wantErr) {
+		t.Fatalf("Recv transport error = %v", err)
+	}
+
+	wantErr = errors.New("close failed")
+	stream = &hostStream{stream: &stubHostStreamClient{closeErr: wantErr}}
+	if err := stream.CloseSend(); !errors.Is(err, wantErr) {
+		t.Fatalf("CloseSend error = %v", err)
 	}
 }
