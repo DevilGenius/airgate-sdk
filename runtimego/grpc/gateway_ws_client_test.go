@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -46,6 +47,7 @@ func (c wsGatewayServiceClient) HandleWebSocket(context.Context, ...grpc.CallOpt
 }
 
 type testGatewayWSStream struct {
+	mu                 sync.Mutex
 	sent               []*pb.WebSocketFrame
 	recv               []*pb.WebSocketFrame
 	recvIndex          int
@@ -60,7 +62,9 @@ func (s *testGatewayWSStream) Send(frame *pb.WebSocketFrame) error {
 	if s.sendErr != nil {
 		return s.sendErr
 	}
+	s.mu.Lock()
 	s.sent = append(s.sent, frame)
+	s.mu.Unlock()
 	if s.sentCh != nil {
 		select {
 		case s.sentCh <- struct{}{}:
@@ -78,7 +82,7 @@ func (s *testGatewayWSStream) Recv() (*pb.WebSocketFrame, error) {
 	}
 	if want := s.waitSentBeforeRecv[s.recvIndex]; want > 0 {
 		deadline := time.After(time.Second)
-		for len(s.sent) < want {
+		for s.sentLen() < want {
 			select {
 			case <-s.sentCh:
 			case <-deadline:
@@ -99,6 +103,30 @@ func (s *testGatewayWSStream) CloseSend() error {
 func (s *testGatewayWSStream) Context() context.Context { return context.Background() }
 func (s *testGatewayWSStream) SendMsg(any) error        { return nil }
 func (s *testGatewayWSStream) RecvMsg(any) error        { return nil }
+
+func (s *testGatewayWSStream) sentLen() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return len(s.sent)
+}
+
+func (s *testGatewayWSStream) sentFrames() []*pb.WebSocketFrame {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]*pb.WebSocketFrame(nil), s.sent...)
+}
+
+func (s *testGatewayWSStream) waitSentCount(want int) error {
+	deadline := time.After(time.Second)
+	for s.sentLen() < want {
+		select {
+		case <-s.sentCh:
+		case <-deadline:
+			return errors.New("timed out waiting for websocket sends")
+		}
+	}
+	return nil
+}
 
 type testSDKWSConn struct {
 	info  *sdk.WebSocketConnectInfo
@@ -172,8 +200,12 @@ func TestGatewayGRPCClientHandleWebSocketResult(t *testing.T) {
 	if outcome.Kind != sdk.OutcomeSuccess || outcome.Upstream.StatusCode != http.StatusOK {
 		t.Fatalf("outcome = %+v", outcome)
 	}
-	if len(stream.sent) < 3 || stream.sent[0].Type != pb.WebSocketFrame_CONNECT || stream.sent[1].Type != pb.WebSocketFrame_TEXT || stream.sent[2].Type != pb.WebSocketFrame_CLOSE {
-		t.Fatalf("sent frames = %+v", stream.sent)
+	if err := stream.waitSentCount(3); err != nil {
+		t.Fatal(err)
+	}
+	sent := stream.sentFrames()
+	if len(sent) < 3 || sent[0].Type != pb.WebSocketFrame_CONNECT || sent[1].Type != pb.WebSocketFrame_TEXT || sent[2].Type != pb.WebSocketFrame_CLOSE {
+		t.Fatalf("sent frames = %+v", sent)
 	}
 	if len(conn.writes) != 1 || conn.writes[0].typ != sdk.WSMessageText || string(conn.writes[0].data) != "server text" {
 		t.Fatalf("conn writes = %+v", conn.writes)
