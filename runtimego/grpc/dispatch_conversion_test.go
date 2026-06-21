@@ -56,7 +56,7 @@ func TestDispatchDSLFromProtoSkipsNilRulesAndNilSubMessages(t *testing.T) {
 			nil,
 			{
 				Id:         "rule",
-				Candidates: []*pb.DispatchCandidateProto{nil, &pb.DispatchCandidateProto{Scheduling: "primary"}},
+				Candidates: []*pb.DispatchCandidateProto{nil, {Scheduling: "primary"}},
 			},
 		},
 	})

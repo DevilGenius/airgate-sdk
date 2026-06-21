@@ -110,9 +110,9 @@ func TestPluginBaseInfoMapsAllFieldsAndCaches(t *testing.T) {
 			Label:        "API Key",
 			Type:         "password",
 			Required:     true,
-			DefaultValue:  "default",
-			Description:   "desc",
-			Placeholder:   "sk",
+			DefaultValue: "default",
+			Description:  "desc",
+			Placeholder:  "sk",
 		}},
 		AccountTypes: []*pb.AccountTypeProto{{
 			Key:         "apikey",
@@ -181,7 +181,7 @@ func TestPluginBaseInitStartStopHealth(t *testing.T) {
 	base := &pluginBase{plugin: fake, coreInvokeBrokerID: 99}
 	ctx := &grpcPluginContext{config: &mapConfig{data: map[string]string{
 		sdk.ConfigKeyLogLevel: "debug",
-		"api_key":            "sk",
+		"api_key":             "sk",
 	}}}
 
 	if err := base.Init(ctx); err != nil {
@@ -302,4 +302,3 @@ func TestPluginBaseAssetsSchemaAndHTTPRequestBranches(t *testing.T) {
 		t.Fatalf("HandleHTTPRequest error branch status=%d headers=%v body=%v err=%v", status, headers, body, err)
 	}
 }
-

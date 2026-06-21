@@ -117,7 +117,9 @@ type testMiddlewarePlugin struct {
 	decision *sdk.MiddlewareDecision
 }
 
-func (p *testMiddlewarePlugin) Info() sdk.PluginInfo         { return sdk.PluginInfo{Type: sdk.PluginTypeMiddleware} }
+func (p *testMiddlewarePlugin) Info() sdk.PluginInfo {
+	return sdk.PluginInfo{Type: sdk.PluginTypeMiddleware}
+}
 func (p *testMiddlewarePlugin) Init(sdk.PluginContext) error { return nil }
 func (p *testMiddlewarePlugin) Start(context.Context) error  { return nil }
 func (p *testMiddlewarePlugin) Stop(context.Context) error   { return nil }
@@ -255,4 +257,3 @@ func TestMiddlewareGRPCClientPropagatesTransportErrors(t *testing.T) {
 		t.Fatalf("OnForwardEnd error = %v, want %v", err, wantErr)
 	}
 }
-

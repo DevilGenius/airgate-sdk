@@ -166,4 +166,3 @@ func TestLoggingStreamClientInterceptorPropagatesRequestID(t *testing.T) {
 		t.Fatalf("stream client interceptor error = %v", err)
 	}
 }
-

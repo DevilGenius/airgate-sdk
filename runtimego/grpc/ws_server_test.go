@@ -18,13 +18,13 @@ type wsGatewayPlugin struct {
 	handle func(context.Context, sdk.WebSocketConn) (sdk.ForwardOutcome, error)
 }
 
-func (p wsGatewayPlugin) Info() sdk.PluginInfo                                     { return sdk.PluginInfo{Type: sdk.PluginTypeGateway} }
-func (p wsGatewayPlugin) Init(sdk.PluginContext) error                             { return nil }
-func (p wsGatewayPlugin) Start(context.Context) error                              { return nil }
-func (p wsGatewayPlugin) Stop(context.Context) error                               { return nil }
-func (p wsGatewayPlugin) Platform() string                                         { return "test" }
-func (p wsGatewayPlugin) Models() []sdk.ModelInfo                                  { return nil }
-func (p wsGatewayPlugin) Routes() []sdk.RouteDefinition                            { return nil }
+func (p wsGatewayPlugin) Info() sdk.PluginInfo          { return sdk.PluginInfo{Type: sdk.PluginTypeGateway} }
+func (p wsGatewayPlugin) Init(sdk.PluginContext) error  { return nil }
+func (p wsGatewayPlugin) Start(context.Context) error   { return nil }
+func (p wsGatewayPlugin) Stop(context.Context) error    { return nil }
+func (p wsGatewayPlugin) Platform() string              { return "test" }
+func (p wsGatewayPlugin) Models() []sdk.ModelInfo       { return nil }
+func (p wsGatewayPlugin) Routes() []sdk.RouteDefinition { return nil }
 func (p wsGatewayPlugin) Forward(context.Context, *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
 	return sdk.ForwardOutcome{}, nil
 }

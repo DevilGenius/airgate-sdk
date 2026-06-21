@@ -66,4 +66,3 @@ func TestConfigGetAllReturnsCopy(t *testing.T) {
 		t.Fatalf("GetAll should return a copy, config mutated to %q", cfg["a"])
 	}
 }
-

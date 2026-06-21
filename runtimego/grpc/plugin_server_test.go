@@ -229,4 +229,3 @@ type emptyAssetsPlugin struct {
 }
 
 func (p *emptyAssetsPlugin) GetWebAssets() map[string][]byte { return nil }
-
