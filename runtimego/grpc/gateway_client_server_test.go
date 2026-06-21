@@ -20,7 +20,9 @@ type metadataGatewayPlugin struct {
 	validateErr error
 }
 
-func (p *metadataGatewayPlugin) Info() sdk.PluginInfo         { return sdk.PluginInfo{Type: sdk.PluginTypeGateway} }
+func (p *metadataGatewayPlugin) Info() sdk.PluginInfo {
+	return sdk.PluginInfo{Type: sdk.PluginTypeGateway}
+}
 func (p *metadataGatewayPlugin) Init(sdk.PluginContext) error { return nil }
 func (p *metadataGatewayPlugin) Start(context.Context) error  { return nil }
 func (p *metadataGatewayPlugin) Stop(context.Context) error   { return nil }
@@ -332,4 +334,3 @@ func TestGatewayGRPCClientForwardErrors(t *testing.T) {
 		t.Fatal("expected missing final outcome error")
 	}
 }
-

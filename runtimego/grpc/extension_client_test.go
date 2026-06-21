@@ -101,8 +101,8 @@ func TestExtensionGRPCClientMethods(t *testing.T) {
 	stream := &testHTTPChunkClient{chunks: []*pb.HttpResponseChunk{{StatusCode: http.StatusOK}}}
 	fake := &testExtensionServiceClient{
 		tasksResp: &pb.BackgroundTasksResponse{Tasks: []*pb.BackgroundTaskProto{{Name: "sync", IntervalMs: 1500}}},
-		httpResp: &pb.HttpResponse{StatusCode: http.StatusCreated, Body: []byte("ok")},
-		stream:   stream,
+		httpResp:  &pb.HttpResponse{StatusCode: http.StatusCreated, Body: []byte("ok")},
+		stream:    stream,
 		processResp: &pb.ProcessTaskResponse{
 			Success: true,
 		},
@@ -172,4 +172,3 @@ func TestExtensionGRPCClientErrors(t *testing.T) {
 		t.Fatalf("GetTaskTypes error = %v", err)
 	}
 }
-

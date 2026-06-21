@@ -56,9 +56,11 @@ func TestLogFormatDefaultAndInitLogger(t *testing.T) {
 }
 
 func TestContextLoggerAndRequestID(t *testing.T) {
+	//nolint:staticcheck // This test verifies nil context fallback behavior.
 	if LoggerFromContext(nil) == nil {
 		t.Fatal("LoggerFromContext(nil) returned nil")
 	}
+	//nolint:staticcheck // This test verifies nil context fallback behavior.
 	if RequestIDFromContext(nil) != "" {
 		t.Fatal("RequestIDFromContext(nil) should be empty")
 	}
@@ -251,7 +253,9 @@ func TestShouldColorEnvironmentBranches(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateTemp: %v", err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 	if shouldColor(file) {
 		t.Fatal("regular file should not be treated as a color-capable TTY")
 	}

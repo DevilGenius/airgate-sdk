@@ -266,7 +266,9 @@ func TestProxyServeHTTPWebSocket(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	if err := conn.WriteMessage(websocket.BinaryMessage, []byte("hello")); err != nil {
 		t.Fatalf("WriteMessage() error = %v", err)
@@ -330,7 +332,9 @@ func TestProxyServeHTTPWebSocketTextAndBinaryBranches(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	if err := conn.WriteMessage(websocket.TextMessage, []byte("hello")); err != nil {
 		t.Fatalf("WriteMessage() error = %v", err)

@@ -173,4 +173,3 @@ func TestPluginBaseEventClientErrorBranches(t *testing.T) {
 		t.Fatal("expected eventToProto payload encoding error")
 	}
 }
-

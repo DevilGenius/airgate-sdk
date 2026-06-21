@@ -465,7 +465,7 @@ func (s *generatedServerStream) RecvMsg(m any) error {
 	}
 	dst := reflect.ValueOf(m)
 	src := reflect.ValueOf(s.recv[0])
-	if src.Kind() == reflect.Ptr {
+	if src.Kind() == reflect.Pointer {
 		src = src.Elem()
 	}
 	dst.Elem().Set(src)
@@ -538,7 +538,7 @@ func callUnimplementedMethods(t *testing.T, srv interface{}) {
 			continue
 		}
 		reqType := method.Type.In(2)
-		if reqType.Kind() != reflect.Ptr {
+		if reqType.Kind() != reflect.Pointer {
 			continue
 		}
 		out := rv.Method(i).Call([]reflect.Value{reflect.ValueOf(context.Background()), reflect.New(reqType.Elem())})

@@ -46,13 +46,13 @@ func (c wsGatewayServiceClient) HandleWebSocket(context.Context, ...grpc.CallOpt
 }
 
 type testGatewayWSStream struct {
-	sent      []*pb.WebSocketFrame
-	recv      []*pb.WebSocketFrame
-	recvIndex int
-	closed    bool
-	sendErr   error
-	recvErr   error
-	sentCh    chan struct{}
+	sent               []*pb.WebSocketFrame
+	recv               []*pb.WebSocketFrame
+	recvIndex          int
+	closed             bool
+	sendErr            error
+	recvErr            error
+	sentCh             chan struct{}
 	waitSentBeforeRecv map[int]int
 }
 
@@ -101,8 +101,8 @@ func (s *testGatewayWSStream) SendMsg(any) error        { return nil }
 func (s *testGatewayWSStream) RecvMsg(any) error        { return nil }
 
 type testSDKWSConn struct {
-	info    *sdk.WebSocketConnectInfo
-	reads   []struct {
+	info  *sdk.WebSocketConnectInfo
+	reads []struct {
 		typ  int
 		data []byte
 		err  error

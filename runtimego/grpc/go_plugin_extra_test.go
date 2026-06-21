@@ -114,4 +114,3 @@ func TestServePanicsForUnknownType(t *testing.T) {
 	}()
 	Serve(struct{}{})
 }
-

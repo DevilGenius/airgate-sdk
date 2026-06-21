@@ -24,7 +24,9 @@ type testExtensionPlugin struct {
 	taskTypes  []string
 }
 
-func (p *testExtensionPlugin) Info() sdk.PluginInfo         { return sdk.PluginInfo{Type: sdk.PluginTypeExtension} }
+func (p *testExtensionPlugin) Info() sdk.PluginInfo {
+	return sdk.PluginInfo{Type: sdk.PluginTypeExtension}
+}
 func (p *testExtensionPlugin) Init(sdk.PluginContext) error { return nil }
 func (p *testExtensionPlugin) Start(context.Context) error  { return nil }
 func (p *testExtensionPlugin) Stop(context.Context) error   { return nil }
@@ -45,7 +47,9 @@ func (p *testExtensionPlugin) TaskTypes() []string { return p.taskTypes }
 
 type extensionPluginNoTasks struct{}
 
-func (extensionPluginNoTasks) Info() sdk.PluginInfo         { return sdk.PluginInfo{Type: sdk.PluginTypeExtension} }
+func (extensionPluginNoTasks) Info() sdk.PluginInfo {
+	return sdk.PluginInfo{Type: sdk.PluginTypeExtension}
+}
 func (extensionPluginNoTasks) Init(sdk.PluginContext) error { return nil }
 func (extensionPluginNoTasks) Start(context.Context) error  { return nil }
 func (extensionPluginNoTasks) Stop(context.Context) error   { return nil }
