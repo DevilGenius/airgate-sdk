@@ -130,8 +130,8 @@ func outcomeKindToProto(k sdk.OutcomeKind) pb.OutcomeKind {
 		return pb.OutcomeKind_OUTCOME_UPSTREAM_TRANSIENT
 	case sdk.OutcomeStreamAborted:
 		return pb.OutcomeKind_OUTCOME_STREAM_ABORTED
-	case sdk.OutcomeAccountModelUnsupported: //nolint:staticcheck // 兼容旧插件
-		return pb.OutcomeKind_OUTCOME_CLIENT_ERROR
+	case sdk.OutcomeFamilyTransient:
+		return pb.OutcomeKind_OUTCOME_FAMILY_TRANSIENT
 	case sdk.OutcomeAccountUnavailable:
 		return pb.OutcomeKind_OUTCOME_ACCOUNT_UNAVAILABLE
 	default:
@@ -153,8 +153,8 @@ func outcomeKindFromProto(k pb.OutcomeKind) sdk.OutcomeKind {
 		return sdk.OutcomeUpstreamTransient
 	case pb.OutcomeKind_OUTCOME_STREAM_ABORTED:
 		return sdk.OutcomeStreamAborted
-	case pb.OutcomeKind_OUTCOME_ACCOUNT_MODEL_UNSUPPORTED:
-		return sdk.OutcomeClientError
+	case pb.OutcomeKind_OUTCOME_FAMILY_TRANSIENT:
+		return sdk.OutcomeFamilyTransient
 	case pb.OutcomeKind_OUTCOME_ACCOUNT_UNAVAILABLE:
 		return sdk.OutcomeAccountUnavailable
 	default:

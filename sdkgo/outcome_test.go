@@ -18,8 +18,8 @@ func TestOutcomeKind_String(t *testing.T) {
 		{sdk.OutcomeAccountDead, "account_dead"},
 		{sdk.OutcomeUpstreamTransient, "upstream_transient"},
 		{sdk.OutcomeStreamAborted, "stream_aborted"},
+		{sdk.OutcomeFamilyTransient, "family_transient"},
 		{sdk.OutcomeAccountUnavailable, "account_unavailable"},
-		{sdk.OutcomeAccountModelUnsupported, "client_error"},
 		{sdk.OutcomeKind(99), "unknown"}, // 非枚举值回退到 unknown
 	}
 	for _, tc := range cases {
@@ -40,7 +40,7 @@ func TestOutcomeKind_IsSuccess(t *testing.T) {
 		sdk.OutcomeAccountDead,
 		sdk.OutcomeUpstreamTransient,
 		sdk.OutcomeStreamAborted,
-		sdk.OutcomeAccountModelUnsupported,
+		sdk.OutcomeFamilyTransient,
 	}
 	for _, k := range nonSuccess {
 		if k.IsSuccess() {
@@ -54,6 +54,7 @@ func TestOutcomeKind_IsAccountFault(t *testing.T) {
 		sdk.OutcomeAccountRateLimited,
 		sdk.OutcomeAccountDead,
 		sdk.OutcomeAccountUnavailable,
+		sdk.OutcomeFamilyTransient,
 	}
 	for _, k := range accountFaults {
 		if !k.IsAccountFault() {
@@ -66,7 +67,6 @@ func TestOutcomeKind_IsAccountFault(t *testing.T) {
 		sdk.OutcomeClientError,
 		sdk.OutcomeUpstreamTransient,
 		sdk.OutcomeStreamAborted,
-		sdk.OutcomeAccountModelUnsupported,
 	}
 	for _, k := range notAccountFaults {
 		if k.IsAccountFault() {
@@ -81,6 +81,7 @@ func TestOutcomeKind_ShouldFailover(t *testing.T) {
 		sdk.OutcomeAccountDead,
 		sdk.OutcomeUpstreamTransient,
 		sdk.OutcomeAccountUnavailable,
+		sdk.OutcomeFamilyTransient,
 	}
 	for _, k := range failover {
 		if !k.ShouldFailover() {
@@ -88,11 +89,10 @@ func TestOutcomeKind_ShouldFailover(t *testing.T) {
 		}
 	}
 	noFailover := []sdk.OutcomeKind{
-		sdk.OutcomeUnknown,                 // 插件没说的情况下不盲目重试
-		sdk.OutcomeSuccess,                 // 成功无需 failover
-		sdk.OutcomeClientError,             // 换号也救不回来
-		sdk.OutcomeStreamAborted,           // 字节已发给客户端
-		sdk.OutcomeAccountModelUnsupported, // 已归入 ClientError
+		sdk.OutcomeUnknown,       // 插件没说的情况下不盲目重试
+		sdk.OutcomeSuccess,       // 成功无需 failover
+		sdk.OutcomeClientError,   // 换号也救不回来
+		sdk.OutcomeStreamAborted, // 字节已发给客户端
 	}
 	for _, k := range noFailover {
 		if k.ShouldFailover() {

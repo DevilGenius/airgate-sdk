@@ -39,9 +39,9 @@ const (
 	// 不能 failover（字节已经发出去了），也不能把账号直接标死。
 	OutcomeStreamAborted
 
-	// Deprecated: OutcomeAccountModelUnsupported 已归入 OutcomeClientError。
-	// 保留常量避免编译失败，运行时等同于 ClientError。
-	OutcomeAccountModelUnsupported
+	// OutcomeFamilyTransient 上游某个模型家族暂时过载（例如 model overloaded）。
+	// Core 会把 (account, model-family) 写入短退避冷却并尝试 failover，不影响同账号其它 family。
+	OutcomeFamilyTransient
 
 	// OutcomeAccountUnavailable 账号暂时不可用（例如 OpenAI 账号临时 403）。
 	// Core 会短暂降级并累计次数，连续达到阈值后再升级为 AccountDead。
@@ -63,10 +63,10 @@ func (k OutcomeKind) String() string {
 		return "upstream_transient"
 	case OutcomeStreamAborted:
 		return "stream_aborted"
+	case OutcomeFamilyTransient:
+		return "family_transient"
 	case OutcomeAccountUnavailable:
 		return "account_unavailable"
-	case OutcomeAccountModelUnsupported:
-		return "client_error"
 	default:
 		return "unknown"
 	}
@@ -75,10 +75,13 @@ func (k OutcomeKind) String() string {
 // IsSuccess 是否成功完成（2xx）。
 func (k OutcomeKind) IsSuccess() bool { return k == OutcomeSuccess }
 
-// IsAccountFault 本次判决是否归咎于账号自身（RateLimited / Dead）。
-// Core 据此决定是否推进账号状态机。
+// IsAccountFault 本次判决是否需要避开当前选中的账号上下文。
+// FamilyTransient 只惩罚当前账号的当前模型家族，不会降级整个账号。
 func (k OutcomeKind) IsAccountFault() bool {
-	return k == OutcomeAccountRateLimited || k == OutcomeAccountDead || k == OutcomeAccountUnavailable
+	return k == OutcomeAccountRateLimited ||
+		k == OutcomeAccountDead ||
+		k == OutcomeAccountUnavailable ||
+		k == OutcomeFamilyTransient
 }
 
 // ShouldFailover 是否允许换账号重试。
@@ -86,7 +89,7 @@ func (k OutcomeKind) IsAccountFault() bool {
 // Success / Unknown 显然不该 failover。
 func (k OutcomeKind) ShouldFailover() bool {
 	switch k {
-	case OutcomeAccountRateLimited, OutcomeAccountDead, OutcomeUpstreamTransient, OutcomeAccountUnavailable:
+	case OutcomeAccountRateLimited, OutcomeAccountDead, OutcomeUpstreamTransient, OutcomeAccountUnavailable, OutcomeFamilyTransient:
 		return true
 	}
 	return false

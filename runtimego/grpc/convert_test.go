@@ -167,6 +167,7 @@ func TestForwardOutcome_KindPreserved(t *testing.T) {
 		sdk.OutcomeAccountDead,
 		sdk.OutcomeUpstreamTransient,
 		sdk.OutcomeStreamAborted,
+		sdk.OutcomeFamilyTransient,
 		sdk.OutcomeAccountUnavailable,
 	}
 	for _, k := range kinds {
@@ -175,15 +176,6 @@ func TestForwardOutcome_KindPreserved(t *testing.T) {
 		restored := outcomeFromProto(proto)
 		if restored.Kind != k {
 			t.Errorf("Kind %q not preserved: got %q", k, restored.Kind)
-		}
-	}
-	// AccountModelUnsupported 已归入 ClientError，round-trip 后变为 ClientError
-	{
-		original := sdk.ForwardOutcome{Kind: sdk.OutcomeAccountModelUnsupported} //nolint:staticcheck // 测试兼容映射
-		proto := outcomeToProto(original)
-		restored := outcomeFromProto(proto)
-		if restored.Kind != sdk.OutcomeClientError {
-			t.Errorf("AccountModelUnsupported should map to ClientError, got %q", restored.Kind)
 		}
 	}
 }
