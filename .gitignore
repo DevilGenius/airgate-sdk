@@ -6,4 +6,6 @@ coverage.out
 
 # 主题包依赖
 theme/node_modules/
+theme/.pnpm-store/
+theme/.pnpm-store-tmp/
 theme/dist/
