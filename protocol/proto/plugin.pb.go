@@ -1905,31 +1905,37 @@ func (x *UpstreamResponse) GetBody() []byte {
 
 // Usage 单次调用的用量与费用结果。非 Success 判决下应为空。
 type Usage struct {
-	state                 protoimpl.MessageState `protogen:"open.v1"`
-	Model                 string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
-	AccountCost           float64                `protobuf:"fixed64,2,opt,name=account_cost,json=accountCost,proto3" json:"account_cost,omitempty"`
-	UserCost              float64                `protobuf:"fixed64,3,opt,name=user_cost,json=userCost,proto3" json:"user_cost,omitempty"`
-	BillingMultiplier     float64                `protobuf:"fixed64,4,opt,name=billing_multiplier,json=billingMultiplier,proto3" json:"billing_multiplier,omitempty"`
-	Currency              string                 `protobuf:"bytes,5,opt,name=currency,proto3" json:"currency,omitempty"`
-	Summary               string                 `protobuf:"bytes,6,opt,name=summary,proto3" json:"summary,omitempty"`
-	FirstTokenMs          int64                  `protobuf:"varint,7,opt,name=first_token_ms,json=firstTokenMs,proto3" json:"first_token_ms,omitempty"`
-	Metadata              map[string]string      `protobuf:"bytes,11,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	InputTokens           int64                  `protobuf:"varint,12,opt,name=input_tokens,json=inputTokens,proto3" json:"input_tokens,omitempty"`
-	OutputTokens          int64                  `protobuf:"varint,13,opt,name=output_tokens,json=outputTokens,proto3" json:"output_tokens,omitempty"`
-	CachedInputTokens     int64                  `protobuf:"varint,14,opt,name=cached_input_tokens,json=cachedInputTokens,proto3" json:"cached_input_tokens,omitempty"`
-	CacheCreationTokens   int64                  `protobuf:"varint,15,opt,name=cache_creation_tokens,json=cacheCreationTokens,proto3" json:"cache_creation_tokens,omitempty"`
-	ReasoningOutputTokens int64                  `protobuf:"varint,18,opt,name=reasoning_output_tokens,json=reasoningOutputTokens,proto3" json:"reasoning_output_tokens,omitempty"`
-	InputPrice            float64                `protobuf:"fixed64,22,opt,name=input_price,json=inputPrice,proto3" json:"input_price,omitempty"`
-	OutputPrice           float64                `protobuf:"fixed64,23,opt,name=output_price,json=outputPrice,proto3" json:"output_price,omitempty"`
-	CachedInputPrice      float64                `protobuf:"fixed64,24,opt,name=cached_input_price,json=cachedInputPrice,proto3" json:"cached_input_price,omitempty"`
-	CacheCreationPrice    float64                `protobuf:"fixed64,25,opt,name=cache_creation_price,json=cacheCreationPrice,proto3" json:"cache_creation_price,omitempty"`
-	InputCost             float64                `protobuf:"fixed64,27,opt,name=input_cost,json=inputCost,proto3" json:"input_cost,omitempty"`
-	OutputCost            float64                `protobuf:"fixed64,28,opt,name=output_cost,json=outputCost,proto3" json:"output_cost,omitempty"`
-	CachedInputCost       float64                `protobuf:"fixed64,29,opt,name=cached_input_cost,json=cachedInputCost,proto3" json:"cached_input_cost,omitempty"`
-	CacheCreationCost     float64                `protobuf:"fixed64,30,opt,name=cache_creation_cost,json=cacheCreationCost,proto3" json:"cache_creation_cost,omitempty"`
-	ReasoningEffort       string                 `protobuf:"bytes,35,opt,name=reasoning_effort,json=reasoningEffort,proto3" json:"reasoning_effort,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Model             string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
+	AccountCost       float64                `protobuf:"fixed64,2,opt,name=account_cost,json=accountCost,proto3" json:"account_cost,omitempty"`
+	UserCost          float64                `protobuf:"fixed64,3,opt,name=user_cost,json=userCost,proto3" json:"user_cost,omitempty"`
+	BillingMultiplier float64                `protobuf:"fixed64,4,opt,name=billing_multiplier,json=billingMultiplier,proto3" json:"billing_multiplier,omitempty"`
+	Currency          string                 `protobuf:"bytes,5,opt,name=currency,proto3" json:"currency,omitempty"`
+	Summary           string                 `protobuf:"bytes,6,opt,name=summary,proto3" json:"summary,omitempty"`
+	// 请求进入插件到收到首个上游事件的耗时。字段号 7 保留旧 first_token_ms
+	// 的 wire 兼容语义，旧插件升级期间仍会被新 Core 解释为首事件延迟。
+	FirstEventMs          int64             `protobuf:"varint,7,opt,name=first_event_ms,json=firstEventMs,proto3" json:"first_event_ms,omitempty"`
+	Metadata              map[string]string `protobuf:"bytes,11,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	InputTokens           int64             `protobuf:"varint,12,opt,name=input_tokens,json=inputTokens,proto3" json:"input_tokens,omitempty"`
+	OutputTokens          int64             `protobuf:"varint,13,opt,name=output_tokens,json=outputTokens,proto3" json:"output_tokens,omitempty"`
+	CachedInputTokens     int64             `protobuf:"varint,14,opt,name=cached_input_tokens,json=cachedInputTokens,proto3" json:"cached_input_tokens,omitempty"`
+	CacheCreationTokens   int64             `protobuf:"varint,15,opt,name=cache_creation_tokens,json=cacheCreationTokens,proto3" json:"cache_creation_tokens,omitempty"`
+	ReasoningOutputTokens int64             `protobuf:"varint,18,opt,name=reasoning_output_tokens,json=reasoningOutputTokens,proto3" json:"reasoning_output_tokens,omitempty"`
+	InputPrice            float64           `protobuf:"fixed64,22,opt,name=input_price,json=inputPrice,proto3" json:"input_price,omitempty"`
+	OutputPrice           float64           `protobuf:"fixed64,23,opt,name=output_price,json=outputPrice,proto3" json:"output_price,omitempty"`
+	CachedInputPrice      float64           `protobuf:"fixed64,24,opt,name=cached_input_price,json=cachedInputPrice,proto3" json:"cached_input_price,omitempty"`
+	CacheCreationPrice    float64           `protobuf:"fixed64,25,opt,name=cache_creation_price,json=cacheCreationPrice,proto3" json:"cache_creation_price,omitempty"`
+	InputCost             float64           `protobuf:"fixed64,27,opt,name=input_cost,json=inputCost,proto3" json:"input_cost,omitempty"`
+	OutputCost            float64           `protobuf:"fixed64,28,opt,name=output_cost,json=outputCost,proto3" json:"output_cost,omitempty"`
+	CachedInputCost       float64           `protobuf:"fixed64,29,opt,name=cached_input_cost,json=cachedInputCost,proto3" json:"cached_input_cost,omitempty"`
+	CacheCreationCost     float64           `protobuf:"fixed64,30,opt,name=cache_creation_cost,json=cacheCreationCost,proto3" json:"cache_creation_cost,omitempty"`
+	ReasoningEffort       string            `protobuf:"bytes,35,opt,name=reasoning_effort,json=reasoningEffort,proto3" json:"reasoning_effort,omitempty"`
+	// 请求进入插件到收到首个真实输出 token/工具调用内容的耗时（TTFT）。
+	FirstTokenMs int64 `protobuf:"varint,36,opt,name=first_token_ms,json=firstTokenMs,proto3" json:"first_token_ms,omitempty"`
+	// WebSocket 建连耗时；非 WebSocket 上游保持 0。
+	WsDialMs      int64 `protobuf:"varint,37,opt,name=ws_dial_ms,json=wsDialMs,proto3" json:"ws_dial_ms,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Usage) Reset() {
@@ -2004,9 +2010,9 @@ func (x *Usage) GetSummary() string {
 	return ""
 }
 
-func (x *Usage) GetFirstTokenMs() int64 {
+func (x *Usage) GetFirstEventMs() int64 {
 	if x != nil {
-		return x.FirstTokenMs
+		return x.FirstEventMs
 	}
 	return 0
 }
@@ -2114,6 +2120,20 @@ func (x *Usage) GetReasoningEffort() string {
 		return x.ReasoningEffort
 	}
 	return ""
+}
+
+func (x *Usage) GetFirstTokenMs() int64 {
+	if x != nil {
+		return x.FirstTokenMs
+	}
+	return 0
+}
+
+func (x *Usage) GetWsDialMs() int64 {
+	if x != nil {
+		return x.WsDialMs
+	}
+	return 0
 }
 
 // ForwardOutcome 插件对一次 Forward 的完整判决结果。
@@ -4792,7 +4812,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x04body\x18\x03 \x01(\fR\x04body\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\x86\b\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xca\b\n" +
 	"\x05Usage\x12\x14\n" +
 	"\x05model\x18\x01 \x01(\tR\x05model\x12!\n" +
 	"\faccount_cost\x18\x02 \x01(\x01R\vaccountCost\x12\x1b\n" +
@@ -4800,7 +4820,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x12billing_multiplier\x18\x04 \x01(\x01R\x11billingMultiplier\x12\x1a\n" +
 	"\bcurrency\x18\x05 \x01(\tR\bcurrency\x12\x18\n" +
 	"\asummary\x18\x06 \x01(\tR\asummary\x12$\n" +
-	"\x0efirst_token_ms\x18\a \x01(\x03R\ffirstTokenMs\x12B\n" +
+	"\x0efirst_event_ms\x18\a \x01(\x03R\ffirstEventMs\x12B\n" +
 	"\bmetadata\x18\v \x03(\v2&.airgate.plugin.v1.Usage.MetadataEntryR\bmetadata\x12!\n" +
 	"\finput_tokens\x18\f \x01(\x03R\vinputTokens\x12#\n" +
 	"\routput_tokens\x18\r \x01(\x03R\foutputTokens\x12.\n" +
@@ -4818,7 +4838,10 @@ const file_plugin_proto_rawDesc = "" +
 	"outputCost\x12*\n" +
 	"\x11cached_input_cost\x18\x1d \x01(\x01R\x0fcachedInputCost\x12.\n" +
 	"\x13cache_creation_cost\x18\x1e \x01(\x01R\x11cacheCreationCost\x12)\n" +
-	"\x10reasoning_effort\x18# \x01(\tR\x0freasoningEffort\x1a;\n" +
+	"\x10reasoning_effort\x18# \x01(\tR\x0freasoningEffort\x12$\n" +
+	"\x0efirst_token_ms\x18$ \x01(\x03R\ffirstTokenMs\x12\x1c\n" +
+	"\n" +
+	"ws_dial_ms\x18% \x01(\x03R\bwsDialMs\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01J\x04\b\b\x10\tJ\x04\b\t\x10\n" +

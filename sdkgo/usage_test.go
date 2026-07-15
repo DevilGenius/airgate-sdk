@@ -16,7 +16,9 @@ func TestUsageJSONRoundTrip(t *testing.T) {
 		BillingMultiplier:  2,
 		Currency:           "USD",
 		Summary:            "输入 10 token，输出 5 token",
-		FirstTokenMs:       120,
+		FirstEventMs:       120,
+		FirstTokenMs:       240,
+		WSDialMs:           35,
 		InputTokens:        10,
 		OutputTokens:       5,
 		CachedInputTokens:  2,
@@ -59,7 +61,7 @@ func TestUsageJSONRoundTrip(t *testing.T) {
 		t.Fatalf("Usage metadata round-trip mismatch: %+v", got.Metadata)
 	}
 	raw := string(data)
-	for _, key := range []string{"account_cost", "user_cost", "billing_multiplier", "first_token_ms", "input_tokens", "output_tokens", "cache_creation_price", "input_cost", "output_cost", "metadata"} {
+	for _, key := range []string{"account_cost", "user_cost", "billing_multiplier", "first_event_ms", "first_token_ms", "ws_dial_ms", "input_tokens", "output_tokens", "cache_creation_price", "input_cost", "output_cost", "metadata"} {
 		if !strings.Contains(raw, `"`+key+`"`) {
 			t.Fatalf("Usage JSON 缺少 snake_case key %q: %s", key, raw)
 		}
@@ -69,7 +71,7 @@ func TestUsageJSONRoundTrip(t *testing.T) {
 			t.Fatalf("Usage JSON metadata 缺少 key %q: %s", key, raw)
 		}
 	}
-	for _, key := range []string{"AccountCost", "UserCost", "BillingMultiplier", "FirstTokenMs", "CostDetails"} {
+	for _, key := range []string{"AccountCost", "UserCost", "BillingMultiplier", "FirstEventMs", "FirstTokenMs", "WSDialMs", "CostDetails"} {
 		if strings.Contains(raw, `"`+key+`"`) {
 			t.Fatalf("Usage JSON 不应包含 PascalCase key %q: %s", key, raw)
 		}

@@ -306,7 +306,9 @@ message Usage {
     double billing_multiplier = 4;
     string currency = 5;
     string summary = 6;
-    int64  first_token_ms = 7;
+    // 请求进入插件到收到首个上游事件的耗时。字段号 7 保留旧 first_token_ms
+    // 的 wire 兼容语义，旧插件升级期间仍会被新 Core 解释为首事件延迟。
+    int64  first_event_ms = 7;
     map<string, string> metadata = 11;
     int64  input_tokens = 12;
     int64  output_tokens = 13;
@@ -322,6 +324,10 @@ message Usage {
     double cached_input_cost = 29;
     double cache_creation_cost = 30;
     string reasoning_effort = 35;
+    // 请求进入插件到收到首个真实输出 token/工具调用内容的耗时（TTFT）。
+    int64  first_token_ms = 36;
+    // WebSocket 建连耗时；非 WebSocket 上游保持 0。
+    int64  ws_dial_ms = 37;
     reserved 8, 9, 10, 16, 17, 19, 20, 21, 26, 31, 32, 33, 34;
 }
 

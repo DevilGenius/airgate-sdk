@@ -161,7 +161,9 @@ type Usage struct {
 	BillingMultiplier     float64           `json:"billing_multiplier,omitempty"`
 	Currency              string            `json:"currency,omitempty"`
 	Summary               string            `json:"summary,omitempty"`
-	FirstTokenMs          int64             `json:"first_token_ms,omitempty"`
+	FirstEventMs          int64             `json:"first_event_ms,omitempty"` // 请求进入插件到首个上游事件（FRT）。
+	FirstTokenMs          int64             `json:"first_token_ms,omitempty"` // 请求进入插件到首个真实输出（TTFT）。
+	WSDialMs              int64             `json:"ws_dial_ms,omitempty"`     // WebSocket 建连耗时；非 WS 为 0。
 	InputTokens           int               `json:"input_tokens,omitempty"`
 	OutputTokens          int               `json:"output_tokens,omitempty"`
 	CachedInputTokens     int               `json:"cached_input_tokens,omitempty"`
