@@ -121,6 +121,30 @@ type UpstreamResponse struct {
 	Body       []byte
 }
 
+// OutboundRequestDiagnostic is a credential-free snapshot of one request that
+// the plugin actually sent upstream. Authorization, cookies, API keys and
+// access tokens must never be included in Headers.
+type OutboundRequestDiagnostic struct {
+	Transport           string
+	Method              string
+	URL                 string
+	Headers             http.Header
+	Body                []byte
+	StatusCode          int
+	BodyRedacted        bool
+	BodyRedactionReason string
+	BodyOriginalSize    int64
+}
+
+// FinalErrorDiagnostic contains optional raw diagnostics for a failed Forward
+// attempt. It must remain nil for successful attempts.
+type FinalErrorDiagnostic struct {
+	OutboundRequests []OutboundRequestDiagnostic
+	// UpstreamErrorBody carries a raw terminal error event when Upstream.Body is
+	// synthesized by the plugin (for example a WebSocket response.failed frame).
+	UpstreamErrorBody []byte
+}
+
 // Usage 是插件计算后的单次调用用量与费用结果。
 //
 // 只有 OutcomeSuccess 下 Usage 必填；OutcomeClientError 如果上游也计费（如部分重置 context
@@ -167,6 +191,7 @@ type Usage struct {
 //	Reason            人类可读原因，Core 仅落日志，不做任何判断
 //	UpdatedCredentials 插件若在 Forward 中刷新了凭证（OAuth 轮转等）通过此字段带回
 //	FailoverScope     可选，声明 OutcomeKind 之外的重试边界
+//	FinalErrorDiagnostic 可选，仅 TraceFinalError=true 且本次 attempt 失败时填写
 type ForwardOutcome struct {
 	Kind OutcomeKind
 
@@ -182,4 +207,6 @@ type ForwardOutcome struct {
 	Reason string
 
 	UpdatedCredentials map[string]string
+
+	FinalErrorDiagnostic *FinalErrorDiagnostic
 }

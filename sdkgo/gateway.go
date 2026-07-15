@@ -66,6 +66,11 @@ type ForwardRequest struct {
 	DispatchPlan DispatchPlan
 	Stream       bool
 
+	// TraceFinalError requests best-effort diagnostics only when this Forward
+	// attempt fails. Plugins must not copy or retain request bodies on successful
+	// attempts solely for tracing.
+	TraceFinalError bool
+
 	// Writer 流式响应写入目标。
 	// Core 负责把写入内容转发给用户，并在调用结束后根据 ForwardOutcome 写记录和更新账号状态。
 	Writer http.ResponseWriter

@@ -264,6 +264,7 @@ message ForwardRequest {
     bool   stream = 10;
     AccountProto account = 11;
     DispatchPlanProto dispatch_plan = 12;
+    bool trace_final_error = 13;
 }
 
 message DispatchPlanProto {
@@ -334,6 +335,24 @@ message ForwardOutcome {
     string reason = 6;
     map<string, string> updated_credentials = 7;
     string failover_scope = 8;
+    FinalErrorDiagnostic final_error_diagnostic = 9;
+}
+
+message OutboundRequestDiagnostic {
+    string transport = 1;
+    string method = 2;
+    string url = 3;
+    map<string, HeaderValues> headers = 4;
+    bytes body = 5;
+    int32 status_code = 6;
+    bool body_redacted = 7;
+    string body_redaction_reason = 8;
+    int64 body_original_size = 9;
+}
+
+message FinalErrorDiagnostic {
+    repeated OutboundRequestDiagnostic outbound_requests = 1;
+    bytes upstream_error_body = 2;
 }
 
 message ForwardChunk {

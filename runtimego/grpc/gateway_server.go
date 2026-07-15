@@ -92,6 +92,9 @@ func outcomeToProto(o sdk.ForwardOutcome) *pb.ForwardOutcome {
 	if o.Usage != nil {
 		out.Usage = usageToProto(*o.Usage)
 	}
+	if o.FinalErrorDiagnostic != nil {
+		out.FinalErrorDiagnostic = finalErrorDiagnosticToProto(o.FinalErrorDiagnostic)
+	}
 	return out
 }
 
@@ -112,6 +115,60 @@ func outcomeFromProto(p *pb.ForwardOutcome) sdk.ForwardOutcome {
 	if p.Usage != nil {
 		u := usageFromProto(p.Usage)
 		out.Usage = &u
+	}
+	if p.FinalErrorDiagnostic != nil {
+		out.FinalErrorDiagnostic = finalErrorDiagnosticFromProto(p.FinalErrorDiagnostic)
+	}
+	return out
+}
+
+func finalErrorDiagnosticToProto(d *sdk.FinalErrorDiagnostic) *pb.FinalErrorDiagnostic {
+	if d == nil {
+		return nil
+	}
+	out := &pb.FinalErrorDiagnostic{UpstreamErrorBody: d.UpstreamErrorBody}
+	if len(d.OutboundRequests) > 0 {
+		out.OutboundRequests = make([]*pb.OutboundRequestDiagnostic, 0, len(d.OutboundRequests))
+		for _, request := range d.OutboundRequests {
+			out.OutboundRequests = append(out.OutboundRequests, &pb.OutboundRequestDiagnostic{
+				Transport:           request.Transport,
+				Method:              request.Method,
+				Url:                 request.URL,
+				Headers:             httpHeadersToProto(request.Headers),
+				Body:                request.Body,
+				StatusCode:          int32(request.StatusCode),
+				BodyRedacted:        request.BodyRedacted,
+				BodyRedactionReason: request.BodyRedactionReason,
+				BodyOriginalSize:    request.BodyOriginalSize,
+			})
+		}
+	}
+	return out
+}
+
+func finalErrorDiagnosticFromProto(d *pb.FinalErrorDiagnostic) *sdk.FinalErrorDiagnostic {
+	if d == nil {
+		return nil
+	}
+	out := &sdk.FinalErrorDiagnostic{UpstreamErrorBody: d.UpstreamErrorBody}
+	if len(d.OutboundRequests) > 0 {
+		out.OutboundRequests = make([]sdk.OutboundRequestDiagnostic, 0, len(d.OutboundRequests))
+		for _, request := range d.OutboundRequests {
+			if request == nil {
+				continue
+			}
+			out.OutboundRequests = append(out.OutboundRequests, sdk.OutboundRequestDiagnostic{
+				Transport:           request.Transport,
+				Method:              request.Method,
+				URL:                 request.Url,
+				Headers:             protoHeadersToHTTP(request.Headers),
+				Body:                request.Body,
+				StatusCode:          int(request.StatusCode),
+				BodyRedacted:        request.BodyRedacted,
+				BodyRedactionReason: request.BodyRedactionReason,
+				BodyOriginalSize:    request.BodyOriginalSize,
+			})
+		}
 	}
 	return out
 }
@@ -259,13 +316,14 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 	// 非流式：用 bufferWriter 兜底捕获插件可能意外写入 Writer 的内容。
 	bw := &bufferWriter{}
 	fwdReq := &sdk.ForwardRequest{
-		Account:      buildAccount(req),
-		Body:         req.Body,
-		Headers:      protoHeadersToHTTP(req.Headers),
-		Model:        req.Model,
-		DispatchPlan: dispatchPlanFromProto(req.DispatchPlan),
-		Stream:       req.Stream,
-		Writer:       bw,
+		Account:         buildAccount(req),
+		Body:            req.Body,
+		Headers:         protoHeadersToHTTP(req.Headers),
+		Model:           req.Model,
+		DispatchPlan:    dispatchPlanFromProto(req.DispatchPlan),
+		Stream:          req.Stream,
+		TraceFinalError: req.TraceFinalError,
+		Writer:          bw,
 	}
 
 	outcome, err := s.Impl.Forward(ctx, fwdReq)
@@ -306,13 +364,14 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.GatewayService_ForwardStreamServer) error {
 	sw := &streamWriter{stream: stream}
 	fwdReq := &sdk.ForwardRequest{
-		Account:      buildAccount(req),
-		Body:         req.Body,
-		Headers:      protoHeadersToHTTP(req.Headers),
-		Model:        req.Model,
-		DispatchPlan: dispatchPlanFromProto(req.DispatchPlan),
-		Stream:       true,
-		Writer:       sw,
+		Account:         buildAccount(req),
+		Body:            req.Body,
+		Headers:         protoHeadersToHTTP(req.Headers),
+		Model:           req.Model,
+		DispatchPlan:    dispatchPlanFromProto(req.DispatchPlan),
+		Stream:          true,
+		TraceFinalError: req.TraceFinalError,
+		Writer:          sw,
 	}
 
 	startTime := time.Now()
