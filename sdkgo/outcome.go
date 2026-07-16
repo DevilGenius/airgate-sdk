@@ -194,6 +194,7 @@ type Usage struct {
 //	UpdatedCredentials 插件若在 Forward 中刷新了凭证（OAuth 轮转等）通过此字段带回
 //	FailoverScope     可选，声明 OutcomeKind 之外的重试边界
 //	FinalErrorDiagnostic 可选，仅 TraceFinalError=true 且本次 attempt 失败时填写
+//	SafetyRejected    响应处理器确认上游因安全策略拒绝本次请求
 type ForwardOutcome struct {
 	Kind OutcomeKind
 
@@ -211,4 +212,6 @@ type ForwardOutcome struct {
 	UpdatedCredentials map[string]string
 
 	FinalErrorDiagnostic *FinalErrorDiagnostic
+
+	SafetyRejected bool
 }

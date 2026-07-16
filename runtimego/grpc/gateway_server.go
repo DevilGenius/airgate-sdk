@@ -88,6 +88,7 @@ func outcomeToProto(o sdk.ForwardOutcome) *pb.ForwardOutcome {
 		RetryAfterMs:       o.RetryAfter.Milliseconds(),
 		Reason:             o.Reason,
 		UpdatedCredentials: o.UpdatedCredentials,
+		SafetyRejected:     o.SafetyRejected,
 	}
 	if o.Usage != nil {
 		out.Usage = usageToProto(*o.Usage)
@@ -111,6 +112,7 @@ func outcomeFromProto(p *pb.ForwardOutcome) sdk.ForwardOutcome {
 		RetryAfter:         time.Duration(p.RetryAfterMs) * time.Millisecond,
 		Reason:             p.Reason,
 		UpdatedCredentials: p.UpdatedCredentials,
+		SafetyRejected:     p.SafetyRejected,
 	}
 	if p.Usage != nil {
 		u := usageFromProto(p.Usage)

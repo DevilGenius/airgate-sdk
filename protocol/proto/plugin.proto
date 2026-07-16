@@ -342,6 +342,7 @@ message ForwardOutcome {
     map<string, string> updated_credentials = 7;
     string failover_scope = 8;
     FinalErrorDiagnostic final_error_diagnostic = 9;
+    bool safety_rejected = 10;
 }
 
 message OutboundRequestDiagnostic {

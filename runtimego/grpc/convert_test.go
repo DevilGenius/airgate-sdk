@@ -119,9 +119,10 @@ func TestForwardOutcome_RoundTrip(t *testing.T) {
 				"openai.image.unit":       "USD/image",
 			},
 		},
-		Duration:   2500 * time.Millisecond,
-		RetryAfter: 30000 * time.Millisecond,
-		Reason:     "normal success",
+		Duration:       2500 * time.Millisecond,
+		RetryAfter:     30000 * time.Millisecond,
+		Reason:         "normal success",
+		SafetyRejected: true,
 		UpdatedCredentials: map[string]string{
 			"access_token": "new-token",
 		},
