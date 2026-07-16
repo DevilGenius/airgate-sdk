@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -95,10 +96,10 @@ func (k OutcomeKind) ShouldFailover() bool {
 	return false
 }
 
-// FailoverScope 声明一次 ForwardOutcome 允许 Core 重试的边界。
+// FailoverScope 声明一次 ForwardOutcome 允许 Core 重试或重路由的边界。
 //
-// 零值表示不覆盖 OutcomeKind 自身语义。插件只有在能精确判断某类失败应该切换
-// Core 下发的 DispatchPlan 候选时，才应填写 DispatchCandidate。
+// 零值表示不覆盖 OutcomeKind 自身语义。DispatchCandidate 仅前进当前候选链；
+// ModelReroute 则要求 Core 使用 RerouteClientModel 重新解析完整 DispatchPlan。
 type FailoverScope string
 
 const (
@@ -108,6 +109,10 @@ const (
 	// FailoverScopeDispatchCandidate 表示当前 DispatchPlan 候选不可用，Core 可前进
 	// 到下一候选重试；若没有下一候选，则按原 OutcomeKind 处理。
 	FailoverScopeDispatchCandidate FailoverScope = "dispatch_candidate"
+
+	// FailoverScopeModelReroute 表示当前请求需要用 RerouteClientModel 重新解析
+	// DispatchPlan 并重新选择账号，而不是沿当前候选链继续前进。
+	FailoverScopeModelReroute FailoverScope = "model_reroute"
 )
 
 // UpstreamResponse 上游返回的原始 HTTP 快照。
@@ -193,12 +198,14 @@ type Usage struct {
 //	Reason            人类可读原因，Core 仅落日志，不做任何判断
 //	UpdatedCredentials 插件若在 Forward 中刷新了凭证（OAuth 轮转等）通过此字段带回
 //	FailoverScope     可选，声明 OutcomeKind 之外的重试边界
+//	RerouteClientModel 仅 ModelReroute scope 使用，作为新的 client model 重新解析调度方案并选号
 //	FinalErrorDiagnostic 可选，仅 TraceFinalError=true 且本次 attempt 失败时填写
 //	SafetyRejected    响应处理器确认上游因安全策略拒绝本次请求
 type ForwardOutcome struct {
 	Kind OutcomeKind
 
-	FailoverScope FailoverScope
+	FailoverScope      FailoverScope
+	RerouteClientModel string
 
 	Upstream UpstreamResponse
 
@@ -214,4 +221,16 @@ type ForwardOutcome struct {
 	FinalErrorDiagnostic *FinalErrorDiagnostic
 
 	SafetyRejected bool
+}
+
+// ModelRerouteClientTarget 返回经过协议校验的 client model 重路由目标。
+//
+// 模型重路由是 ClientError 的后续调度动作，而不是独立 OutcomeKind。只有插件明确
+// 声明 ModelReroute scope 且提供非空 client model 时，Core 才应执行该控制转换。
+func (o ForwardOutcome) ModelRerouteClientTarget() (string, bool) {
+	if o.Kind != OutcomeClientError || o.FailoverScope != FailoverScopeModelReroute {
+		return "", false
+	}
+	target := strings.TrimSpace(o.RerouteClientModel)
+	return target, target != ""
 }

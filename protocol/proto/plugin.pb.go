@@ -2149,8 +2149,11 @@ type ForwardOutcome struct {
 	FailoverScope        string                 `protobuf:"bytes,8,opt,name=failover_scope,json=failoverScope,proto3" json:"failover_scope,omitempty"`
 	FinalErrorDiagnostic *FinalErrorDiagnostic  `protobuf:"bytes,9,opt,name=final_error_diagnostic,json=finalErrorDiagnostic,proto3" json:"final_error_diagnostic,omitempty"`
 	SafetyRejected       bool                   `protobuf:"varint,10,opt,name=safety_rejected,json=safetyRejected,proto3" json:"safety_rejected,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// New client model passed back through Core's DispatchPlan resolver when
+	// failover_scope is "model_reroute".
+	RerouteClientModel string `protobuf:"bytes,11,opt,name=reroute_client_model,json=rerouteClientModel,proto3" json:"reroute_client_model,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *ForwardOutcome) Reset() {
@@ -2251,6 +2254,13 @@ func (x *ForwardOutcome) GetSafetyRejected() bool {
 		return x.SafetyRejected
 	}
 	return false
+}
+
+func (x *ForwardOutcome) GetRerouteClientModel() string {
+	if x != nil {
+		return x.RerouteClientModel
+	}
+	return ""
 }
 
 type OutboundRequestDiagnostic struct {
@@ -4854,7 +4864,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01J\x04\b\b\x10\tJ\x04\b\t\x10\n" +
 	"J\x04\b\n" +
-	"\x10\vJ\x04\b\x10\x10\x11J\x04\b\x11\x10\x12J\x04\b\x13\x10\x14J\x04\b\x14\x10\x15J\x04\b\x15\x10\x16J\x04\b\x1a\x10\x1bJ\x04\b\x1f\x10 J\x04\b \x10!J\x04\b!\x10\"J\x04\b\"\x10#\"\xf6\x04\n" +
+	"\x10\vJ\x04\b\x10\x10\x11J\x04\b\x11\x10\x12J\x04\b\x13\x10\x14J\x04\b\x14\x10\x15J\x04\b\x15\x10\x16J\x04\b\x1a\x10\x1bJ\x04\b\x1f\x10 J\x04\b \x10!J\x04\b!\x10\"J\x04\b\"\x10#\"\xa8\x05\n" +
 	"\x0eForwardOutcome\x122\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x1e.airgate.plugin.v1.OutcomeKindR\x04kind\x12?\n" +
 	"\bupstream\x18\x02 \x01(\v2#.airgate.plugin.v1.UpstreamResponseR\bupstream\x12.\n" +
@@ -4867,7 +4877,8 @@ const file_plugin_proto_rawDesc = "" +
 	"\x0efailover_scope\x18\b \x01(\tR\rfailoverScope\x12]\n" +
 	"\x16final_error_diagnostic\x18\t \x01(\v2'.airgate.plugin.v1.FinalErrorDiagnosticR\x14finalErrorDiagnostic\x12'\n" +
 	"\x0fsafety_rejected\x18\n" +
-	" \x01(\bR\x0esafetyRejected\x1aE\n" +
+	" \x01(\bR\x0esafetyRejected\x120\n" +
+	"\x14reroute_client_model\x18\v \x01(\tR\x12rerouteClientModel\x1aE\n" +
 	"\x17UpdatedCredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd1\x03\n" +

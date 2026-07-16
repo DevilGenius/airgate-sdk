@@ -136,6 +136,19 @@ func TestForwardOutcome_RoundTrip(t *testing.T) {
 	}
 }
 
+func TestForwardOutcome_ModelRerouteRoundTrip(t *testing.T) {
+	original := sdk.ForwardOutcome{
+		Kind:               sdk.OutcomeClientError,
+		FailoverScope:      sdk.FailoverScopeModelReroute,
+		RerouteClientModel: "gpt-5.4",
+	}
+	restored := outcomeFromProto(outcomeToProto(original))
+	if restored.Kind != original.Kind || restored.FailoverScope != original.FailoverScope ||
+		restored.RerouteClientModel != original.RerouteClientModel {
+		t.Fatalf("model reroute round-trip mismatch: original=%+v restored=%+v", original, restored)
+	}
+}
+
 func TestForwardOutcome_DurationConversion(t *testing.T) {
 	original := sdk.ForwardOutcome{
 		Kind:       sdk.OutcomeAccountRateLimited,

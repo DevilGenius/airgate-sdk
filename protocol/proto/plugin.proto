@@ -343,6 +343,9 @@ message ForwardOutcome {
     string failover_scope = 8;
     FinalErrorDiagnostic final_error_diagnostic = 9;
     bool safety_rejected = 10;
+    // New client model passed back through Core's DispatchPlan resolver when
+    // failover_scope is "model_reroute".
+    string reroute_client_model = 11;
 }
 
 message OutboundRequestDiagnostic {

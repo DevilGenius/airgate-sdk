@@ -116,3 +116,27 @@ func TestOutcomeKind_UnknownIsZeroValue(t *testing.T) {
 		t.Fatal("zero Kind must not trigger any positive predicate")
 	}
 }
+
+func TestFailoverScopeModelReroute(t *testing.T) {
+	if sdk.FailoverScopeModelReroute != "model_reroute" {
+		t.Fatalf("model reroute scope = %q", sdk.FailoverScopeModelReroute)
+	}
+
+	target, ok := (sdk.ForwardOutcome{
+		Kind:               sdk.OutcomeClientError,
+		FailoverScope:      sdk.FailoverScopeModelReroute,
+		RerouteClientModel: " gpt-5.4 ",
+	}).ModelRerouteClientTarget()
+	if !ok || target != "gpt-5.4" {
+		t.Fatalf("model reroute target = %q, ok=%v", target, ok)
+	}
+	for _, outcome := range []sdk.ForwardOutcome{
+		{Kind: sdk.OutcomeSuccess, FailoverScope: sdk.FailoverScopeModelReroute, RerouteClientModel: "gpt-5.4"},
+		{Kind: sdk.OutcomeClientError, FailoverScope: sdk.FailoverScopeDispatchCandidate, RerouteClientModel: "gpt-5.4"},
+		{Kind: sdk.OutcomeClientError, FailoverScope: sdk.FailoverScopeModelReroute},
+	} {
+		if target, ok := outcome.ModelRerouteClientTarget(); ok {
+			t.Fatalf("invalid model reroute accepted: target=%q outcome=%+v", target, outcome)
+		}
+	}
+}
