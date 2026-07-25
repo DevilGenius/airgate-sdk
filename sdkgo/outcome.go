@@ -47,6 +47,10 @@ const (
 	// OutcomeAccountUnavailable 账号暂时不可用（例如 OpenAI 账号临时 403）。
 	// Core 会短暂降级并累计次数，连续达到阈值后再升级为 AccountDead。
 	OutcomeAccountUnavailable
+
+	// OutcomeAccountQuotaExhausted 账号余额或配额已经耗尽，需要充值或人工处理。
+	// Core 会立即禁用账号并尝试 failover，不进入任何冷却状态。
+	OutcomeAccountQuotaExhausted
 )
 
 // String 返回人类可读名称，用于日志。
@@ -68,6 +72,8 @@ func (k OutcomeKind) String() string {
 		return "family_transient"
 	case OutcomeAccountUnavailable:
 		return "account_unavailable"
+	case OutcomeAccountQuotaExhausted:
+		return "account_quota_exhausted"
 	default:
 		return "unknown"
 	}
@@ -82,6 +88,7 @@ func (k OutcomeKind) IsAccountFault() bool {
 	return k == OutcomeAccountRateLimited ||
 		k == OutcomeAccountDead ||
 		k == OutcomeAccountUnavailable ||
+		k == OutcomeAccountQuotaExhausted ||
 		k == OutcomeFamilyTransient
 }
 
@@ -90,7 +97,7 @@ func (k OutcomeKind) IsAccountFault() bool {
 // Success / Unknown 显然不该 failover。
 func (k OutcomeKind) ShouldFailover() bool {
 	switch k {
-	case OutcomeAccountRateLimited, OutcomeAccountDead, OutcomeUpstreamTransient, OutcomeAccountUnavailable, OutcomeFamilyTransient:
+	case OutcomeAccountRateLimited, OutcomeAccountDead, OutcomeUpstreamTransient, OutcomeAccountUnavailable, OutcomeAccountQuotaExhausted, OutcomeFamilyTransient:
 		return true
 	}
 	return false

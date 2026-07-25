@@ -26,15 +26,16 @@ const (
 type OutcomeKind int32
 
 const (
-	OutcomeKind_OUTCOME_UNKNOWN              OutcomeKind = 0
-	OutcomeKind_OUTCOME_SUCCESS              OutcomeKind = 1
-	OutcomeKind_OUTCOME_CLIENT_ERROR         OutcomeKind = 2
-	OutcomeKind_OUTCOME_ACCOUNT_RATE_LIMITED OutcomeKind = 3
-	OutcomeKind_OUTCOME_ACCOUNT_DEAD         OutcomeKind = 4
-	OutcomeKind_OUTCOME_UPSTREAM_TRANSIENT   OutcomeKind = 5
-	OutcomeKind_OUTCOME_STREAM_ABORTED       OutcomeKind = 6
-	OutcomeKind_OUTCOME_FAMILY_TRANSIENT     OutcomeKind = 7
-	OutcomeKind_OUTCOME_ACCOUNT_UNAVAILABLE  OutcomeKind = 8
+	OutcomeKind_OUTCOME_UNKNOWN                 OutcomeKind = 0
+	OutcomeKind_OUTCOME_SUCCESS                 OutcomeKind = 1
+	OutcomeKind_OUTCOME_CLIENT_ERROR            OutcomeKind = 2
+	OutcomeKind_OUTCOME_ACCOUNT_RATE_LIMITED    OutcomeKind = 3
+	OutcomeKind_OUTCOME_ACCOUNT_DEAD            OutcomeKind = 4
+	OutcomeKind_OUTCOME_UPSTREAM_TRANSIENT      OutcomeKind = 5
+	OutcomeKind_OUTCOME_STREAM_ABORTED          OutcomeKind = 6
+	OutcomeKind_OUTCOME_FAMILY_TRANSIENT        OutcomeKind = 7
+	OutcomeKind_OUTCOME_ACCOUNT_UNAVAILABLE     OutcomeKind = 8
+	OutcomeKind_OUTCOME_ACCOUNT_QUOTA_EXHAUSTED OutcomeKind = 9
 )
 
 // Enum value maps for OutcomeKind.
@@ -49,17 +50,19 @@ var (
 		6: "OUTCOME_STREAM_ABORTED",
 		7: "OUTCOME_FAMILY_TRANSIENT",
 		8: "OUTCOME_ACCOUNT_UNAVAILABLE",
+		9: "OUTCOME_ACCOUNT_QUOTA_EXHAUSTED",
 	}
 	OutcomeKind_value = map[string]int32{
-		"OUTCOME_UNKNOWN":              0,
-		"OUTCOME_SUCCESS":              1,
-		"OUTCOME_CLIENT_ERROR":         2,
-		"OUTCOME_ACCOUNT_RATE_LIMITED": 3,
-		"OUTCOME_ACCOUNT_DEAD":         4,
-		"OUTCOME_UPSTREAM_TRANSIENT":   5,
-		"OUTCOME_STREAM_ABORTED":       6,
-		"OUTCOME_FAMILY_TRANSIENT":     7,
-		"OUTCOME_ACCOUNT_UNAVAILABLE":  8,
+		"OUTCOME_UNKNOWN":                 0,
+		"OUTCOME_SUCCESS":                 1,
+		"OUTCOME_CLIENT_ERROR":            2,
+		"OUTCOME_ACCOUNT_RATE_LIMITED":    3,
+		"OUTCOME_ACCOUNT_DEAD":            4,
+		"OUTCOME_UPSTREAM_TRANSIENT":      5,
+		"OUTCOME_STREAM_ABORTED":          6,
+		"OUTCOME_FAMILY_TRANSIENT":        7,
+		"OUTCOME_ACCOUNT_UNAVAILABLE":     8,
+		"OUTCOME_ACCOUNT_QUOTA_EXHAUSTED": 9,
 	}
 )
 
@@ -5173,7 +5176,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12#\n" +
 	"\rerror_message\x18\x02 \x01(\tR\ferrorMessage\")\n" +
 	"\x11TaskTypesResponse\x12\x14\n" +
-	"\x05types\x18\x01 \x03(\tR\x05types*\x88\x02\n" +
+	"\x05types\x18\x01 \x03(\tR\x05types*\xad\x02\n" +
 	"\vOutcomeKind\x12\x13\n" +
 	"\x0fOUTCOME_UNKNOWN\x10\x00\x12\x13\n" +
 	"\x0fOUTCOME_SUCCESS\x10\x01\x12\x18\n" +
@@ -5183,7 +5186,8 @@ const file_plugin_proto_rawDesc = "" +
 	"\x1aOUTCOME_UPSTREAM_TRANSIENT\x10\x05\x12\x1a\n" +
 	"\x16OUTCOME_STREAM_ABORTED\x10\x06\x12\x1c\n" +
 	"\x18OUTCOME_FAMILY_TRANSIENT\x10\a\x12\x1f\n" +
-	"\x1bOUTCOME_ACCOUNT_UNAVAILABLE\x10\b2\xcb\x04\n" +
+	"\x1bOUTCOME_ACCOUNT_UNAVAILABLE\x10\b\x12#\n" +
+	"\x1fOUTCOME_ACCOUNT_QUOTA_EXHAUSTED\x10\t2\xcb\x04\n" +
 	"\rPluginService\x12J\n" +
 	"\aGetInfo\x12\x18.airgate.plugin.v1.Empty\x1a%.airgate.plugin.v1.PluginInfoResponse\x12@\n" +
 	"\x04Init\x12\x1e.airgate.plugin.v1.InitRequest\x1a\x18.airgate.plugin.v1.Empty\x12;\n" +

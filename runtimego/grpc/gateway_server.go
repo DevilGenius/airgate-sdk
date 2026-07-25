@@ -195,6 +195,8 @@ func outcomeKindToProto(k sdk.OutcomeKind) pb.OutcomeKind {
 		return pb.OutcomeKind_OUTCOME_FAMILY_TRANSIENT
 	case sdk.OutcomeAccountUnavailable:
 		return pb.OutcomeKind_OUTCOME_ACCOUNT_UNAVAILABLE
+	case sdk.OutcomeAccountQuotaExhausted:
+		return pb.OutcomeKind_OUTCOME_ACCOUNT_QUOTA_EXHAUSTED
 	default:
 		return pb.OutcomeKind_OUTCOME_UNKNOWN
 	}
@@ -218,6 +220,8 @@ func outcomeKindFromProto(k pb.OutcomeKind) sdk.OutcomeKind {
 		return sdk.OutcomeFamilyTransient
 	case pb.OutcomeKind_OUTCOME_ACCOUNT_UNAVAILABLE:
 		return sdk.OutcomeAccountUnavailable
+	case pb.OutcomeKind_OUTCOME_ACCOUNT_QUOTA_EXHAUSTED:
+		return sdk.OutcomeAccountQuotaExhausted
 	default:
 		return sdk.OutcomeUnknown
 	}

@@ -289,6 +289,7 @@ enum OutcomeKind {
     OUTCOME_STREAM_ABORTED        = 6;
     OUTCOME_FAMILY_TRANSIENT      = 7;
     OUTCOME_ACCOUNT_UNAVAILABLE   = 8;
+    OUTCOME_ACCOUNT_QUOTA_EXHAUSTED = 9;
 }
 
 // UpstreamResponse 上游返回的原始 HTTP 快照。
