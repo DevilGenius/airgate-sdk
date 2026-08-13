@@ -20,6 +20,7 @@ type testPluginServiceClient struct {
 	httpResp      *pb.HttpResponse
 	errByMethod   map[string]error
 	initReq       *pb.InitRequest
+	updateReq     *pb.InitRequest
 	handleReq     *pb.HttpRequest
 	getInfoCalls  int
 	startCalls    int
@@ -46,6 +47,13 @@ func (c *testPluginServiceClient) GetInfo(context.Context, *pb.Empty, ...grpc.Ca
 func (c *testPluginServiceClient) Init(_ context.Context, req *pb.InitRequest, _ ...grpc.CallOption) (*pb.Empty, error) {
 	c.initReq = req
 	if err := c.err("Init"); err != nil {
+		return nil, err
+	}
+	return &pb.Empty{}, nil
+}
+func (c *testPluginServiceClient) UpdateConfig(_ context.Context, req *pb.InitRequest, _ ...grpc.CallOption) (*pb.Empty, error) {
+	c.updateReq = req
+	if err := c.err("UpdateConfig"); err != nil {
 		return nil, err
 	}
 	return &pb.Empty{}, nil

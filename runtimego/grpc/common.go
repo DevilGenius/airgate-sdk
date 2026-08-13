@@ -100,7 +100,7 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 		info.ConfigSchema = make([]sdk.ConfigField, 0, len(resp.ConfigSchema))
 	}
 	for _, cf := range resp.ConfigSchema {
-		info.ConfigSchema = append(info.ConfigSchema, sdk.ConfigField{
+		field := sdk.ConfigField{
 			Key:         cf.Key,
 			Label:       cf.Label,
 			Type:        cf.Type,
@@ -108,7 +108,11 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 			Default:     cf.DefaultValue,
 			Description: cf.Description,
 			Placeholder: cf.Placeholder,
-		})
+		}
+		for _, option := range cf.Options {
+			field.Options = append(field.Options, sdk.ConfigOption{Value: option.Value, Label: option.Label})
+		}
+		info.ConfigSchema = append(info.ConfigSchema, field)
 	}
 
 	if len(resp.AccountTypes) > 0 {
@@ -214,6 +218,17 @@ func (b *pluginBase) Init(ctx sdk.PluginContext) error {
 		sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
 	)
 	return nil
+}
+
+func (b *pluginBase) UpdateConfig(ctx sdk.PluginContext) error {
+	config := make(map[string]string)
+	if ctx != nil && ctx.Config() != nil {
+		config = ctx.Config().GetAll()
+	}
+	grpcCtx, cancel := withTimeout()
+	defer cancel()
+	_, err := b.plugin.UpdateConfig(grpcCtx, &pb.InitRequest{Config: config})
+	return err
 }
 
 // Start 启动插件

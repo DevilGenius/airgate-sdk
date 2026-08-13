@@ -9,6 +9,7 @@ option go_package = "github.com/DevilGenius/airgate-sdk/protocol/proto";
 service PluginService {
     rpc GetInfo(Empty) returns (PluginInfoResponse);
     rpc Init(InitRequest) returns (Empty);
+    rpc UpdateConfig(InitRequest) returns (Empty);
     rpc Start(Empty) returns (Empty);
     rpc Stop(Empty) returns (Empty);
     // 获取插件的前端静态资源
@@ -179,6 +180,7 @@ message ConfigFieldProto {
     string default_value = 5;
     string description = 6;
     string placeholder = 7;
+    repeated ConfigFieldOptionProto options = 8;
 }
 
 message AccountTypeProto {
@@ -663,4 +665,10 @@ message ProcessTaskResponse {
 
 message TaskTypesResponse {
     repeated string types = 1;
+}
+
+// Kept at the end to preserve generated message indexes for existing messages.
+message ConfigFieldOptionProto {
+    string value = 1;
+    string label = 2;
 }

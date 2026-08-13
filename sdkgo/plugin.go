@@ -59,13 +59,20 @@ type PluginInfo struct {
 
 // ConfigField 配置项声明。
 type ConfigField struct {
-	Key         string `json:"key"`
-	Label       string `json:"label"`
-	Type        string `json:"type"` // string / int / bool / float / duration / password
-	Required    bool   `json:"required"`
-	Default     string `json:"default,omitempty"`
-	Description string `json:"description,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
+	Key         string         `json:"key"`
+	Label       string         `json:"label"`
+	Type        string         `json:"type"` // string / int / bool / float / duration / password
+	Required    bool           `json:"required"`
+	Default     string         `json:"default,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Placeholder string         `json:"placeholder,omitempty"`
+	Options     []ConfigOption `json:"options,omitempty"`
+}
+
+// ConfigOption 是 select 配置项的候选值。
+type ConfigOption struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
 }
 
 // PluginContext Core 注入给插件的最小上下文：Logger + Config。

@@ -6,6 +6,8 @@ import (
 	"log/slog"
 
 	goplugin "github.com/hashicorp/go-plugin"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
 	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
@@ -50,6 +52,12 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 			Description:  cf.Description,
 			Placeholder:  cf.Placeholder,
 		})
+		for _, option := range cf.Options {
+			resp.ConfigSchema[len(resp.ConfigSchema)-1].Options = append(resp.ConfigSchema[len(resp.ConfigSchema)-1].Options, &pb.ConfigFieldOptionProto{
+				Value: option.Value,
+				Label: option.Label,
+			})
+		}
 	}
 
 	if len(info.AccountTypes) > 0 {
@@ -134,6 +142,17 @@ func (s *PluginGRPCServer) Init(_ context.Context, req *pb.InitRequest) (*pb.Emp
 		return nil, err
 	}
 	slog.Info("plugin_init_completed", sdk.LogFieldPluginID, info.ID)
+	return &pb.Empty{}, nil
+}
+
+func (s *PluginGRPCServer) UpdateConfig(_ context.Context, req *pb.InitRequest) (*pb.Empty, error) {
+	watcher, ok := s.Impl.(sdk.ConfigWatcher)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "plugin does not support config hot reload")
+	}
+	if err := watcher.OnConfigUpdate(&mapConfig{data: req.Config}); err != nil {
+		return nil, err
+	}
 	return &pb.Empty{}, nil
 }
 

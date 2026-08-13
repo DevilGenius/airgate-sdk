@@ -2,6 +2,7 @@ package sdk_test
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
@@ -28,7 +29,7 @@ func TestConfigFieldJSONRoundTrip(t *testing.T) {
 		t.Fatalf("Unmarshal: %v", err)
 	}
 
-	if got != cf {
+	if !reflect.DeepEqual(got, cf) {
 		t.Errorf("round-trip mismatch:\ngot  %+v\nwant %+v", got, cf)
 	}
 }

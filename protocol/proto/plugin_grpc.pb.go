@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	PluginService_GetInfo_FullMethodName       = "/airgate.plugin.v1.PluginService/GetInfo"
 	PluginService_Init_FullMethodName          = "/airgate.plugin.v1.PluginService/Init"
+	PluginService_UpdateConfig_FullMethodName  = "/airgate.plugin.v1.PluginService/UpdateConfig"
 	PluginService_Start_FullMethodName         = "/airgate.plugin.v1.PluginService/Start"
 	PluginService_Stop_FullMethodName          = "/airgate.plugin.v1.PluginService/Stop"
 	PluginService_GetWebAssets_FullMethodName  = "/airgate.plugin.v1.PluginService/GetWebAssets"
@@ -35,6 +36,7 @@ const (
 type PluginServiceClient interface {
 	GetInfo(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PluginInfoResponse, error)
 	Init(ctx context.Context, in *InitRequest, opts ...grpc.CallOption) (*Empty, error)
+	UpdateConfig(ctx context.Context, in *InitRequest, opts ...grpc.CallOption) (*Empty, error)
 	Start(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	Stop(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	// 获取插件的前端静态资源
@@ -69,6 +71,16 @@ func (c *pluginServiceClient) Init(ctx context.Context, in *InitRequest, opts ..
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, PluginService_Init_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pluginServiceClient) UpdateConfig(ctx context.Context, in *InitRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, PluginService_UpdateConfig_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -141,6 +153,7 @@ func (c *pluginServiceClient) HandleRequest(ctx context.Context, in *HttpRequest
 type PluginServiceServer interface {
 	GetInfo(context.Context, *Empty) (*PluginInfoResponse, error)
 	Init(context.Context, *InitRequest) (*Empty, error)
+	UpdateConfig(context.Context, *InitRequest) (*Empty, error)
 	Start(context.Context, *Empty) (*Empty, error)
 	Stop(context.Context, *Empty) (*Empty, error)
 	// 获取插件的前端静态资源
@@ -166,6 +179,9 @@ func (UnimplementedPluginServiceServer) GetInfo(context.Context, *Empty) (*Plugi
 }
 func (UnimplementedPluginServiceServer) Init(context.Context, *InitRequest) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method Init not implemented")
+}
+func (UnimplementedPluginServiceServer) UpdateConfig(context.Context, *InitRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateConfig not implemented")
 }
 func (UnimplementedPluginServiceServer) Start(context.Context, *Empty) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method Start not implemented")
@@ -238,6 +254,24 @@ func _PluginService_Init_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PluginServiceServer).Init(ctx, req.(*InitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PluginService_UpdateConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PluginServiceServer).UpdateConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PluginService_UpdateConfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PluginServiceServer).UpdateConfig(ctx, req.(*InitRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -364,6 +398,10 @@ var PluginService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Init",
 			Handler:    _PluginService_Init_Handler,
+		},
+		{
+			MethodName: "UpdateConfig",
+			Handler:    _PluginService_UpdateConfig_Handler,
 		},
 		{
 			MethodName: "Start",
