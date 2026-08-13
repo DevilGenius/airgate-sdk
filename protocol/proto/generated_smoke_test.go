@@ -189,6 +189,7 @@ func TestGeneratedGRPCClientsAndRegistration(t *testing.T) {
 	plugin := NewPluginServiceClient(conn)
 	_, _ = plugin.GetInfo(context.Background(), &Empty{})
 	_, _ = plugin.Init(context.Background(), &InitRequest{})
+	_, _ = plugin.UpdateConfig(context.Background(), &InitRequest{})
 	_, _ = plugin.Start(context.Background(), &Empty{})
 	_, _ = plugin.Stop(context.Background(), &Empty{})
 	_, _ = plugin.GetWebAssets(context.Background(), &Empty{})
@@ -261,6 +262,7 @@ func TestGeneratedGRPCUnaryHandlers(t *testing.T) {
 	}{
 		{"PluginGetInfo", _PluginService_GetInfo_Handler},
 		{"PluginInit", _PluginService_Init_Handler},
+		{"PluginUpdateConfig", _PluginService_UpdateConfig_Handler},
 		{"PluginStart", _PluginService_Start_Handler},
 		{"PluginStop", _PluginService_Stop_Handler},
 		{"PluginGetWebAssets", _PluginService_GetWebAssets_Handler},
@@ -364,6 +366,10 @@ func (*generatedHandlerServer) GetInfo(context.Context, *Empty) (*PluginInfoResp
 	return &PluginInfoResponse{Id: "plugin"}, nil
 }
 func (*generatedHandlerServer) Init(context.Context, *InitRequest) (*Empty, error) {
+	return &Empty{}, nil
+}
+
+func (*generatedHandlerServer) UpdateConfig(context.Context, *InitRequest) (*Empty, error) {
 	return &Empty{}, nil
 }
 func (*generatedHandlerServer) Start(context.Context, *Empty) (*Empty, error) {
