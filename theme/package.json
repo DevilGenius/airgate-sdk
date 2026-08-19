@@ -1,9 +1,9 @@
 {
   "name": "@devilgenius/airgate-theme",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "AirGate 插件前端主题、样式隔离和公共组件包",
   "type": "module",
-  "packageManager": "pnpm@11.12.0",
+  "packageManager": "pnpm@11.22.0",
   "license": "MIT",
   "repository": {
     "type": "git",
