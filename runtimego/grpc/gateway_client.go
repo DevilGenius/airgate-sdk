@@ -139,13 +139,13 @@ func (c *GatewayGRPCClient) Forward(ctx context.Context, req *sdk.ForwardRequest
 }
 
 func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.ForwardRequest, req *sdk.ForwardRequest) (sdk.ForwardOutcome, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	stream, err := c.gateway.ForwardStream(ctx, pbReq)
 	if err != nil {
 		return sdk.ForwardOutcome{}, fmt.Errorf("gRPC ForwardStream 调用失败: %w", err)
 	}
 
-	var finalOutcome sdk.ForwardOutcome
-	haveFinal := false
 	responseStarted := false
 	for {
 		chunk, err := stream.Recv()
@@ -171,7 +171,11 @@ func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.Forward
 		}
 
 		if len(chunk.Data) > 0 && req.Writer != nil {
-			if _, writeErr := req.Writer.Write(chunk.Data); writeErr != nil {
+			n, writeErr := req.Writer.Write(chunk.Data)
+			if writeErr == nil && n != len(chunk.Data) {
+				writeErr = io.ErrShortWrite
+			}
+			if writeErr != nil {
 				return sdk.ForwardOutcome{}, fmt.Errorf("写入响应失败: %w", writeErr)
 			}
 			if flusher, ok := req.Writer.(interface{ Flush() }); ok {
@@ -180,15 +184,11 @@ func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.Forward
 		}
 
 		if chunk.Done && chunk.FinalOutcome != nil {
-			finalOutcome = outcomeFromProto(chunk.FinalOutcome)
-			haveFinal = true
+			return outcomeFromProto(chunk.FinalOutcome), nil
 		}
 	}
 
-	if !haveFinal {
-		return sdk.ForwardOutcome{}, fmt.Errorf("未收到最终 outcome")
-	}
-	return finalOutcome, nil
+	return sdk.ForwardOutcome{}, fmt.Errorf("未收到最终 outcome")
 }
 
 func (c *GatewayGRPCClient) ValidateAccount(ctx context.Context, credentials map[string]string) error {
@@ -198,13 +198,30 @@ func (c *GatewayGRPCClient) ValidateAccount(ctx context.Context, credentials map
 
 // HandleWebSocket 通过 gRPC 双向流处理 WebSocket（Core 侧调用）。
 func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSocketConn) (sdk.ForwardOutcome, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	stream, err := c.gateway.HandleWebSocket(ctx)
 	if err != nil {
 		return sdk.ForwardOutcome{}, fmt.Errorf("gRPC HandleWebSocket 调用失败: %w", err)
 	}
 
 	info := conn.ConnectInfo()
-	credsJSON, _ := json.Marshal(info.Account.Credentials) //nolint:errcheck
+	var closeOnce sync.Once
+	closeConn := func(code int, reason string) {
+		closeOnce.Do(func() { _ = conn.Close(code, reason) })
+	}
+	stopOnCancel := context.AfterFunc(ctx, func() { closeConn(1000, "grpc websocket canceled") })
+	defer func() {
+		stopOnCancel()
+		closeConn(1000, "grpc websocket closing")
+	}()
+	if info == nil || info.Account == nil {
+		return sdk.ForwardOutcome{}, fmt.Errorf("WebSocket connection account is missing")
+	}
+	credsJSON, err := json.Marshal(info.Account.Credentials)
+	if err != nil {
+		return sdk.ForwardOutcome{}, err
+	}
 
 	if err := stream.Send(&pb.WebSocketFrame{
 		Type: pb.WebSocketFrame_CONNECT,
@@ -227,21 +244,19 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 		return sdk.ForwardOutcome{}, fmt.Errorf("发送 CONNECT 帧失败: %w", err)
 	}
 
-	clientConn := &grpcClientWebSocketConn{stream: stream, info: info}
-
-	readerCtx, readerCancel := context.WithCancel(ctx)
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
+		defer stream.CloseSend() // This goroutine exclusively owns Send/CloseSend.
+		defer cancel()
 		for {
 			select {
-			case <-readerCtx.Done():
+			case <-ctx.Done():
 				return
 			default:
 			}
 			msgType, data, readErr := conn.ReadMessage()
 			if readErr != nil {
-				_ = stream.Send(&pb.WebSocketFrame{Type: pb.WebSocketFrame_CLOSE})
 				errCh <- readErr
 				return
 			}
@@ -256,9 +271,9 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 		}
 	}()
 	stopReader := func(code int, reason string) {
-		readerCancel()
-		_ = conn.Close(code, reason)
-		_ = stream.CloseSend()
+		stopOnCancel()
+		cancel() // Unblock a Send before joining the sending goroutine.
+		closeConn(code, reason)
 		<-errCh
 	}
 
@@ -307,17 +322,10 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 	}
 
 done:
-	_ = clientConn
 	stopReader(closeCode, closeReason)
 
 	if !haveOutcome {
 		return sdk.ForwardOutcome{}, nil
 	}
 	return outcome, nil
-}
-
-// grpcClientWebSocketConn 保持 gRPC 流引用，便于后续扩展。
-type grpcClientWebSocketConn struct {
-	stream pb.GatewayService_HandleWebSocketClient
-	info   *sdk.WebSocketConnectInfo
 }

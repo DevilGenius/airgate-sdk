@@ -200,11 +200,11 @@ func TestGatewayGRPCClientHandleWebSocketResult(t *testing.T) {
 	if outcome.Kind != sdk.OutcomeSuccess || outcome.Upstream.StatusCode != http.StatusOK {
 		t.Fatalf("outcome = %+v", outcome)
 	}
-	if err := stream.waitSentCount(3); err != nil {
+	if err := stream.waitSentCount(2); err != nil {
 		t.Fatal(err)
 	}
 	sent := stream.sentFrames()
-	if len(sent) < 3 || sent[0].Type != pb.WebSocketFrame_CONNECT || sent[1].Type != pb.WebSocketFrame_TEXT || sent[2].Type != pb.WebSocketFrame_CLOSE {
+	if len(sent) < 2 || sent[0].Type != pb.WebSocketFrame_CONNECT || sent[1].Type != pb.WebSocketFrame_TEXT {
 		t.Fatalf("sent frames = %+v", sent)
 	}
 	if len(conn.writes) != 1 || conn.writes[0].typ != sdk.WSMessageText || string(conn.writes[0].data) != "server text" {
