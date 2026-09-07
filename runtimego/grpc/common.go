@@ -251,6 +251,8 @@ func (b *pluginBase) Start(ctx context.Context) error {
 
 // Stop 停止插件
 func (b *pluginBase) Stop(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultGRPCTimeout)
+	defer cancel()
 	logger, start := b.rpcLogger(ctx, "Stop")
 	logger.Debug("plugin_call_stop_begin")
 	_, err := b.plugin.Stop(ctx, &pb.Empty{})
