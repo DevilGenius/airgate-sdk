@@ -113,6 +113,10 @@ const (
 	// FailoverScopeNone 表示不请求额外 failover。
 	FailoverScopeNone FailoverScope = ""
 
+	// FailoverScopeTerminal forbids replay even when the outcome is transient,
+	// for example when the response cannot fit the configured resource budget.
+	FailoverScopeTerminal FailoverScope = "terminal"
+
 	// FailoverScopeDispatchCandidate 表示当前 DispatchPlan 候选不可用，Core 可前进
 	// 到下一候选重试；若没有下一候选，则按原 OutcomeKind 处理。
 	FailoverScopeDispatchCandidate FailoverScope = "dispatch_candidate"
@@ -228,6 +232,10 @@ type ForwardOutcome struct {
 	FinalErrorDiagnostic *FinalErrorDiagnostic
 
 	SafetyRejected bool
+}
+
+func (o ForwardOutcome) ShouldFailover() bool {
+	return o.FailoverScope != FailoverScopeTerminal && o.Kind.ShouldFailover()
 }
 
 // ModelRerouteClientTarget 返回经过协议校验的 client model 重路由目标。

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"sync"
 
@@ -22,6 +21,8 @@ type streamResponseWriter struct {
 	header     http.Header
 	statusCode int
 	headerSent bool
+	err        error
+	onError    func()
 }
 
 func (w *streamResponseWriter) Header() http.Header {
@@ -35,27 +36,39 @@ func (w *streamResponseWriter) WriteHeader(statusCode int) {
 }
 
 func (w *streamResponseWriter) Write(data []byte) (int, error) {
-	chunk := &pb.HttpResponseChunk{
-		Data: make([]byte, len(data)),
+	if w.err != nil {
+		return 0, w.err
 	}
-	copy(chunk.Data, data)
-
-	if !w.headerSent {
-		w.headerSent = true
-		if w.statusCode == 0 {
-			w.statusCode = http.StatusOK
+	total := 0
+	for first := true; first || len(data) > 0; first = false {
+		n := min(len(data), streamChunkSize)
+		chunk := &pb.HttpResponseChunk{Data: bytes.Clone(data[:n])}
+		if !w.headerSent {
+			w.headerSent = true
+			if w.statusCode == 0 {
+				w.statusCode = http.StatusOK
+			}
+			chunk.StatusCode = int32(w.statusCode)
+			chunk.Headers = make(map[string]*pb.HeaderValues)
+			for k, v := range w.header {
+				chunk.Headers[strings.ToLower(k)] = &pb.HeaderValues{Values: v}
+			}
 		}
-		chunk.StatusCode = int32(w.statusCode)
-		chunk.Headers = make(map[string]*pb.HeaderValues)
-		for k, v := range w.header {
-			chunk.Headers[strings.ToLower(k)] = &pb.HeaderValues{Values: v}
+		err := checkResponseMessage(chunk)
+		if err == nil {
+			err = w.stream.Send(chunk)
 		}
+		if err != nil {
+			w.err = err
+			if w.onError != nil {
+				w.onError()
+			}
+			return total, err
+		}
+		total += n
+		data = data[n:]
 	}
-
-	if err := w.stream.Send(chunk); err != nil {
-		return 0, err
-	}
-	return len(data), nil
+	return total, nil
 }
 
 func (w *streamResponseWriter) Flush() {
@@ -171,14 +184,28 @@ func (s *ExtensionGRPCServer) HandleRequest(ctx context.Context, req *pb.HttpReq
 		}, nil
 	}
 
-	recorder := httptest.NewRecorder()
-	handler.ServeHTTP(recorder, httpReq)
-
-	return httpResponseToPB(recorder), nil
+	callCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	recorder := &bufferWriter{onLimit: cancel}
+	handler.ServeHTTP(recorder, httpReq.WithContext(callCtx))
+	if recorder.err != nil {
+		return nil, recorder.err
+	}
+	code := recorder.code
+	if code == 0 {
+		code = http.StatusOK
+	}
+	headers := make(map[string]*pb.HeaderValues)
+	for key, value := range recorder.Header() {
+		headers[strings.ToLower(key)] = &pb.HeaderValues{Values: value}
+	}
+	response := &pb.HttpResponse{StatusCode: int32(code), Headers: headers, Body: recorder.body}
+	return response, checkResponseMessage(response)
 }
 
 func (s *ExtensionGRPCServer) HandleStreamRequest(req *pb.HttpRequest, stream pb.ExtensionService_HandleStreamRequestServer) error {
-	ctx := stream.Context()
+	ctx, cancel := context.WithCancel(stream.Context())
+	defer cancel()
 	if s.router == nil {
 		sdk.LoggerFromContext(ctx).Error("extension_router_not_initialized",
 			sdk.LogFieldMethod, req.Method,
@@ -216,10 +243,14 @@ func (s *ExtensionGRPCServer) HandleStreamRequest(req *pb.HttpRequest, stream pb
 	}
 
 	w := &streamResponseWriter{
-		stream: stream,
-		header: make(http.Header),
+		stream:  stream,
+		header:  make(http.Header),
+		onError: cancel,
 	}
 	handler.ServeHTTP(w, httpReq)
+	if w.err != nil {
+		return w.err
+	}
 
 	return stream.Send(&pb.HttpResponseChunk{Done: true})
 }
@@ -244,19 +275,6 @@ func pbRequestToHTTP(ctx context.Context, req *pb.HttpRequest) (*http.Request, e
 
 	httpReq.RemoteAddr = req.RemoteAddr
 	return httpReq, nil
-}
-
-// httpResponseToPB 将 httptest.ResponseRecorder 转为 protobuf HttpResponse
-func httpResponseToPB(rec *httptest.ResponseRecorder) *pb.HttpResponse {
-	headers := make(map[string]*pb.HeaderValues)
-	for k, v := range rec.Header() {
-		headers[strings.ToLower(k)] = &pb.HeaderValues{Values: v}
-	}
-	return &pb.HttpResponse{
-		StatusCode: int32(rec.Code),
-		Headers:    headers,
-		Body:       rec.Body.Bytes(),
-	}
 }
 
 // ── 异步任务 ──

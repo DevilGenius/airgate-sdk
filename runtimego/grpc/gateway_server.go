@@ -3,7 +3,8 @@ package grpc
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"net/http"
 	"time"
 
@@ -325,8 +326,10 @@ func httpHeadersToProto(h http.Header) map[string]*pb.HeaderValues {
 }
 
 func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest) (*pb.ForwardOutcome, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	// 非流式：用 bufferWriter 兜底捕获插件可能意外写入 Writer 的内容。
-	bw := &bufferWriter{}
+	bw := &bufferWriter{onLimit: cancel}
 	fwdReq := &sdk.ForwardRequest{
 		Account:         buildAccount(req),
 		Body:            req.Body,
@@ -357,7 +360,10 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 		return nil, bw.err
 	}
 
-	pbOutcome := outcomeToProto(outcome)
+	pbOutcome, sizeErr := checkedOutcome(outcome)
+	if sizeErr != nil {
+		return nil, sizeErr
+	}
 	if len(bw.body) > 0 && (pbOutcome.Upstream == nil || len(pbOutcome.Upstream.Body) == 0) {
 		if pbOutcome.Upstream == nil {
 			pbOutcome.Upstream = &pb.UpstreamResponse{}
@@ -370,7 +376,7 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 			pbOutcome.Upstream.Headers = httpHeadersToProto(bw.Header())
 		}
 	}
-	return pbOutcome, nil
+	return pbOutcome, checkResponseMessage(pbOutcome)
 }
 
 func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.GatewayService_ForwardStreamServer) error {
@@ -414,9 +420,13 @@ func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.Gate
 			return err
 		}
 	}
+	final, sizeErr := checkedOutcome(outcome)
+	if sizeErr != nil {
+		return sizeErr
+	}
 	if err := stream.Send(&pb.ForwardChunk{
 		Done:         true,
-		FinalOutcome: outcomeToProto(outcome),
+		FinalOutcome: final,
 	}); err != nil {
 		sdk.LoggerFromContext(ctx).Error("gateway_forward_stream_send_final_failed",
 			sdk.LogFieldModel, req.Model,
@@ -506,6 +516,7 @@ type bufferWriter struct {
 	code    int
 	body    []byte
 	err     error
+	onLimit func()
 }
 
 func (w *bufferWriter) Header() http.Header {
@@ -519,9 +530,18 @@ func (w *bufferWriter) Write(data []byte) (int, error) {
 	if w.err != nil {
 		return 0, w.err
 	}
-	if len(w.body)+len(data) > PluginGRPCMaxMessageBytes {
-		w.err = fmt.Errorf("buffered gateway response exceeds %d bytes", PluginGRPCMaxMessageBytes)
+	if len(data) > sdk.MaxBufferedResponseBytes-len(w.body) {
+		w.err = status.Error(codes.ResourceExhausted, "buffered plugin response exceeds payload budget")
+		if w.onLimit != nil {
+			w.onLimit()
+		}
 		return 0, w.err
+	}
+	if w.code == 0 {
+		w.code = http.StatusOK
+	}
+	if len(w.body) == 0 && len(data) > 0 && w.Header().Get("Content-Type") == "" {
+		w.Header().Set("Content-Type", http.DetectContentType(data))
 	}
 	w.body = append(w.body, data...)
 	return len(data), nil
