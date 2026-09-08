@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"strings"
 
 	goplugin "github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc/codes"
@@ -223,6 +224,9 @@ func (s *PluginGRPCServer) GetSchema(_ context.Context, _ *pb.Empty) (*pb.Plugin
 
 // HandleRequest 通用请求代理，插件实现 RequestHandler 接口即可处理自定义请求
 func (s *PluginGRPCServer) HandleRequest(ctx context.Context, req *pb.HttpRequest) (*pb.HttpResponse, error) {
+	if strings.HasPrefix(req.Path, sdk.RuntimeControlPrefix) {
+		return s.handleRuntime(ctx, req)
+	}
 	handler, ok := s.Impl.(sdk.RequestHandler)
 	if !ok {
 		body, _ := json.Marshal(map[string]string{"error": "plugin does not implement RequestHandler"})

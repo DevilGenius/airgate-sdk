@@ -62,15 +62,21 @@ func (b *pluginBase) rpcLogger(ctx context.Context, method string) (*slog.Logger
 
 // Info 获取插件信息（带缓存）
 func (b *pluginBase) Info() sdk.PluginInfo {
+	info, _ := b.InfoContext(context.Background())
+	return info
+}
+
+// InfoContext reports transport failures to the candidate preparation pipeline.
+func (b *pluginBase) InfoContext(parent context.Context) (sdk.PluginInfo, error) {
 	b.infoMu.RLock()
 	if b.cachedInfo != nil {
 		info := *b.cachedInfo
 		b.infoMu.RUnlock()
-		return info
+		return info, nil
 	}
 	b.infoMu.RUnlock()
 
-	ctx, cancel := withTimeout()
+	ctx, cancel := context.WithTimeout(parent, defaultGRPCTimeout)
 	defer cancel()
 
 	logger, start := b.rpcLogger(ctx, "GetInfo")
@@ -80,7 +86,7 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 			sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
 			sdk.LogFieldError, err,
 		)
-		return sdk.PluginInfo{}
+		return sdk.PluginInfo{}, err
 	}
 
 	info := sdk.PluginInfo{
@@ -177,7 +183,7 @@ func (b *pluginBase) Info() sdk.PluginInfo {
 	logger.Debug("plugin_call_get_info_completed",
 		sdk.LogFieldDurationMs, time.Since(start).Milliseconds(),
 	)
-	return info
+	return info, nil
 }
 
 func (b *pluginBase) invalidateInfoCache() {
@@ -188,6 +194,10 @@ func (b *pluginBase) invalidateInfoCache() {
 
 // Init 初始化插件
 func (b *pluginBase) Init(ctx sdk.PluginContext) error {
+	return b.InitContext(context.Background(), ctx)
+}
+
+func (b *pluginBase) InitContext(parent context.Context, ctx sdk.PluginContext) error {
 	config := make(map[string]string)
 	if ctx != nil && ctx.Config() != nil {
 		config = ctx.Config().GetAll()
@@ -197,7 +207,7 @@ func (b *pluginBase) Init(ctx sdk.PluginContext) error {
 	logLevel := config[sdk.ConfigKeyLogLevel]
 	delete(config, sdk.ConfigKeyLogLevel)
 
-	grpcCtx, cancel := withTimeout()
+	grpcCtx, cancel := context.WithTimeout(parent, defaultGRPCTimeout)
 	defer cancel()
 
 	logger, start := b.rpcLogger(grpcCtx, "Init")
@@ -271,7 +281,11 @@ func (b *pluginBase) Stop(ctx context.Context) error {
 
 // GetWebAssets 获取插件前端静态资源
 func (b *pluginBase) GetWebAssets() (map[string][]byte, error) {
-	ctx, cancel := withTimeout()
+	return b.WebAssetsContext(context.Background())
+}
+
+func (b *pluginBase) WebAssetsContext(parent context.Context) (map[string][]byte, error) {
+	ctx, cancel := context.WithTimeout(parent, defaultGRPCTimeout)
 	defer cancel()
 
 	logger, start := b.rpcLogger(ctx, "GetWebAssets")
