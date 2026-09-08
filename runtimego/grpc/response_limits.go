@@ -1,11 +1,12 @@
 package grpc
 
 import (
-	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
-	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 func checkResponseMessage(message proto.Message) error {

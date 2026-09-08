@@ -10,9 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc"
+
 	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
 	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
-	"google.golang.org/grpc"
 )
 
 type lifecycleGatewayClient struct {

@@ -247,7 +247,7 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
-		defer stream.CloseSend() // This goroutine exclusively owns Send/CloseSend.
+		defer func() { _ = stream.CloseSend() }() // This goroutine exclusively owns Send/CloseSend.
 		defer cancel()
 		for {
 			select {

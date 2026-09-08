@@ -6,8 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 	"sync"
+
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 type State struct {

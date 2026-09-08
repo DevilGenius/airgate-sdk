@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
 	"google.golang.org/grpc"
+
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
 )
 
 type deadlinePluginClient struct {

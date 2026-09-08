@@ -3,10 +3,11 @@ package grpc
 import (
 	"context"
 	"encoding/json"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"net/http"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
 	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"

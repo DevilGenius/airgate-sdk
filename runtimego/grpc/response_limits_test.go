@@ -3,10 +3,11 @@ package grpc
 import (
 	"testing"
 
-	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
-	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 func TestBufferedResponseStopsAtBusinessPayloadLimit(t *testing.T) {
