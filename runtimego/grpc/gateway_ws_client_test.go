@@ -215,6 +215,55 @@ func TestGatewayGRPCClientHandleWebSocketResult(t *testing.T) {
 	}
 }
 
+type blockingCloseWSStream struct {
+	testGatewayWSStream
+	closing chan struct{}
+	release chan struct{}
+}
+
+func (s *blockingCloseWSStream) CloseSend() error {
+	close(s.closing)
+	<-s.release
+	return s.testGatewayWSStream.CloseSend()
+}
+
+func TestGatewayGRPCClientWaitsForSenderCleanup(t *testing.T) {
+	stream := &blockingCloseWSStream{
+		testGatewayWSStream: testGatewayWSStream{recv: []*pb.WebSocketFrame{{Type: pb.WebSocketFrame_RESULT}}},
+		closing:             make(chan struct{}),
+		release:             make(chan struct{}),
+	}
+	conn := &testSDKWSConn{info: &sdk.WebSocketConnectInfo{Account: &sdk.Account{}}}
+	client := &GatewayGRPCClient{gateway: wsGatewayServiceClient{stream: stream}}
+	done := make(chan error, 1)
+	go func() {
+		_, err := client.HandleWebSocket(context.Background(), conn)
+		done <- err
+	}()
+	var releaseOnce sync.Once
+	release := func() { releaseOnce.Do(func() { close(stream.release) }) }
+	t.Cleanup(release)
+	select {
+	case <-stream.closing:
+	case <-time.After(time.Second):
+		t.Fatal("sender did not start cleanup")
+	}
+	select {
+	case err := <-done:
+		t.Fatalf("returned before sender cleanup: %v", err)
+	case <-time.After(20 * time.Millisecond):
+	}
+	release()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("sender cleanup did not finish")
+	}
+}
+
 func TestGatewayGRPCClientHandleWebSocketCloseAndErrors(t *testing.T) {
 	conn := &testSDKWSConn{info: &sdk.WebSocketConnectInfo{Account: &sdk.Account{Credentials: map[string]string{}}}}
 	wantErr := errors.New("dial failed")

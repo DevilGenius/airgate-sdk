@@ -274,7 +274,8 @@ func (c *GatewayGRPCClient) HandleWebSocket(ctx context.Context, conn sdk.WebSoc
 		stopOnCancel()
 		cancel() // Unblock a Send before joining the sending goroutine.
 		closeConn(code, reason)
-		<-errCh
+		for range errCh {
+		}
 	}
 
 	var outcome sdk.ForwardOutcome
