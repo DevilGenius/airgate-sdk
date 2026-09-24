@@ -164,7 +164,8 @@ type FinalErrorDiagnostic struct {
 // Usage 是插件计算后的单次调用用量与费用结果。
 //
 // 只有 OutcomeSuccess 下 Usage 必填；OutcomeClientError 如果上游也计费（如部分重置 context
-// 后仍计 token）可填；其他 Kind 下应为 nil。
+// 后仍计 token）可填；OutcomeStreamAborted 可保留已确认的上游用量，避免
+// 客户端中断使已消费的 token 漏记。其他 Kind 下应为 nil。
 //
 // 平台价格、token 拆分、图片分档等标准计费规则全部由网关插件自己实现。
 // 插件填通用 token、单价和账号成本字段；Core 只读取这些通用标量字段并按用户、
@@ -203,7 +204,7 @@ type Usage struct {
 //
 //	Kind              必填，零值视为 Unknown（Core 保守处理）
 //	Upstream          必填（StatusCode 至少填；Headers/Body 按 Kind 决定是否透传）
-//	Usage             仅 Success（偶尔 ClientError）下非 nil
+//	Usage             Success 必填；ClientError / StreamAborted 可携带已确认用量
 //	RetryAfter        仅 AccountRateLimited 下有意义
 //	Duration          插件测得的耗时，Core 仅用于日志
 //	Reason            人类可读原因，Core 仅落日志，不做任何判断

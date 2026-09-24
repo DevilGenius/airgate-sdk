@@ -193,6 +193,10 @@ type devBufferWriter struct {
 	body    []byte
 }
 
+// The non-stream development path already defers every byte until Forward
+// returns, so completion needs no additional buffer or gRPC handshake.
+func (*devBufferWriter) BeginStreamCompletion() {}
+
 func (w *devBufferWriter) Header() http.Header {
 	if w.headers == nil {
 		w.headers = make(http.Header)

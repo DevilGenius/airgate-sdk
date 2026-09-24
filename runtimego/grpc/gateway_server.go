@@ -390,6 +390,9 @@ func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.Gate
 	ctx := stream.Context()
 	outcome, err := s.Impl.Forward(ctx, fwdReq)
 	// 同 Forward：Kind=Unknown 才走 gRPC error；否则合并 err 进 Reason，保留判决。
+	if sw.err != nil {
+		return sw.err
+	}
 	if err != nil && outcome.Kind == sdk.OutcomeUnknown {
 		sdk.LoggerFromContext(ctx).Error("gateway_forward_stream_failed",
 			sdk.LogFieldModel, req.Model,
@@ -418,6 +421,7 @@ func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.Gate
 	chunk := &pb.ForwardChunk{
 		Done:         true,
 		FinalOutcome: final,
+		Data:         sw.completionTail,
 	}
 	if err := checkOutcomeMessage(final, chunk); err != nil {
 		return err
@@ -440,12 +444,29 @@ func (s *GatewayGRPCServer) ValidateAccount(ctx context.Context, req *pb.Credent
 }
 
 // streamWriter 把 gRPC 流包装成 http.ResponseWriter。
+// Forward's goroutine exclusively owns this writer and the final Send. Plugins
+// must keep background work independent of Writer (see ForwardRequest.Writer).
 type streamWriter struct {
-	stream      pb.GatewayService_ForwardStreamServer
-	headers     http.Header
-	code        int
-	wroteHeader bool
-	sent        bool
+	stream         pb.GatewayService_ForwardStreamServer
+	headers        http.Header
+	code           int
+	wroteHeader    bool
+	sent           bool
+	completing     bool
+	completionTail []byte
+	err            error
+}
+
+func (w *streamWriter) BeginStreamCompletion() { w.completing = true }
+
+func (w *streamWriter) fail(err error) error {
+	if w.err == nil {
+		w.err = err
+	}
+	// A failed Send may have reached the peer. Never replay it or send a final
+	// success after this transport failure, even if the plugin ignores the error.
+	w.completionTail = nil
+	return w.err
 }
 
 func (w *streamWriter) Header() http.Header {
@@ -460,13 +481,38 @@ func (w *streamWriter) Header() http.Header {
 const streamChunkSize = 256 * 1024
 
 func (w *streamWriter) Write(data []byte) (int, error) {
+	if w.err != nil {
+		return 0, w.err
+	}
 	if err := w.flushMeta(); err != nil {
 		return 0, err
 	}
 	total := len(data)
+	if w.completing {
+		// Only the terminal event uses this path. Keep at most one chunk, never
+		// the full response. Its last bytes travel with the authoritative outcome.
+		sendBytes := max(0, len(w.completionTail)+len(data)-streamChunkSize)
+		if n := min(sendBytes, len(w.completionTail)); n > 0 {
+			if err := w.stream.Send(&pb.ForwardChunk{Data: w.completionTail[:n]}); err != nil {
+				return 0, w.fail(err) // No bytes from this Write were accepted yet.
+			}
+			w.completionTail = append([]byte(nil), w.completionTail[n:]...)
+			sendBytes -= n
+		}
+		for sendBytes > 0 {
+			n := min(sendBytes, streamChunkSize)
+			if err := w.stream.Send(&pb.ForwardChunk{Data: data[:n]}); err != nil {
+				return total - len(data), w.fail(err)
+			}
+			data = data[n:]
+			sendBytes -= n
+		}
+		w.completionTail = append(w.completionTail, data...)
+		return total, nil
+	}
 	if total == 0 {
 		if err := w.stream.Send(&pb.ForwardChunk{Data: data}); err != nil {
-			return 0, err
+			return 0, w.fail(err)
 		}
 		return 0, nil
 	}
@@ -476,7 +522,7 @@ func (w *streamWriter) Write(data []byte) (int, error) {
 			end = total
 		}
 		if err := w.stream.Send(&pb.ForwardChunk{Data: data[offset:end]}); err != nil {
-			return 0, err
+			return offset, w.fail(err)
 		}
 	}
 	return total, nil
@@ -491,6 +537,9 @@ func (w *streamWriter) WriteHeader(statusCode int) {
 }
 
 func (w *streamWriter) flushMeta() error {
+	if w.err != nil {
+		return w.err
+	}
 	if w.sent {
 		return nil
 	}
@@ -504,9 +553,12 @@ func (w *streamWriter) flushMeta() error {
 		Headers:    httpHeadersToProto(w.Header()),
 	}
 	if err := checkResponseMessage(chunk); err != nil {
-		return err
+		return w.fail(err)
 	}
-	return w.stream.Send(chunk)
+	if err := w.stream.Send(chunk); err != nil {
+		return w.fail(err)
+	}
+	return nil
 }
 
 // bufferWriter 兜底捕获插件意外写入 Writer 的非流式响应。

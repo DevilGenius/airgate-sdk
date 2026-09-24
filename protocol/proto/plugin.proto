@@ -301,7 +301,7 @@ message UpstreamResponse {
     bytes body = 3;
 }
 
-// Usage 单次调用的用量与费用结果。非 Success 判决下应为空。
+// Usage 单次调用的用量与费用结果。Success 必填；ClientError / StreamAborted 可携带已确认用量。
 message Usage {
     string model = 1;
     double account_cost = 2;

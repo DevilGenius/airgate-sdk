@@ -73,5 +73,7 @@ type ForwardRequest struct {
 
 	// Writer 流式响应写入目标。
 	// Core 负责把写入内容转发给用户，并在调用结束后根据 ForwardOutcome 写记录和更新账号状态。
+	// Header / WriteHeader / Write / BeginStreamCompletion 必须由 Forward 的同一
+	// goroutine 调用。后台任务只返回数据和用量，不得持有 Writer 或在 Forward 返回后写入。
 	Writer http.ResponseWriter
 }

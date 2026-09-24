@@ -155,6 +155,13 @@ func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.Forward
 		if err != nil {
 			return sdk.ForwardOutcome{}, fmt.Errorf("gRPC 流接收失败: %w", err)
 		}
+		// Decode before writing the terminal bytes: Write/Flush may cause the
+		// HTTP client to close and cancel this RPC immediately afterwards.
+		var final sdk.ForwardOutcome
+		hasFinal := chunk.Done && chunk.FinalOutcome != nil
+		if hasFinal {
+			final = outcomeFromProto(chunk.FinalOutcome)
+		}
 
 		if !responseStarted && req.Writer != nil && (chunk.StatusCode != 0 || len(chunk.Headers) > 0 || len(chunk.Data) > 0) {
 			for k, vals := range protoHeadersToHTTP(chunk.Headers) {
@@ -176,6 +183,14 @@ func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.Forward
 				writeErr = io.ErrShortWrite
 			}
 			if writeErr != nil {
+				if hasFinal {
+					// Upstream usage remains billable even if delivery of the last
+					// chunk failed. Do not misclassify partial delivery as success.
+					final.Kind = sdk.OutcomeStreamAborted
+					final.FailoverScope = sdk.FailoverScopeTerminal
+					final.Reason = fmt.Sprintf("写入响应失败: %v", writeErr)
+					return final, fmt.Errorf("写入响应失败: %w", writeErr)
+				}
 				return sdk.ForwardOutcome{}, fmt.Errorf("写入响应失败: %w", writeErr)
 			}
 			if flusher, ok := req.Writer.(interface{ Flush() }); ok {
@@ -183,8 +198,8 @@ func (c *GatewayGRPCClient) forwardStream(ctx context.Context, pbReq *pb.Forward
 			}
 		}
 
-		if chunk.Done && chunk.FinalOutcome != nil {
-			return outcomeFromProto(chunk.FinalOutcome), nil
+		if hasFinal {
+			return final, nil
 		}
 	}
 

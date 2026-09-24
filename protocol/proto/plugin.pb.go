@@ -1914,7 +1914,7 @@ func (x *UpstreamResponse) GetBody() []byte {
 	return nil
 }
 
-// Usage 单次调用的用量与费用结果。非 Success 判决下应为空。
+// Usage 单次调用的用量与费用结果。Success 必填；ClientError / StreamAborted 可携带已确认用量。
 type Usage struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Model             string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
