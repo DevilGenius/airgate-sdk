@@ -17,12 +17,18 @@ func checkResponseMessage(message proto.Message) error {
 }
 
 func checkedOutcome(outcome sdk.ForwardOutcome) (*pb.ForwardOutcome, error) {
-	if len(outcome.Upstream.Body) > sdk.MaxBufferedResponseBytes {
-		return nil, status.Error(codes.ResourceExhausted, "plugin response body exceeds payload budget")
-	}
 	value := outcomeToProto(outcome)
-	if checkResponseMessage(value) != nil {
-		value.FinalErrorDiagnostic = nil
+	return value, checkOutcomeMessage(value, value)
+}
+
+// Check the fully assembled wire message, including a ForwardChunk wrapper.
+// Diagnostics are optional; never reject a valid response just to retain them.
+func checkOutcomeMessage(outcome *pb.ForwardOutcome, message proto.Message) error {
+	if len(outcome.GetUpstream().GetBody()) > sdk.MaxBufferedResponseBytes {
+		return status.Error(codes.ResourceExhausted, "plugin response body exceeds payload budget")
 	}
-	return value, checkResponseMessage(value)
+	if checkResponseMessage(message) != nil {
+		outcome.FinalErrorDiagnostic = nil
+	}
+	return checkResponseMessage(message)
 }

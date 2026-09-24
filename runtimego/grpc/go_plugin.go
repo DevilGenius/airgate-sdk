@@ -192,6 +192,6 @@ func (a *gatewayTaskAdapter) TaskTypes() []string {
 }
 
 // PluginGRPCMaxMessageBytes 是插件 gRPC 服务端单条消息最大字节数（收/发同值）。
-// 默认 4 MB 经常被大段 LLM 响应或翻译后的 SSE 事件击穿，统一抬到 64 MB；
+// 为 96 MiB 正文及 112 MiB 完整响应消息预留传输空间，统一使用 128 MiB；
 // 必须与 core 侧 ClientConfig.GRPCDialOptions 中的上限保持一致。
-const PluginGRPCMaxMessageBytes = 64 * 1024 * 1024
+const PluginGRPCMaxMessageBytes = 128 << 20

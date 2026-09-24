@@ -361,23 +361,16 @@ func (s *GatewayGRPCServer) Forward(ctx context.Context, req *pb.ForwardRequest)
 		return nil, bw.err
 	}
 
-	pbOutcome, sizeErr := checkedOutcome(outcome)
-	if sizeErr != nil {
-		return nil, sizeErr
-	}
-	if len(bw.body) > 0 && (pbOutcome.Upstream == nil || len(pbOutcome.Upstream.Body) == 0) {
-		if pbOutcome.Upstream == nil {
-			pbOutcome.Upstream = &pb.UpstreamResponse{}
+	if len(bw.body) > 0 && len(outcome.Upstream.Body) == 0 {
+		outcome.Upstream.Body = bw.body
+		if outcome.Upstream.StatusCode == 0 && bw.code > 0 {
+			outcome.Upstream.StatusCode = bw.code
 		}
-		pbOutcome.Upstream.Body = bw.body
-		if pbOutcome.Upstream.StatusCode == 0 && bw.code > 0 {
-			pbOutcome.Upstream.StatusCode = int32(bw.code)
-		}
-		if len(pbOutcome.Upstream.Headers) == 0 {
-			pbOutcome.Upstream.Headers = httpHeadersToProto(bw.Header())
+		if len(outcome.Upstream.Headers) == 0 {
+			outcome.Upstream.Headers = bw.Header()
 		}
 	}
-	return pbOutcome, checkResponseMessage(pbOutcome)
+	return checkedOutcome(outcome)
 }
 
 func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.GatewayService_ForwardStreamServer) error {
@@ -421,14 +414,15 @@ func (s *GatewayGRPCServer) ForwardStream(req *pb.ForwardRequest, stream pb.Gate
 			return err
 		}
 	}
-	final, sizeErr := checkedOutcome(outcome)
-	if sizeErr != nil {
-		return sizeErr
-	}
-	if err := stream.Send(&pb.ForwardChunk{
+	final := outcomeToProto(outcome)
+	chunk := &pb.ForwardChunk{
 		Done:         true,
 		FinalOutcome: final,
-	}); err != nil {
+	}
+	if err := checkOutcomeMessage(final, chunk); err != nil {
+		return err
+	}
+	if err := stream.Send(chunk); err != nil {
 		sdk.LoggerFromContext(ctx).Error("gateway_forward_stream_send_final_failed",
 			sdk.LogFieldModel, req.Model,
 			sdk.LogFieldError, err,
@@ -505,10 +499,14 @@ func (w *streamWriter) flushMeta() error {
 	if statusCode == 0 {
 		statusCode = http.StatusOK
 	}
-	return w.stream.Send(&pb.ForwardChunk{
+	chunk := &pb.ForwardChunk{
 		StatusCode: int32(statusCode),
 		Headers:    httpHeadersToProto(w.Header()),
-	})
+	}
+	if err := checkResponseMessage(chunk); err != nil {
+		return err
+	}
+	return w.stream.Send(chunk)
 }
 
 // bufferWriter 兜底捕获插件意外写入 Writer 的非流式响应。
