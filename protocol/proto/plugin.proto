@@ -331,7 +331,15 @@ message Usage {
     int64  first_token_ms = 36;
     // WebSocket 建连耗时；非 WebSocket 上游保持 0。
     int64  ws_dial_ms = 37;
+    BillingAdjustments billing = 38;
     reserved 8, 9, 10, 16, 17, 19, 20, 21, 26, 31, 32, 33, 34;
+}
+
+// Optional scalars preserve explicit zero versus absent adjustments.
+message BillingAdjustments {
+    optional double charge_override = 1;
+    optional double charge_addon = 2;
+    optional double api_key_base_cost = 3;
 }
 
 // ForwardOutcome 插件对一次 Forward 的完整判决结果。

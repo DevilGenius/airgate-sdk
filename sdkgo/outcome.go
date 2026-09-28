@@ -171,6 +171,7 @@ type FinalErrorDiagnostic struct {
 // 插件填通用 token、单价和账号成本字段；Core 只读取这些通用标量字段并按用户、
 // 分组、模型等倍率写入自己的 usage_log 标准列。插件特有维度（如 service_tier、
 // Claude cache TTL 拆分、OpenAI 图片尺寸/数量/单价）放入 Metadata。
+// 可配置的厂商计价调整通过 Billing 返回；Metadata 只用于展示/审计，不参与结算。
 type Usage struct {
 	Model                 string            `json:"model,omitempty"`
 	AccountCost           float64           `json:"account_cost,omitempty"`
@@ -196,6 +197,8 @@ type Usage struct {
 	CachedInputCost       float64           `json:"cached_input_cost,omitempty"`
 	CacheCreationCost     float64           `json:"cache_creation_cost,omitempty"`
 	Metadata              map[string]string `json:"metadata,omitempty"`
+	// Core applies rates and ledger writes; Metadata is not a billing API.
+	Billing *BillingAdjustments `json:"billing,omitempty"`
 }
 
 // ForwardOutcome 是插件对一次 Forward 的完整判决结果。

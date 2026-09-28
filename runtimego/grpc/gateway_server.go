@@ -275,6 +275,13 @@ func usageToProto(u sdk.Usage) *pb.Usage {
 		CachedInputCost:       u.CachedInputCost,
 		CacheCreationCost:     u.CacheCreationCost,
 	}
+	if u.Billing != nil {
+		out.Billing = &pb.BillingAdjustments{
+			ChargeOverride: cloneBillingAmount(u.Billing.ChargeOverride),
+			ChargeAddon:    cloneBillingAmount(u.Billing.ChargeAddon),
+			ApiKeyBaseCost: cloneBillingAmount(u.Billing.APIKeyBaseCost),
+		}
+	}
 	return out
 }
 
@@ -305,7 +312,22 @@ func usageFromProto(p *pb.Usage) sdk.Usage {
 		CachedInputCost:       p.CachedInputCost,
 		CacheCreationCost:     p.CacheCreationCost,
 	}
+	if p.Billing != nil {
+		out.Billing = &sdk.BillingAdjustments{
+			ChargeOverride: cloneBillingAmount(p.Billing.ChargeOverride),
+			ChargeAddon:    cloneBillingAmount(p.Billing.ChargeAddon),
+			APIKeyBaseCost: cloneBillingAmount(p.Billing.ApiKeyBaseCost),
+		}
+	}
 	return out
+}
+
+func cloneBillingAmount(value *float64) *float64 {
+	if value == nil {
+		return nil
+	}
+	copy := *value
+	return &copy
 }
 
 func protoHeadersToHTTP(ph map[string]*pb.HeaderValues) http.Header {
