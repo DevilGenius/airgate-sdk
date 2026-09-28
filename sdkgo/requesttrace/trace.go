@@ -91,10 +91,12 @@ func record(ctx context.Context, request sdk.OutboundRequestDiagnostic, ownsBody
 		return nil
 	}
 	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.closed {
+	closed := c.closed
+	c.mu.Unlock()
+	if closed {
 		return nil
 	}
+	// Copy outside the collector lock; publication below rechecks Finish.
 	request.Headers = request.Headers.Clone()
 	if len(request.Body) > maxBodyBytes {
 		request.BodyOriginalSize = max(request.BodyOriginalSize, int64(len(request.Body)))
@@ -103,12 +105,24 @@ func record(ctx context.Context, request sdk.OutboundRequestDiagnostic, ownsBody
 		request.Body = bytes.Clone(request.Body)
 	}
 	e := &Exchange{request: request, sent: sent}
+	var evicted *Exchange
+	c.mu.Lock()
+	if c.closed {
+		c.mu.Unlock()
+		e.release()
+		return nil
+	}
 	if len(c.exchanges) < maxRequests {
 		c.exchanges = append(c.exchanges, e)
 	} else {
-		c.exchanges[1].release()
+		evicted = c.exchanges[1]
 		copy(c.exchanges[1:maxRequests-1], c.exchanges[2:])
 		c.exchanges[maxRequests-1] = e
+	}
+	c.mu.Unlock()
+	// Buffer/observer locks must never extend the collector critical section.
+	if evicted != nil {
+		evicted.release()
 	}
 	return e
 }
@@ -147,7 +161,7 @@ func (e *Exchange) SetStatus(status int) {
 // ObserveEvent retains the most recent raw data payload, before any translation.
 // It deliberately has no vendor-specific event names or protocol success rules.
 func (e *Exchange) ObserveEvent(data []byte) {
-	if e == nil || len(data) == 0 || bytes.Equal(data, []byte("[DONE]")) {
+	if e == nil || len(data) == 0 {
 		return
 	}
 	if len(data) > maxEventBytes {

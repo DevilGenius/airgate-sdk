@@ -148,6 +148,7 @@ type eventObserver struct {
 	data      []byte
 	skipLine  bool
 	skipEvent bool
+	skipLF    bool
 }
 
 func (s *eventObserver) write(p []byte) {
@@ -157,7 +158,15 @@ func (s *eventObserver) write(p []byte) {
 		return
 	}
 	for len(p) > 0 {
-		index := bytes.IndexByte(p, '\n')
+		// CR terminates immediately; swallow its optional LF even across reads.
+		if s.skipLF {
+			s.skipLF = false
+			if p[0] == '\n' {
+				p = p[1:]
+				continue
+			}
+		}
+		index := bytes.IndexAny(p, "\r\n")
 		chunk := p
 		if index >= 0 {
 			chunk = p[:index]
@@ -175,10 +184,11 @@ func (s *eventObserver) write(p []byte) {
 			return
 		}
 		if !s.skipLine {
-			s.consumeLine(bytes.TrimSuffix(s.line, []byte{'\r'}))
+			s.consumeLine(s.line)
 		}
 		s.line = s.line[:0]
 		s.skipLine = false
+		s.skipLF = p[index] == '\r'
 		p = p[index+1:]
 	}
 }
@@ -202,8 +212,11 @@ func (s *eventObserver) consumeLine(line []byte) {
 }
 
 func (s *eventObserver) flush() {
-	if !s.skipEvent {
-		s.exchange.ObserveEvent(bytes.TrimSuffix(s.data, []byte{'\n'}))
+	payload := bytes.TrimSuffix(s.data, []byte{'\n'})
+	// Streaming API SSE adapters use [DONE] as a terminator, not a payload.
+	// Keep this convention out of the raw collector and WebSocket messages.
+	if !s.skipEvent && !bytes.Equal(payload, []byte("[DONE]")) {
+		s.exchange.ObserveEvent(payload)
 	}
 	s.data = s.data[:0]
 	s.skipEvent = false
@@ -216,7 +229,7 @@ func (s *eventObserver) finish() {
 		return
 	}
 	if !s.skipLine && len(s.line) > 0 {
-		s.consumeLine(bytes.TrimSuffix(s.line, []byte{'\r'}))
+		s.consumeLine(s.line)
 	}
 	s.line = nil
 	s.flush()

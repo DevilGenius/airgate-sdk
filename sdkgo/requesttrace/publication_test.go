@@ -10,9 +10,60 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
+
+func TestEvictionDoesNotHoldCollectorLockDuringRelease(t *testing.T) {
+	ctx, capture := Start(t.Context(), true)
+	var evicted *Exchange
+	for i := 0; i < maxRequests; i++ {
+		e := Record(ctx, sdk.OutboundRequestDiagnostic{URL: fmt.Sprint(i)})
+		if i == 1 {
+			evicted = e
+		}
+	}
+	evicted.mu.Lock()
+	unlock := sync.OnceFunc(evicted.mu.Unlock)
+	defer unlock()
+	recorded := make(chan struct{})
+	go func() {
+		Record(ctx, sdk.OutboundRequestDiagnostic{URL: "new"})
+		close(recorded)
+	}()
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		published := false
+		if capture.mu.TryLock() {
+			published = capture.exchanges[maxRequests-1].request.URL == "new"
+			capture.mu.Unlock()
+		}
+		if published {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("eviction blocked the collector bookkeeping lock")
+		}
+		time.Sleep(time.Millisecond)
+	}
+	finished := make(chan struct{})
+	go func() { capture.Finish(&sdk.ForwardOutcome{Kind: sdk.OutcomeSuccess}, nil); close(finished) }()
+	select {
+	case <-finished:
+	case <-time.After(3 * time.Second):
+		t.Fatal("Finish waited for the detached exchange")
+	}
+	unlock()
+	select {
+	case <-recorded:
+	case <-time.After(3 * time.Second):
+		t.Fatal("retired exchange was not released")
+	}
+	if !evicted.closed {
+		t.Fatal("retired exchange accepted late data")
+	}
+}
 
 func TestRequestCaptureIsInitializedBeforePublication(t *testing.T) {
 	ctx, capture := Start(t.Context(), true)
