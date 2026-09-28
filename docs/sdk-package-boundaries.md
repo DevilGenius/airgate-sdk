@@ -7,12 +7,15 @@
 | 包 | 职责 | 可依赖 | 不应包含 |
 | --- | --- | --- | --- |
 | `sdkgo` | 插件作者 API、共享类型、capability helper、日志 helper | Go 标准库、少量稳定依赖 | protobuf、gRPC、go-plugin、devserver、Core 产品逻辑 |
+| `sdkgo/requesttrace` | 插件可选的主请求原始诊断采集、HTTP/WebSocket 包装、容量与生命周期管理 | `sdkgo`、Go 标准库、WebSocket 库 | protobuf、gRPC、脱敏策略、指纹、数据库、供应商业务判断 |
 | `protocol/proto` | protobuf schema 与生成代码 | protobuf runtime | 插件业务 helper、Core 实现细节 |
 | `runtimego/grpc` | go-plugin/gRPC 适配、stream bridge、proto 转换、Core 反向调用 broker | `sdkgo`、`protocol/proto` | 插件业务逻辑、devserver UI |
 | `devkit/devserver` | 本地开发服务器和 fake core 能力 | `sdkgo` | 生产运行时依赖、Core 数据库访问 |
 | `theme` | 前端插件 API、主题 token、样式注入、Tailwind bridge、公共 UI 组件 | TypeScript 生态、React peer dependency | Go runtime、Core 后端逻辑、具体插件业务页面 |
 
 ## 新需求判断
+
+请求诊断的共享类型留在 `sdkgo`，采集实现由插件按需导入 `sdkgo/requesttrace`。根包不能反向依赖采集器；`runtimego/grpc` 只转换和传输诊断类型，不负责安装或调用采集器。Core 独立负责落库前脱敏、指纹及持久化。
 
 只有以下变化可以修改 `sdkgo` 稳定接口：
 

@@ -108,7 +108,6 @@ func (e *Exchange) WrapResponse(resp *http.Response) {
 		e.mu.Unlock()
 		return
 	}
-	e.responseType = contentType
 	if strings.EqualFold(mediaType, "text/event-stream") {
 		events := &eventObserver{exchange: e}
 		e.events = events

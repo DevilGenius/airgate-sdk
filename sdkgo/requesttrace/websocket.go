@@ -23,7 +23,7 @@ type WebSocket struct {
 }
 
 func WrapWebSocket(ctx context.Context, conn *websocket.Conn, url string, headers http.Header) *WebSocket {
-	return &WebSocket{conn: conn, ctx: ctx, url: SafeURL(url), headers: SafeHeaders(headers)}
+	return &WebSocket{conn: conn, ctx: ctx, url: url, headers: headers.Clone()}
 }
 
 func (c *WebSocket) Close() error { return c.conn.Close() }
@@ -48,6 +48,9 @@ func (c *WebSocket) WriteMessage(kind int, data []byte) error {
 			method = envelope.Type
 		}
 		headers := c.headers.Clone()
+		if headers == nil {
+			headers = make(http.Header)
+		}
 		headers.Set("Content-Type", "application/json")
 		e := Record(c.ctx, sdk.OutboundRequestDiagnostic{Transport: "websocket", Method: method, URL: c.url, Headers: headers, Body: data, StatusCode: http.StatusSwitchingProtocols})
 		c.mu.Lock()

@@ -137,15 +137,13 @@ func finalErrorDiagnosticToProto(d *sdk.FinalErrorDiagnostic) *pb.FinalErrorDiag
 		out.OutboundRequests = make([]*pb.OutboundRequestDiagnostic, 0, len(d.OutboundRequests))
 		for _, request := range d.OutboundRequests {
 			out.OutboundRequests = append(out.OutboundRequests, &pb.OutboundRequestDiagnostic{
-				Transport:           request.Transport,
-				Method:              request.Method,
-				Url:                 request.URL,
-				Headers:             httpHeadersToProto(request.Headers),
-				Body:                request.Body,
-				StatusCode:          int32(request.StatusCode),
-				BodyRedacted:        request.BodyRedacted,
-				BodyRedactionReason: request.BodyRedactionReason,
-				BodyOriginalSize:    request.BodyOriginalSize,
+				Transport:        request.Transport,
+				Method:           request.Method,
+				Url:              request.URL,
+				Headers:          httpHeadersToProto(request.Headers),
+				Body:             request.Body,
+				StatusCode:       int32(request.StatusCode),
+				BodyOriginalSize: request.BodyOriginalSize,
 			})
 		}
 	}
@@ -164,15 +162,13 @@ func finalErrorDiagnosticFromProto(d *pb.FinalErrorDiagnostic) *sdk.FinalErrorDi
 				continue
 			}
 			out.OutboundRequests = append(out.OutboundRequests, sdk.OutboundRequestDiagnostic{
-				Transport:           request.Transport,
-				Method:              request.Method,
-				URL:                 request.Url,
-				Headers:             protoHeadersToHTTP(request.Headers),
-				Body:                request.Body,
-				StatusCode:          int(request.StatusCode),
-				BodyRedacted:        request.BodyRedacted,
-				BodyRedactionReason: request.BodyRedactionReason,
-				BodyOriginalSize:    request.BodyOriginalSize,
+				Transport:        request.Transport,
+				Method:           request.Method,
+				URL:              request.Url,
+				Headers:          protoHeadersToHTTP(request.Headers),
+				Body:             request.Body,
+				StatusCode:       int(request.StatusCode),
+				BodyOriginalSize: request.BodyOriginalSize,
 			})
 		}
 	}

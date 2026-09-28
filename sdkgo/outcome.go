@@ -137,19 +137,17 @@ type UpstreamResponse struct {
 	Body       []byte
 }
 
-// OutboundRequestDiagnostic is a credential-free snapshot of one request that
-// the plugin actually sent upstream. Authorization, cookies, API keys and
-// access tokens must never be included in Headers.
+// OutboundRequestDiagnostic is a bounded raw snapshot for internal transport
+// to Core. Core owns redaction before persistence; do not log it directly.
 type OutboundRequestDiagnostic struct {
-	Transport           string
-	Method              string
-	URL                 string
-	Headers             http.Header
-	Body                []byte
-	StatusCode          int
-	BodyRedacted        bool
-	BodyRedactionReason string
-	BodyOriginalSize    int64
+	Transport  string
+	Method     string
+	URL        string
+	Headers    http.Header
+	Body       []byte
+	StatusCode int
+	// A size larger than len(Body) indicates omitted/incomplete capture.
+	BodyOriginalSize int64
 }
 
 // FinalErrorDiagnostic contains optional raw diagnostics for a failed Forward

@@ -64,11 +64,11 @@ func TestHTTPTracePreservesFullWireRequest(t *testing.T) {
 				t.Fatalf("trace=%+v", trace)
 			}
 			request := trace.OutboundRequests[0]
-			if !bytes.Equal(request.Body, expected) || request.BodyRedacted || request.StatusCode != 422 || request.Headers.Get("Content-Type") != "application/json" {
+			if !bytes.Equal(request.Body, expected) || request.BodyOriginalSize != int64(len(expected)) || request.StatusCode != 422 || request.Headers.Get("Content-Type") != "application/json" {
 				t.Fatal("full request was lost or changed")
 			}
-			if request.Headers.Get("Authorization") != "" || request.Headers.Get("session_id") != "" || request.URL != "https://example.test/responses" {
-				t.Fatal("trace leaked credentials")
+			if request.Headers.Get("Authorization") != "Bearer secret" || request.Headers.Get("session_id") != "private-session" || request.URL != "https://user:secret@example.test/responses?token=secret" {
+				t.Fatal("SDK modified raw diagnostic metadata")
 			}
 		})
 	}
@@ -210,27 +210,9 @@ func TestWebSocketTraceCapturesActualFrames(t *testing.T) {
 		t.Fatal("missing WebSocket diagnostics")
 	}
 	for _, request := range trace.OutboundRequests {
-		if !bytes.Equal(request.Body, <-received) || request.Method != "response.create" || request.Transport != "websocket" || request.Headers.Get("Authorization") != "" {
+		if !bytes.Equal(request.Body, <-received) || request.Method != "response.create" || request.Transport != "websocket" || request.Headers.Get("Authorization") != "secret" {
 			t.Fatal("WebSocket wire snapshot mismatch")
 		}
-	}
-}
-
-func TestSharedBodyRedaction(t *testing.T) {
-	for _, body := range []string{`{"access_token":"secret","nested":{"refresh_token":"secret"}}`, "client_secret=secret&grant_type=refresh_token"} {
-		contentType := "application/json"
-		if strings.HasPrefix(body, "client_secret") {
-			contentType = "application/x-www-form-urlencoded"
-		}
-		snapshot := SanitizeBody([]byte(body), contentType, false)
-		if !snapshot.Redacted || snapshot.RedactionReason != "credentials" || snapshot.OriginalSize != int64(len(body)) || strings.Contains(string(snapshot.Body), `:"secret"`) || strings.Contains(string(snapshot.Body), "=secret") {
-			t.Fatalf("credential redaction failed: %+v", snapshot)
-		}
-	}
-	body := []byte(`{"input":[{"type":"input_text","text":"keep"},{"type":"input_image","image_url":"data:image/png;base64,c2VjcmV0"}]}`)
-	snapshot := SanitizeBody(body, "application/json", false)
-	if !snapshot.Redacted || snapshot.RedactionReason != "image_input" || !bytes.Contains(snapshot.Body, []byte("keep")) || bytes.Contains(snapshot.Body, []byte("c2VjcmV0")) {
-		t.Fatal("image redaction failed")
 	}
 }
 
@@ -248,18 +230,18 @@ func TestIncompleteReaderRequestIsExplicitlyMarked(t *testing.T) {
 		t.Fatal(err)
 	}
 	request := capture.Snapshot().OutboundRequests[0]
-	if !request.BodyRedacted || request.BodyRedactionReason != "trace_capture_incomplete" || request.BodyOriginalSize != req.ContentLength || len(request.Body) != 0 {
+	if request.BodyOriginalSize != req.ContentLength || len(request.Body) != 0 {
 		t.Fatalf("partial request presented as complete: %+v", request)
 	}
 }
 
 func TestSizeLimitedRequestRetainsExplicitOmission(t *testing.T) {
 	ctx, capture := Start(t.Context(), true)
-	e := Record(ctx, sdk.OutboundRequestDiagnostic{URL: "https://example.test", BodyRedacted: true, BodyRedactionReason: "trace_size_limit", BodyOriginalSize: maxBodyBytes + 1})
+	e := Record(ctx, sdk.OutboundRequestDiagnostic{URL: "https://example.test", BodyOriginalSize: maxBodyBytes + 1})
 	e.ObserveEvent([]byte("terminal-error"))
 	trace := capture.Snapshot()
 	request := trace.OutboundRequests[0]
-	if !request.BodyRedacted || request.BodyRedactionReason != "trace_size_limit" || request.BodyOriginalSize != maxBodyBytes+1 || string(trace.UpstreamErrorBody) != "terminal-error" {
+	if len(request.Body) != 0 || request.BodyOriginalSize != maxBodyBytes+1 || string(trace.UpstreamErrorBody) != "terminal-error" {
 		t.Fatalf("lost omission metadata: %+v", trace)
 	}
 }

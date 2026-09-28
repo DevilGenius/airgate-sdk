@@ -2344,18 +2344,16 @@ func (x *ForwardOutcome) GetRerouteClientModel() string {
 }
 
 type OutboundRequestDiagnostic struct {
-	state               protoimpl.MessageState   `protogen:"open.v1"`
-	Transport           string                   `protobuf:"bytes,1,opt,name=transport,proto3" json:"transport,omitempty"`
-	Method              string                   `protobuf:"bytes,2,opt,name=method,proto3" json:"method,omitempty"`
-	Url                 string                   `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
-	Headers             map[string]*HeaderValues `protobuf:"bytes,4,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Body                []byte                   `protobuf:"bytes,5,opt,name=body,proto3" json:"body,omitempty"`
-	StatusCode          int32                    `protobuf:"varint,6,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
-	BodyRedacted        bool                     `protobuf:"varint,7,opt,name=body_redacted,json=bodyRedacted,proto3" json:"body_redacted,omitempty"`
-	BodyRedactionReason string                   `protobuf:"bytes,8,opt,name=body_redaction_reason,json=bodyRedactionReason,proto3" json:"body_redaction_reason,omitempty"`
-	BodyOriginalSize    int64                    `protobuf:"varint,9,opt,name=body_original_size,json=bodyOriginalSize,proto3" json:"body_original_size,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state            protoimpl.MessageState   `protogen:"open.v1"`
+	Transport        string                   `protobuf:"bytes,1,opt,name=transport,proto3" json:"transport,omitempty"`
+	Method           string                   `protobuf:"bytes,2,opt,name=method,proto3" json:"method,omitempty"`
+	Url              string                   `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
+	Headers          map[string]*HeaderValues `protobuf:"bytes,4,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Body             []byte                   `protobuf:"bytes,5,opt,name=body,proto3" json:"body,omitempty"`
+	StatusCode       int32                    `protobuf:"varint,6,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
+	BodyOriginalSize int64                    `protobuf:"varint,7,opt,name=body_original_size,json=bodyOriginalSize,proto3" json:"body_original_size,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *OutboundRequestDiagnostic) Reset() {
@@ -2428,20 +2426,6 @@ func (x *OutboundRequestDiagnostic) GetStatusCode() int32 {
 		return x.StatusCode
 	}
 	return 0
-}
-
-func (x *OutboundRequestDiagnostic) GetBodyRedacted() bool {
-	if x != nil {
-		return x.BodyRedacted
-	}
-	return false
-}
-
-func (x *OutboundRequestDiagnostic) GetBodyRedactionReason() string {
-	if x != nil {
-		return x.BodyRedactionReason
-	}
-	return ""
 }
 
 func (x *OutboundRequestDiagnostic) GetBodyOriginalSize() int64 {
@@ -5023,7 +5007,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x14reroute_client_model\x18\v \x01(\tR\x12rerouteClientModel\x1aE\n" +
 	"\x17UpdatedCredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd1\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf8\x02\n" +
 	"\x19OutboundRequestDiagnostic\x12\x1c\n" +
 	"\ttransport\x18\x01 \x01(\tR\ttransport\x12\x16\n" +
 	"\x06method\x18\x02 \x01(\tR\x06method\x12\x10\n" +
@@ -5031,10 +5015,8 @@ const file_plugin_proto_rawDesc = "" +
 	"\aheaders\x18\x04 \x03(\v29.airgate.plugin.v1.OutboundRequestDiagnostic.HeadersEntryR\aheaders\x12\x12\n" +
 	"\x04body\x18\x05 \x01(\fR\x04body\x12\x1f\n" +
 	"\vstatus_code\x18\x06 \x01(\x05R\n" +
-	"statusCode\x12#\n" +
-	"\rbody_redacted\x18\a \x01(\bR\fbodyRedacted\x122\n" +
-	"\x15body_redaction_reason\x18\b \x01(\tR\x13bodyRedactionReason\x12,\n" +
-	"\x12body_original_size\x18\t \x01(\x03R\x10bodyOriginalSize\x1a[\n" +
+	"statusCode\x12,\n" +
+	"\x12body_original_size\x18\a \x01(\x03R\x10bodyOriginalSize\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
 	"\x05value\x18\x02 \x01(\v2\x1f.airgate.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\xa1\x01\n" +

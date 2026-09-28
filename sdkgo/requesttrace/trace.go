@@ -1,13 +1,10 @@
-// Package requesttrace captures upstream wire requests at transport boundaries.
-// Core owns incoming requests and persistence; transports own wire diagnostics.
+// Package requesttrace provides opt-in raw diagnostics for main upstream requests.
+// Plugins select traced transports; Core owns redaction and persistence.
 package requesttrace
 
 import (
 	"bytes"
 	"context"
-	"net/http"
-	"net/url"
-	"strings"
 	"sync"
 
 	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
@@ -69,19 +66,19 @@ func (c *Capture) release() {
 	}
 }
 
-// Exchange is one transport request, including internal retries or attachments.
+// Exchange is one main transport request, including an internal retry.
 type Exchange struct {
-	mu           sync.Mutex
-	request      sdk.OutboundRequestDiagnostic
-	sent         *bodyBuffer
-	response     *bodyBuffer
-	event        []byte
-	responseType string
-	events       *eventObserver
-	closed       bool
+	mu       sync.Mutex
+	request  sdk.OutboundRequestDiagnostic
+	sent     *bodyBuffer
+	response *bodyBuffer
+	event    []byte
+	events   *eventObserver
+	closed   bool
 }
 
-// Record starts an exchange. The request body and safe headers are copied.
+// Record copies raw request bytes and headers. Only Core may persist them,
+// after applying its redaction policy.
 func Record(ctx context.Context, request sdk.OutboundRequestDiagnostic) *Exchange {
 	return record(ctx, request, false, nil)
 }
@@ -98,12 +95,10 @@ func record(ctx context.Context, request sdk.OutboundRequestDiagnostic, ownsBody
 	if c.closed {
 		return nil
 	}
-	request.Headers = SafeHeaders(request.Headers)
-	request.URL = SafeURL(request.URL)
+	request.Headers = request.Headers.Clone()
 	if len(request.Body) > maxBodyBytes {
 		request.BodyOriginalSize = max(request.BodyOriginalSize, int64(len(request.Body)))
 		request.Body = nil
-		request.BodyRedacted, request.BodyRedactionReason = true, "trace_size_limit"
 	} else if !ownsBody {
 		request.Body = bytes.Clone(request.Body)
 	}
@@ -182,44 +177,20 @@ func (c *Capture) Snapshot() *sdk.FinalErrorDiagnostic {
 		e := exchanges[i]
 		e.mu.Lock()
 		req, sent, response := e.request, e.sent, e.response
-		event, responseType := bytes.Clone(e.event), e.responseType
+		event := bytes.Clone(e.event)
 		e.mu.Unlock()
 		body := req.Body
 		originalSize := max(req.BodyOriginalSize, int64(len(body)))
-		omission := req.BodyRedactionReason
 		if sent != nil {
 			var sentSize int64
 			body, sentSize = sent.snapshot()
 			originalSize = max(originalSize, sentSize)
-			if originalSize > maxBodyBytes {
-				omission = "trace_size_limit"
-			} else if originalSize > int64(len(body)) {
-				omission = "trace_capture_incomplete"
-			}
-		}
-		snapshot := BodySnapshot{Body: body}
-		if omission == "" {
-			snapshot = SanitizeBody(body, req.Headers.Get("Content-Type"), IsImageURL(req.URL))
 		}
 		req.Body = nil
-		req.BodyOriginalSize = 0
-		req.BodyRedacted, req.BodyRedactionReason = snapshot.Redacted, snapshot.RedactionReason
-		if snapshot.Redacted {
-			req.BodyOriginalSize = snapshot.OriginalSize
-			req.Headers = req.Headers.Clone()
-			if req.Headers == nil {
-				req.Headers = make(http.Header)
-			}
-			req.Headers.Set("Content-Type", snapshot.ContentType)
-		}
-		if omission != "" || len(snapshot.Body) > remaining {
-			if omission == "" {
-				omission = "trace_size_limit"
-			}
-			req.BodyRedacted, req.BodyRedactionReason, req.BodyOriginalSize = true, omission, originalSize
-		} else {
-			req.Body = snapshot.Body
-			remaining -= len(req.Body)
+		req.BodyOriginalSize = originalSize
+		if originalSize <= int64(len(body)) && len(body) <= remaining {
+			req.Body = body
+			remaining -= len(body)
 		}
 		diagnostic.OutboundRequests[i] = req
 		if i == len(exchanges)-1 {
@@ -231,7 +202,6 @@ func (c *Capture) Snapshot() *sdk.FinalErrorDiagnostic {
 					raw = nil
 				}
 			}
-			raw = SanitizeBody(raw, responseType, false).Body
 			if len(raw) <= remaining {
 				diagnostic.UpstreamErrorBody = raw
 				remaining -= len(raw)
@@ -239,35 +209,6 @@ func (c *Capture) Snapshot() *sdk.FinalErrorDiagnostic {
 		}
 	}
 	return diagnostic
-}
-
-// SafeHeaders keeps transport metadata only; credentials never leave the plugin.
-func SafeHeaders(headers http.Header) http.Header {
-	safe := make(http.Header)
-	for name, values := range headers {
-		key := strings.ToLower(strings.TrimSpace(name))
-		switch key {
-		case "accept", "content-type", "openai-beta", "originator", "user-agent":
-			safe[name] = append([]string(nil), values...)
-		default:
-			if strings.HasPrefix(key, "x-airgate-trace-") {
-				safe[name] = append([]string(nil), values...)
-			}
-		}
-	}
-	for key, digest := range HeaderFingerprints(headers) {
-		safe.Set(key, digest)
-	}
-	return safe
-}
-
-func SafeURL(raw string) string {
-	u, err := url.Parse(raw)
-	if err != nil {
-		return "<invalid-url>"
-	}
-	u.User, u.RawQuery, u.Fragment = nil, "", ""
-	return u.String()
 }
 
 type bodyBuffer struct {

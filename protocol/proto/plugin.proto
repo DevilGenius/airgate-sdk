@@ -366,9 +366,7 @@ message OutboundRequestDiagnostic {
     map<string, HeaderValues> headers = 4;
     bytes body = 5;
     int32 status_code = 6;
-    bool body_redacted = 7;
-    string body_redaction_reason = 8;
-    int64 body_original_size = 9;
+    int64 body_original_size = 7;
 }
 
 message FinalErrorDiagnostic {
