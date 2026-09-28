@@ -40,7 +40,7 @@ func TestSSECRMultilineTerminatorsAndForwarding(t *testing.T) {
 	wire := ": heartbeat\rdata: first\rdata: second\r\rdata: [DONE]\r\r"
 	resp := &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": {"text/event-stream"}}, Body: io.NopCloser(oneByteReader{strings.NewReader(wire)})}
 	exchange.WrapResponse(resp)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	raw, err := io.ReadAll(resp.Body)
 	if err != nil || string(raw) != wire {
 		t.Fatalf("SSE forwarding changed: %q / %v", raw, err)

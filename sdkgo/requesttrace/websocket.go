@@ -7,8 +7,9 @@ import (
 	"sync"
 	"time"
 
-	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 	"github.com/gorilla/websocket"
+
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 // WebSocket observes application messages at the wire boundary. Control frames

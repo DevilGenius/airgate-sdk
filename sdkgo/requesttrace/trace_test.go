@@ -11,8 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 	"github.com/gorilla/websocket"
+
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
@@ -177,7 +178,7 @@ func TestWebSocketTraceCapturesActualFrames(t *testing.T) {
 		if err != nil {
 			return
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 		for i := 0; i < 2; i++ {
 			_, body, err := conn.ReadMessage()
 			if err != nil {
@@ -195,7 +196,7 @@ func TestWebSocketTraceCapturesActualFrames(t *testing.T) {
 		t.Fatal(err)
 	}
 	conn := WrapWebSocket(ctx, raw, url, http.Header{"Authorization": {"secret"}})
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	for i := 0; i < 2; i++ {
 		if err := conn.WriteJSON(map[string]any{"type": "response.create", "input": strings.Repeat("full history ", 1024), "attempt": i}); err != nil {
 			t.Fatal(err)
