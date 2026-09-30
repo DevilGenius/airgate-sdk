@@ -1,11 +1,13 @@
 package grpc
 
 import (
-	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
-	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
-	"google.golang.org/protobuf/proto"
 	"reflect"
 	"testing"
+
+	"google.golang.org/protobuf/proto"
+
+	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
+	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
 )
 
 func TestAccountPlanContractProtoRoundTrip(t *testing.T) {

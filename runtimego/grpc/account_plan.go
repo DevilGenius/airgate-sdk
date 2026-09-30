@@ -1,9 +1,10 @@
 package grpc
 
 import (
+	"slices"
+
 	pb "github.com/DevilGenius/airgate-sdk/protocol/proto"
 	sdk "github.com/DevilGenius/airgate-sdk/sdkgo"
-	"slices"
 )
 
 func accountPlansToProto(plans []sdk.AccountPlan) []*pb.AccountPlanProto {
