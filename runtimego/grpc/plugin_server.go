@@ -38,6 +38,7 @@ func (s *PluginGRPCServer) GetInfo(_ context.Context, _ *pb.Empty) (*pb.PluginIn
 		Dependencies: info.Dependencies,
 		DispatchDsl:  dispatchDSLToProto(info.DispatchDSL),
 		Metadata:     info.Metadata,
+		AccountPlans: accountPlansToProto(info.AccountPlans),
 	}
 
 	if len(info.ConfigSchema) > 0 {

@@ -100,6 +100,7 @@ func (b *pluginBase) InfoContext(parent context.Context) (sdk.PluginInfo, error)
 		Dependencies: resp.Dependencies,
 		DispatchDSL:  dispatchDSLFromProto(resp.DispatchDsl),
 		Metadata:     resp.Metadata,
+		AccountPlans: accountPlansFromProto(resp.AccountPlans),
 	}
 
 	if len(resp.ConfigSchema) > 0 {

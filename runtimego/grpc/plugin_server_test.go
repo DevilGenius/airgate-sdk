@@ -104,6 +104,7 @@ func TestPluginGRPCServerGetInfoMapsFields(t *testing.T) {
 		Capabilities:       []sdk.Capability{sdk.CapabilityHostInvoke},
 		Priority:           20,
 		Metadata:           map[string]string{"category": "extension"},
+		AccountPlans:       []sdk.AccountPlan{{Key: "power", MatchMode: sdk.AccountPlanContains, Matches: []string{"Power"}}},
 		DispatchDSL: sdk.DispatchDSL{Rules: []sdk.DispatchRule{{
 			ID: "rule",
 		}}},
@@ -115,6 +116,9 @@ func TestPluginGRPCServerGetInfoMapsFields(t *testing.T) {
 	}
 	if resp.Id != "plugin" || resp.Type != "extension" || resp.ConfigSchema[0].DefaultValue != "default" {
 		t.Fatalf("GetInfo response = %+v", resp)
+	}
+	if len(resp.AccountPlans) != 1 || resp.AccountPlans[0].Key != "power" || resp.AccountPlans[0].MatchMode != "contains" {
+		t.Fatalf("missing typed plan contract: %+v", resp.AccountPlans)
 	}
 	if !resp.AccountTypes[0].Fields[0].EditDisabled || resp.FrontendPages[0].Audience != "admin" || resp.FrontendWidgets[0].Slot != sdk.SlotAccountEdit {
 		t.Fatalf("nested response = %+v", resp)

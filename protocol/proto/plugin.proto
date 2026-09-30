@@ -130,6 +130,9 @@ message PluginInfoResponse {
     map<string, string> metadata = 16;
     // dispatch_dsl 是插件默认的请求调度规则。Core 可在 group 级覆盖或追加。
     DispatchDSLProto dispatch_dsl = 17;
+    // Known OAuth plans used by Core filtering and group model policies.
+    // Empty means no known plans; Unknown is always owned by Core.
+    repeated AccountPlanProto account_plans = 18;
 }
 
 message DispatchDSLProto {
@@ -677,4 +680,12 @@ message TaskTypesResponse {
 message ConfigFieldOptionProto {
     string value = 1;
     string label = 2;
+}
+
+message AccountPlanProto {
+    string key = 1;
+    string label = 2;
+    string credential_key = 3;
+    string match_mode = 4; // exact / contains / normalized_contains
+    repeated string matches = 5;
 }

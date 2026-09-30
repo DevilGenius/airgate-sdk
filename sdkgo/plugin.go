@@ -43,6 +43,7 @@ type PluginInfo struct {
 	Dependencies       []string         `json:"dependencies"`
 	ConfigSchema       []ConfigField    `json:"config_schema"`
 	AccountTypes       []AccountType    `json:"account_types"`
+	AccountPlans       []AccountPlan    `json:"account_plans,omitempty"`
 	FrontendPages      []FrontendPage   `json:"frontend_pages"`
 	FrontendWidgets    []FrontendWidget `json:"frontend_widgets"`
 	InstructionPresets []string         `json:"instruction_presets"`

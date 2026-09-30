@@ -151,6 +151,7 @@ func TestPluginBaseInfoMapsAllFieldsAndCaches(t *testing.T) {
 		Capabilities:       []string{string(sdk.CapabilityHostInvoke)},
 		Priority:           10,
 		Metadata:           map[string]string{"category": "middleware"},
+		AccountPlans:       []*pb.AccountPlanProto{{Key: "power", MatchMode: "contains", Matches: []string{"Power"}}},
 		DispatchDsl: dispatchDSLToProto(sdk.DispatchDSL{Rules: []sdk.DispatchRule{{
 			ID: "rule",
 		}}}),
@@ -160,6 +161,9 @@ func TestPluginBaseInfoMapsAllFieldsAndCaches(t *testing.T) {
 	info := base.Info()
 	if info.ID != "plugin" || info.Type != sdk.PluginTypeMiddleware || info.ConfigSchema[0].Default != "default" {
 		t.Fatalf("Info() = %+v", info)
+	}
+	if len(info.AccountPlans) != 1 || info.AccountPlans[0].Key != "power" || info.AccountPlans[0].MatchMode != sdk.AccountPlanContains {
+		t.Fatalf("missing typed plan contract: %+v", info.AccountPlans)
 	}
 	if info.AccountTypes[0].Fields[0].EditDisabled != true || info.FrontendPages[0].Audience != "admin" {
 		t.Fatalf("Info nested fields = %+v", info)
