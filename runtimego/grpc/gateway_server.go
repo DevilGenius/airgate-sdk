@@ -83,15 +83,15 @@ func buildAccount(req *pb.ForwardRequest) *sdk.Account {
 // outcomeToProto 把 SDK 判决转为 proto 消息。
 func outcomeToProto(o sdk.ForwardOutcome) *pb.ForwardOutcome {
 	out := &pb.ForwardOutcome{
-		Kind:               outcomeKindToProto(o.Kind),
-		FailoverScope:      string(o.FailoverScope),
-		RerouteClientModel: o.RerouteClientModel,
-		Upstream:           upstreamToProto(o.Upstream),
-		DurationMs:         o.Duration.Milliseconds(),
-		RetryAfterMs:       o.RetryAfter.Milliseconds(),
-		Reason:             o.Reason,
-		UpdatedCredentials: o.UpdatedCredentials,
-		SafetyRejected:     o.SafetyRejected,
+		Kind:                outcomeKindToProto(o.Kind),
+		FailoverScope:       string(o.FailoverScope),
+		ModelFallbackReason: string(o.ModelFallbackReason),
+		Upstream:            upstreamToProto(o.Upstream),
+		DurationMs:          o.Duration.Milliseconds(),
+		RetryAfterMs:        o.RetryAfter.Milliseconds(),
+		Reason:              o.Reason,
+		UpdatedCredentials:  o.UpdatedCredentials,
+		SafetyRejected:      o.SafetyRejected,
 	}
 	if o.Usage != nil {
 		out.Usage = usageToProto(*o.Usage)
@@ -108,15 +108,15 @@ func outcomeFromProto(p *pb.ForwardOutcome) sdk.ForwardOutcome {
 		return sdk.ForwardOutcome{}
 	}
 	out := sdk.ForwardOutcome{
-		Kind:               outcomeKindFromProto(p.Kind),
-		FailoverScope:      sdk.FailoverScope(p.FailoverScope),
-		RerouteClientModel: p.RerouteClientModel,
-		Upstream:           upstreamFromProto(p.Upstream),
-		Duration:           time.Duration(p.DurationMs) * time.Millisecond,
-		RetryAfter:         time.Duration(p.RetryAfterMs) * time.Millisecond,
-		Reason:             p.Reason,
-		UpdatedCredentials: p.UpdatedCredentials,
-		SafetyRejected:     p.SafetyRejected,
+		Kind:                outcomeKindFromProto(p.Kind),
+		FailoverScope:       sdk.FailoverScope(p.FailoverScope),
+		ModelFallbackReason: sdk.ModelFallbackReason(p.ModelFallbackReason),
+		Upstream:            upstreamFromProto(p.Upstream),
+		Duration:            time.Duration(p.DurationMs) * time.Millisecond,
+		RetryAfter:          time.Duration(p.RetryAfterMs) * time.Millisecond,
+		Reason:              p.Reason,
+		UpdatedCredentials:  p.UpdatedCredentials,
+		SafetyRejected:      p.SafetyRejected,
 	}
 	if p.Usage != nil {
 		u := usageFromProto(p.Usage)

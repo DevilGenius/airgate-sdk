@@ -11,9 +11,10 @@ import (
 func TestDispatchDSLConversionRoundTripAndCopiesSlices(t *testing.T) {
 	original := sdk.DispatchDSL{
 		Rules: []sdk.DispatchRule{{
-			ID:             "rule-1",
-			Operation:      "chat",
-			TimeoutProfile: "long",
+			ID:                    "rule-1",
+			ContextWindowFallback: "gpt-long",
+			Operation:             "chat",
+			TimeoutProfile:        "long",
 			When: sdk.DispatchWhen{
 				Methods:       []string{"POST"},
 				Paths:         []string{"/v1/chat/completions"},

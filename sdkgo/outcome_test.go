@@ -126,21 +126,16 @@ func TestFailoverScopeModelReroute(t *testing.T) {
 		t.Fatalf("model reroute scope = %q", sdk.FailoverScopeModelReroute)
 	}
 
-	target, ok := (sdk.ForwardOutcome{
-		Kind:               sdk.OutcomeClientError,
-		FailoverScope:      sdk.FailoverScopeModelReroute,
-		RerouteClientModel: " gpt-5.4 ",
-	}).ModelRerouteClientTarget()
-	if !ok || target != "gpt-5.4" {
-		t.Fatalf("model reroute target = %q, ok=%v", target, ok)
+	if !(sdk.ForwardOutcome{Kind: sdk.OutcomeClientError, FailoverScope: sdk.FailoverScopeModelReroute, ModelFallbackReason: sdk.ModelFallbackContextWindow}).RequestsModelFallback() {
+		t.Fatal("context window fallback signal rejected")
 	}
 	for _, outcome := range []sdk.ForwardOutcome{
-		{Kind: sdk.OutcomeSuccess, FailoverScope: sdk.FailoverScopeModelReroute, RerouteClientModel: "gpt-5.4"},
-		{Kind: sdk.OutcomeClientError, FailoverScope: sdk.FailoverScopeDispatchCandidate, RerouteClientModel: "gpt-5.4"},
+		{Kind: sdk.OutcomeSuccess, FailoverScope: sdk.FailoverScopeModelReroute, ModelFallbackReason: sdk.ModelFallbackContextWindow},
+		{Kind: sdk.OutcomeClientError, FailoverScope: sdk.FailoverScopeDispatchCandidate, ModelFallbackReason: sdk.ModelFallbackContextWindow},
 		{Kind: sdk.OutcomeClientError, FailoverScope: sdk.FailoverScopeModelReroute},
 	} {
-		if target, ok := outcome.ModelRerouteClientTarget(); ok {
-			t.Fatalf("invalid model reroute accepted: target=%q outcome=%+v", target, outcome)
+		if outcome.RequestsModelFallback() {
+			t.Fatalf("invalid model fallback accepted: %+v", outcome)
 		}
 	}
 }

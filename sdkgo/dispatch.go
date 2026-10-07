@@ -10,13 +10,16 @@ type DispatchDSL struct {
 
 // DispatchRule 一条请求调度规则。
 type DispatchRule struct {
-	ID             string              `json:"id,omitempty"`
-	When           DispatchWhen        `json:"when,omitempty"`
-	Model          DispatchModel       `json:"model,omitempty"`
-	Operation      string              `json:"operation,omitempty"`
-	TimeoutProfile string              `json:"timeout_profile,omitempty"`
-	Gate           DispatchGate        `json:"gate,omitempty"`
-	Candidates     []DispatchCandidate `json:"candidates,omitempty"`
+	ID             string        `json:"id,omitempty"`
+	When           DispatchWhen  `json:"when,omitempty"`
+	Model          DispatchModel `json:"model,omitempty"`
+	Operation      string        `json:"operation,omitempty"`
+	TimeoutProfile string        `json:"timeout_profile,omitempty"`
+	Gate           DispatchGate  `json:"gate,omitempty"`
+	// ContextWindowFallback is the client model to re-resolve after context overflow.
+	// Empty disables this fallback; a matching group rule replaces platform policy.
+	ContextWindowFallback string              `json:"context_window_fallback,omitempty"`
+	Candidates            []DispatchCandidate `json:"candidates,omitempty"`
 }
 
 // DispatchWhen 描述一条规则的匹配条件。

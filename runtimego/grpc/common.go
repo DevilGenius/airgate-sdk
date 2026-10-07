@@ -396,13 +396,14 @@ func dispatchDSLFromProto(protoDSL *pb.DispatchDSLProto) sdk.DispatchDSL {
 			continue
 		}
 		dsl.Rules = append(dsl.Rules, sdk.DispatchRule{
-			ID:             rule.Id,
-			When:           dispatchWhenFromProto(rule.When),
-			Model:          dispatchModelFromProto(rule.Model),
-			Operation:      rule.Operation,
-			TimeoutProfile: rule.TimeoutProfile,
-			Gate:           dispatchGateFromProto(rule.Gate),
-			Candidates:     dispatchCandidatesFromProto(rule.Candidates),
+			ID:                    rule.Id,
+			When:                  dispatchWhenFromProto(rule.When),
+			Model:                 dispatchModelFromProto(rule.Model),
+			Operation:             rule.Operation,
+			TimeoutProfile:        rule.TimeoutProfile,
+			Gate:                  dispatchGateFromProto(rule.Gate),
+			ContextWindowFallback: rule.ContextWindowFallback,
+			Candidates:            dispatchCandidatesFromProto(rule.Candidates),
 		})
 	}
 	return dsl
@@ -415,13 +416,14 @@ func dispatchDSLToProto(dsl sdk.DispatchDSL) *pb.DispatchDSLProto {
 	protoDSL := &pb.DispatchDSLProto{Rules: make([]*pb.DispatchRuleProto, 0, len(dsl.Rules))}
 	for _, rule := range dsl.Rules {
 		protoDSL.Rules = append(protoDSL.Rules, &pb.DispatchRuleProto{
-			Id:             rule.ID,
-			When:           dispatchWhenToProto(rule.When),
-			Model:          dispatchModelToProto(rule.Model),
-			Operation:      rule.Operation,
-			TimeoutProfile: rule.TimeoutProfile,
-			Gate:           dispatchGateToProto(rule.Gate),
-			Candidates:     dispatchCandidatesToProto(rule.Candidates),
+			Id:                    rule.ID,
+			When:                  dispatchWhenToProto(rule.When),
+			Model:                 dispatchModelToProto(rule.Model),
+			Operation:             rule.Operation,
+			TimeoutProfile:        rule.TimeoutProfile,
+			Gate:                  dispatchGateToProto(rule.Gate),
+			ContextWindowFallback: rule.ContextWindowFallback,
+			Candidates:            dispatchCandidatesToProto(rule.Candidates),
 		})
 	}
 	return protoDSL

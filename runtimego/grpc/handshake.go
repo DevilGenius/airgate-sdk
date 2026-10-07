@@ -2,9 +2,9 @@ package grpc
 
 import "github.com/hashicorp/go-plugin"
 
-// Handshake 统一握手配置，核心和插件必须使用相同值
+// Handshake v2 requires plan-owned model fallback; v1 peers are rejected.
 var Handshake = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
+	ProtocolVersion:  2,
 	MagicCookieKey:   "AIRGATE_PLUGIN",
 	MagicCookieValue: "airgate-v1",
 }

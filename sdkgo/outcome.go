@@ -2,7 +2,6 @@ package sdk
 
 import (
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -106,7 +105,7 @@ func (k OutcomeKind) ShouldFailover() bool {
 // FailoverScope 声明一次 ForwardOutcome 允许 Core 重试或重路由的边界。
 //
 // 零值表示不覆盖 OutcomeKind 自身语义。DispatchCandidate 仅前进当前候选链；
-// ModelReroute 则要求 Core 使用 RerouteClientModel 重新解析完整 DispatchPlan。
+// ModelReroute 要求 Core 按当前 DispatchPlan 和失败原因重新决策。
 type FailoverScope string
 
 const (
@@ -121,7 +120,7 @@ const (
 	// 到下一候选重试；若没有下一候选，则按原 OutcomeKind 处理。
 	FailoverScopeDispatchCandidate FailoverScope = "dispatch_candidate"
 
-	// FailoverScopeModelReroute 表示当前请求需要用 RerouteClientModel 重新解析
+	// FailoverScopeModelReroute 表示当前请求需要按计划中的回退策略重新解析
 	// DispatchPlan 并重新选择账号，而不是沿当前候选链继续前进。
 	FailoverScopeModelReroute FailoverScope = "model_reroute"
 )
@@ -211,14 +210,14 @@ type Usage struct {
 //	Reason            人类可读原因，Core 仅落日志，不做任何判断
 //	UpdatedCredentials 插件若在 Forward 中刷新了凭证（OAuth 轮转等）通过此字段带回
 //	FailoverScope     可选，声明 OutcomeKind 之外的重试边界
-//	RerouteClientModel 仅 ModelReroute scope 使用，作为新的 client model 重新解析调度方案并选号
+//	ModelFallbackReason 仅报告回退原因，目标模型由 Core 从 DispatchPlan 决定
 //	FinalErrorDiagnostic 可选，仅 TraceFinalError=true 且本次 attempt 失败时填写
 //	SafetyRejected    响应处理器确认上游因安全策略拒绝本次请求
 type ForwardOutcome struct {
 	Kind OutcomeKind
 
-	FailoverScope      FailoverScope
-	RerouteClientModel string
+	FailoverScope       FailoverScope
+	ModelFallbackReason ModelFallbackReason
 
 	Upstream UpstreamResponse
 
@@ -240,14 +239,12 @@ func (o ForwardOutcome) ShouldFailover() bool {
 	return o.FailoverScope != FailoverScopeTerminal && o.Kind.ShouldFailover()
 }
 
-// ModelRerouteClientTarget 返回经过协议校验的 client model 重路由目标。
-//
-// 模型重路由是 ClientError 的后续调度动作，而不是独立 OutcomeKind。只有插件明确
-// 声明 ModelReroute scope 且提供非空 client model 时，Core 才应执行该控制转换。
-func (o ForwardOutcome) ModelRerouteClientTarget() (string, bool) {
-	if o.Kind != OutcomeClientError || o.FailoverScope != FailoverScopeModelReroute {
-		return "", false
-	}
-	target := strings.TrimSpace(o.RerouteClientModel)
-	return target, target != ""
+// ModelFallbackReason reports a condition, never an upstream model choice.
+type ModelFallbackReason string
+
+const ModelFallbackContextWindow ModelFallbackReason = "context_window"
+
+func (o ForwardOutcome) RequestsModelFallback() bool {
+	return o.Kind == OutcomeClientError && o.FailoverScope == FailoverScopeModelReroute &&
+		o.ModelFallbackReason == ModelFallbackContextWindow
 }

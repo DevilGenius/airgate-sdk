@@ -556,16 +556,17 @@ func (x *DispatchDSLProto) GetRules() []*DispatchRuleProto {
 }
 
 type DispatchRuleProto struct {
-	state          protoimpl.MessageState    `protogen:"open.v1"`
-	Id             string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	When           *DispatchWhenProto        `protobuf:"bytes,2,opt,name=when,proto3" json:"when,omitempty"`
-	Model          *DispatchModelProto       `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
-	Operation      string                    `protobuf:"bytes,4,opt,name=operation,proto3" json:"operation,omitempty"`
-	TimeoutProfile string                    `protobuf:"bytes,5,opt,name=timeout_profile,json=timeoutProfile,proto3" json:"timeout_profile,omitempty"`
-	Gate           *DispatchGateProto        `protobuf:"bytes,6,opt,name=gate,proto3" json:"gate,omitempty"`
-	Candidates     []*DispatchCandidateProto `protobuf:"bytes,7,rep,name=candidates,proto3" json:"candidates,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state                 protoimpl.MessageState    `protogen:"open.v1"`
+	Id                    string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	When                  *DispatchWhenProto        `protobuf:"bytes,2,opt,name=when,proto3" json:"when,omitempty"`
+	Model                 *DispatchModelProto       `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	Operation             string                    `protobuf:"bytes,4,opt,name=operation,proto3" json:"operation,omitempty"`
+	TimeoutProfile        string                    `protobuf:"bytes,5,opt,name=timeout_profile,json=timeoutProfile,proto3" json:"timeout_profile,omitempty"`
+	Gate                  *DispatchGateProto        `protobuf:"bytes,6,opt,name=gate,proto3" json:"gate,omitempty"`
+	Candidates            []*DispatchCandidateProto `protobuf:"bytes,7,rep,name=candidates,proto3" json:"candidates,omitempty"`
+	ContextWindowFallback string                    `protobuf:"bytes,8,opt,name=context_window_fallback,json=contextWindowFallback,proto3" json:"context_window_fallback,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *DispatchRuleProto) Reset() {
@@ -645,6 +646,13 @@ func (x *DispatchRuleProto) GetCandidates() []*DispatchCandidateProto {
 		return x.Candidates
 	}
 	return nil
+}
+
+func (x *DispatchRuleProto) GetContextWindowFallback() string {
+	if x != nil {
+		return x.ContextWindowFallback
+	}
+	return ""
 }
 
 type DispatchWhenProto struct {
@@ -2239,11 +2247,10 @@ type ForwardOutcome struct {
 	FailoverScope        string                 `protobuf:"bytes,8,opt,name=failover_scope,json=failoverScope,proto3" json:"failover_scope,omitempty"`
 	FinalErrorDiagnostic *FinalErrorDiagnostic  `protobuf:"bytes,9,opt,name=final_error_diagnostic,json=finalErrorDiagnostic,proto3" json:"final_error_diagnostic,omitempty"`
 	SafetyRejected       bool                   `protobuf:"varint,10,opt,name=safety_rejected,json=safetyRejected,proto3" json:"safety_rejected,omitempty"`
-	// New client model passed back through Core's DispatchPlan resolver when
-	// failover_scope is "model_reroute".
-	RerouteClientModel string `protobuf:"bytes,11,opt,name=reroute_client_model,json=rerouteClientModel,proto3" json:"reroute_client_model,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// Failure condition only; Core selects the target from DispatchPlan.
+	ModelFallbackReason string `protobuf:"bytes,12,opt,name=model_fallback_reason,json=modelFallbackReason,proto3" json:"model_fallback_reason,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *ForwardOutcome) Reset() {
@@ -2346,9 +2353,9 @@ func (x *ForwardOutcome) GetSafetyRejected() bool {
 	return false
 }
 
-func (x *ForwardOutcome) GetRerouteClientModel() string {
+func (x *ForwardOutcome) GetModelFallbackReason() string {
 	if x != nil {
-		return x.RerouteClientModel
+		return x.ModelFallbackReason
 	}
 	return ""
 }
@@ -4907,7 +4914,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"N\n" +
 	"\x10DispatchDSLProto\x12:\n" +
-	"\x05rules\x18\x01 \x03(\v2$.airgate.plugin.v1.DispatchRuleProtoR\x05rules\"\xe6\x02\n" +
+	"\x05rules\x18\x01 \x03(\v2$.airgate.plugin.v1.DispatchRuleProtoR\x05rules\"\x9e\x03\n" +
 	"\x11DispatchRuleProto\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x128\n" +
 	"\x04when\x18\x02 \x01(\v2$.airgate.plugin.v1.DispatchWhenProtoR\x04when\x12;\n" +
@@ -4917,7 +4924,8 @@ const file_plugin_proto_rawDesc = "" +
 	"\x04gate\x18\x06 \x01(\v2$.airgate.plugin.v1.DispatchGateProtoR\x04gate\x12I\n" +
 	"\n" +
 	"candidates\x18\a \x03(\v2).airgate.plugin.v1.DispatchCandidateProtoR\n" +
-	"candidates\"\xce\x01\n" +
+	"candidates\x126\n" +
+	"\x17context_window_fallback\x18\b \x01(\tR\x15contextWindowFallback\"\xce\x01\n" +
 	"\x11DispatchWhenProto\x12\x18\n" +
 	"\amethods\x18\x01 \x03(\tR\amethods\x12\x14\n" +
 	"\x05paths\x18\x02 \x03(\tR\x05paths\x12#\n" +
@@ -5077,7 +5085,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x11api_key_base_cost\x18\x03 \x01(\x01H\x02R\x0eapiKeyBaseCost\x88\x01\x01B\x12\n" +
 	"\x10_charge_overrideB\x0f\n" +
 	"\r_charge_addonB\x14\n" +
-	"\x12_api_key_base_cost\"\xa8\x05\n" +
+	"\x12_api_key_base_cost\"\xc6\x05\n" +
 	"\x0eForwardOutcome\x122\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x1e.airgate.plugin.v1.OutcomeKindR\x04kind\x12?\n" +
 	"\bupstream\x18\x02 \x01(\v2#.airgate.plugin.v1.UpstreamResponseR\bupstream\x12.\n" +
@@ -5090,11 +5098,11 @@ const file_plugin_proto_rawDesc = "" +
 	"\x0efailover_scope\x18\b \x01(\tR\rfailoverScope\x12]\n" +
 	"\x16final_error_diagnostic\x18\t \x01(\v2'.airgate.plugin.v1.FinalErrorDiagnosticR\x14finalErrorDiagnostic\x12'\n" +
 	"\x0fsafety_rejected\x18\n" +
-	" \x01(\bR\x0esafetyRejected\x120\n" +
-	"\x14reroute_client_model\x18\v \x01(\tR\x12rerouteClientModel\x1aE\n" +
+	" \x01(\bR\x0esafetyRejected\x122\n" +
+	"\x15model_fallback_reason\x18\f \x01(\tR\x13modelFallbackReason\x1aE\n" +
 	"\x17UpdatedCredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf8\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01J\x04\b\v\x10\fR\x14reroute_client_model\"\xf8\x02\n" +
 	"\x19OutboundRequestDiagnostic\x12\x1c\n" +
 	"\ttransport\x18\x01 \x01(\tR\ttransport\x12\x16\n" +
 	"\x06method\x18\x02 \x01(\tR\x06method\x12\x10\n" +
