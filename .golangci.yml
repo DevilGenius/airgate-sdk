@@ -22,7 +22,8 @@ formatters:
 
   settings:
     goimports:
-      local-prefixes: github.com/DevilGenius
+      local-prefixes:
+        - github.com/DevilGenius
 
 issues:
   max-issues-per-linter: 0
