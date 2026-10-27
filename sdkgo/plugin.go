@@ -29,7 +29,7 @@ const (
 )
 
 // SDKVersion 当前 SDK 版本，插件编译时嵌入到 PluginInfo。
-const SDKVersion = "0.2.19"
+const SDKVersion = "0.2.20"
 
 // PluginInfo 插件元信息。
 type PluginInfo struct {
